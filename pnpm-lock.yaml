@@ -32,6 +32,9 @@ importers:
 
   packages/ai-evaluator:
     dependencies:
+      '@talent-scout/data-processor':
+        specifier: workspace:*
+        version: link:../data-processor
       '@talent-scout/shared':
         specifier: workspace:*
         version: link:../shared
@@ -39,6 +42,9 @@ importers:
         specifier: ^9.5.2
         version: 9.6.1
     devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
       tsx:
         specifier: ^4.19.3
         version: 4.21.0
