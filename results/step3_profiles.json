@@ -1,6 +1,6 @@
 {
   "step": "3_profiles",
-  "enriched_at": "2026-03-25T02:02:21.541613",
+  "enriched_at": "2026-03-25T02:24:38.197584",
   "total_candidates": 500,
   "profiles_fetched": 500,
   "candidates": [
@@ -3235,7 +3235,7 @@
         "hireable": null,
         "public_repos": 0,
         "public_gists": 0,
-        "followers": 57712,
+        "followers": 57722,
         "following": 0,
         "created_at": "2009-05-07T00:15:43Z",
         "updated_at": "2026-01-02T00:03:45Z",
@@ -3300,7 +3300,7 @@
         "hireable": null,
         "public_repos": 0,
         "public_gists": 0,
-        "followers": 4528,
+        "followers": 4529,
         "following": 0,
         "created_at": "2020-05-25T17:35:50Z",
         "updated_at": "2021-02-19T05:23:11Z",
@@ -17822,7 +17822,7 @@
         "hireable": null,
         "public_repos": 6,
         "public_gists": 0,
-        "followers": 3,
+        "followers": 4,
         "following": 0,
         "created_at": "2026-03-17T21:22:45Z",
         "updated_at": "2026-03-22T00:07:01Z",
@@ -18181,7 +18181,7 @@
         "public_repos": 143,
         "public_gists": 4,
         "followers": 708,
-        "following": 80,
+        "following": 81,
         "created_at": "2017-12-02T20:08:42Z",
         "updated_at": "2026-03-25T05:18:42Z",
         "top_repos": [
@@ -19143,7 +19143,7 @@
         "hireable": null,
         "public_repos": 7692,
         "public_gists": 0,
-        "followers": 115483,
+        "followers": 115484,
         "following": 0,
         "created_at": "2013-12-10T19:06:48Z",
         "updated_at": "2025-06-06T20:30:56Z",
@@ -20954,7 +20954,7 @@
         "hireable": null,
         "public_repos": 3093,
         "public_gists": 0,
-        "followers": 22148,
+        "followers": 22149,
         "following": 0,
         "created_at": "2009-01-17T20:14:40Z",
         "updated_at": "2026-03-12T11:20:09Z",
@@ -24666,7 +24666,7 @@
           {
             "name": "claude-night-market",
             "description": "18 production-ready Claude Code plugins: git workflows, code review, spec-driven development, archit",
-            "stars": 227,
+            "stars": 228,
             "language": "Python",
             "fork": false
           }
@@ -24701,7 +24701,7 @@
         "hireable": null,
         "public_repos": 538,
         "public_gists": 0,
-        "followers": 71432,
+        "followers": 71434,
         "following": 0,
         "created_at": "2008-05-11T04:37:31Z",
         "updated_at": "2026-03-04T15:46:48Z",
@@ -27695,7 +27695,7 @@
           {
             "name": "agent-plugins",
             "description": "Agent Plugins for AWS equip AI coding agents with the skills to help you architect, deploy, and oper",
-            "stars": 331,
+            "stars": 334,
             "language": "Python",
             "fork": false
           },
@@ -29153,7 +29153,7 @@
         "company": "Microsoft",
         "hireable": null,
         "public_repos": 43,
-        "public_gists": 38,
+        "public_gists": 39,
         "followers": 10,
         "following": 5,
         "created_at": "2013-10-13T03:28:32Z",
@@ -29503,7 +29503,7 @@
           {
             "name": "lean-ctx",
             "description": "Hybrid Context Optimizer — Shell Hook + MCP Server. Reduces LLM token consumption by 89-99%. Single ",
-            "stars": 84,
+            "stars": 86,
             "language": "Rust",
             "fork": false
           },
@@ -29915,7 +29915,7 @@
         "hireable": null,
         "public_repos": 16,
         "public_gists": 0,
-        "followers": 376,
+        "followers": 377,
         "following": 1,
         "created_at": "2024-10-07T06:33:13Z",
         "updated_at": "2026-03-19T20:42:49Z",
@@ -32433,7 +32433,7 @@
           {
             "name": "tinyfish-cookbook",
             "description": "A collection of sample apps and recipes built with the TinyFish web agent. Open-source examples for ",
-            "stars": 1318,
+            "stars": 1319,
             "language": "TypeScript",
             "fork": false
           },
