@@ -5,81 +5,76 @@
 ## 工作原理
 
 ```
-Python 收集 (gh CLI)          Claude Code 分析
-┌─────────────────────┐      ┌─────────────────────┐
-│ CLAUDE.md 文件搜索    │      │ 读取 enriched.json   │
-│ Claude co-author 搜索 │ ──→  │ 判断是否中国人        │
-│ Topic repo 搜索      │      │ 评估技术水平/AI深度   │
-│ 中文社区 star/fork   │      │ 提取联系方式          │
-│ 头部 repo stargazers │      │ 输出 talent.json/csv  │
-└─────────────────────┘      └─────────────────────┘
+Python 收集 (gh CLI)                 Claude Code 分析
+┌────────────────────────────┐      ┌─────────────────────┐
+│ Step 1a  代码文件搜索        │      │ 读取 step3 结果      │
+│ Step 1b  Commit 签名搜索     │      │ 判断是否中国人        │
+│ Step 1c  Topic repo 搜索    │ ──→  │ 评估技术水平/AI深度   │
+│ Step 1d  中文社区 star/fork  │      │ 提取联系方式          │
+│ Step 1e  头部 repo stargazers│      │ 输出 talent.json/csv │
+│ Step 2   合并去重            │      └─────────────────────┘
+│ Step 3   拉 profile + 粗筛  │        Step 4 (AI analysis)
+└────────────────────────────┘
 ```
 
-## 信号维度
+## Pipeline 步骤
 
-| 信号 | 权重 | 说明 |
-|------|------|------|
-| `CLAUDE.md` 文件 | 5.0 | 证明项目级使用 Claude Code |
-| Claude co-author commit | 5.0 | 证明日常使用 AI coding |
-| `topic:claude-code` repo | 4.0 | 主动构建 AI 工具 |
-| `topic:mcp-server` repo | 4.0 | MCP 生态建设者 |
-| `.cursorrules` 文件 | 3.0 | Cursor 重度用户 |
-| `.clinerules` 文件 | 3.0 | Cline 重度用户 |
-| 中文社区 star/fork | 2-3 | 几乎全是中国开发者 |
-| 头部 repo star | 1.0-1.5 | 量大但信号弱 |
+每步独立运行，中间结果落盘：
+
+| Step | 命令 | 输出文件 | 说明 |
+|------|------|----------|------|
+| 1a | `python3 scout.py --step 1a` | `results/step1a_code.json` | CLAUDE.md / .cursorrules 搜索 |
+| 1b | `python3 scout.py --step 1b` | `results/step1b_commits.json` | Claude co-author commit 搜索 |
+| 1c | `python3 scout.py --step 1c` | `results/step1c_topics.json` | topic:claude-code 等搜索 |
+| 1d | `python3 scout.py --step 1d` | `results/step1d_community.json` | 中文社区 repo star/fork |
+| 1e | `python3 scout.py --step 1e` | `results/step1e_stars.json` | 头部 repo stargazers |
+| 2 | `python3 scout.py --step 2` | `results/step2_merged.json` | 合并去重，按分数排序 |
+| 3 | `python3 scout.py --step 3` | `results/step3_enriched.json` | Top N 拉 profile + 中国粗筛 |
+| 4 | Claude Code | `results/step4_talent.json` | AI 评估 + 最终排名 |
 
 ## 快速开始
 
 ```bash
-# 前置条件：gh CLI 已登录
+# 前置条件
 gh auth status
-
-# 安装依赖
 pip3 install -r requirements.txt
 
 # 预览 API 预算
 python3 scout.py --dry-run
 
-# 完整收集
-python3 scout.py
+# 跑全部步骤 (1a→3)
+python3 scout.py --all
 
-# 然后用 Claude Code 分析结果（参见 CLAUDE.md）
+# 或者单步执行
+python3 scout.py --step 1a
+python3 scout.py --step 1b
+# ...
+python3 scout.py --step 2
+python3 scout.py --step 3
+
+# Step 4: Claude Code 分析（参见 CLAUDE.md）
 ```
 
-## 使用方式
+## 信号权重
 
-```bash
-# 完整运行
-python3 scout.py
-
-# 只跑某个阶段
-python3 scout.py --phase code       # 代码文件搜索
-python3 scout.py --phase commits    # commit 签名搜索
-python3 scout.py --phase topics     # topic repo 搜索
-python3 scout.py --phase community  # 中文社区 repo
-python3 scout.py --phase stars      # 头部 repo stargazers
-
-# 跳过收集，只用已有数据重新 enrich
-python3 scout.py --enrich-only
-```
-
-## 输出文件
-
-| 文件 | 说明 |
-|------|------|
-| `results/raw_YYYY-MM-DD.json` | 全量信号数据（所有候选人） |
-| `results/enriched_YYYY-MM-DD.json` | Top 500 候选人 + GitHub profile |
-| `results/talent_YYYY-MM-DD.json` | Claude Code 评估后的最终结果 |
-| `results/talent_YYYY-MM-DD.csv` | CSV 版本，方便表格查看 |
-| `results/all_talent.json` | 跨次运行累积去重 |
+| 信号 | 权重 | Step | 说明 |
+|------|------|------|------|
+| `CLAUDE.md` 文件 | 5.0 | 1a | 证明项目级使用 Claude Code |
+| Claude co-author commit | 5.0 | 1b | 证明日常使用 AI coding |
+| `topic:claude-code` repo | 4.0 | 1c | 主动构建 AI 工具 |
+| `topic:mcp-server` repo | 4.0 | 1c | MCP 生态建设者 |
+| `.cursorrules` 文件 | 3.0 | 1a | Cursor 重度用户 |
+| `.clinerules` 文件 | 3.0 | 1a | Cline 重度用户 |
+| 中文社区 star/fork | 2-3 | 1d | 几乎全是中国开发者 |
+| 头部 repo star | 1.0-1.5 | 1e | 量大但信号弱 |
 
 ## 项目结构
 
 ```
-├── CLAUDE.md        # Claude Code 分析指令
+├── CLAUDE.md        # Claude Code Step 4 分析指令
 ├── config.yaml      # 目标 repo、权重、API 预算
-├── scout.py         # 主收集脚本
+├── scout.py         # 分步 pipeline（Step 1-3）
 ├── github_api.py    # gh CLI 封装
 ├── requirements.txt # pyyaml
-└── results/         # 输出目录
+└── results/         # 每步输出目录
 ```
