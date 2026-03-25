@@ -1,0 +1,20 @@
+{
+  "name": "@talent-scout/data-collector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "collect": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@talent-scout/shared": "workspace:*",
+    "execa": "^9.5.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3"
+  }
+}

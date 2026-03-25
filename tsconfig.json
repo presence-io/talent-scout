@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "packages/data-collector" },
+    { "path": "packages/data-processor" },
+    { "path": "packages/ai-evaluator" },
+    { "path": "packages/dashboard" }
+  ]
+}

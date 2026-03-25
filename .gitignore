@@ -52,11 +52,18 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Node (if ever used)
+# Node
 node_modules/
+dist/
 
 # Project-specific generated results
 output/
+
+# API 缓存
+cache/
+
+# v1 Python 代码备份
+legacy/
 
 # Misc
 *.sqlite3

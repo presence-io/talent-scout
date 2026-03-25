@@ -1,0 +1,21 @@
+{
+  "name": "@talent-scout/data-processor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "process": "tsx src/index.ts",
+    "validate:identity": "tsx src/validate-identity.ts"
+  },
+  "dependencies": {
+    "@talent-scout/shared": "workspace:*",
+    "execa": "^9.5.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3"
+  }
+}
