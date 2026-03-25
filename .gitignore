@@ -1,8 +1,70 @@
+.# .gitignore for talent-scout
+
+# 环境与密钥（不要将凭证提交）
 .env
+.env.*
+.env.local
+.envrc
+
+# Python: byte-compiled / cache
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+venv.bak/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Test / coverage / type check caches
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.mypy_cache/
+.pytype/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# IDEs / editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# Node (if ever used)
+node_modules/
+
+# Project-specific generated results
+# 保留仓库内的历史 step1/step2/step3 数据，但忽略 step4 的自动生成文件以及聚合输出
 results/step4_*.json
 results/step4_*.csv
 results/all_talent.json
 !results/.gitkeep
-.venv/
+
+# Misc
+*.sqlite3
+*.db
+*.bak
+
+# End of file

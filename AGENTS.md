@@ -32,7 +32,9 @@ python3 scout.py --dry-run       # 预览 API 预算
 读取 `results/step3_enriched.json`，对候选人评估：
 
 ### 输入
+
 `step3_enriched.json` 中每个候选人包含：
+
 - `username`: GitHub 用户名
 - `raw_score`: 信号权重总分
 - `signal_count`: 信号数量
@@ -41,6 +43,7 @@ python3 scout.py --dry-run       # 预览 API 预算
 - `location_match`: Python 粗筛是否匹配中国 location
 
 ### 评估维度
+
 1. **是否中国人**：location + name + company + bio 综合判断（比 Python 关键词匹配更准）
 2. **城市**：北京/上海优先
 3. **技术水平** (1-10)：repos 数、followers、bio、公司背景
@@ -53,13 +56,16 @@ python3 scout.py --dry-run       # 预览 API 预算
 6. **推荐动作**：reach_out / monitor / skip
 
 ### 评分公式
+
 ```
 final_score = raw_score + skill_level × 0.5 + ai_adoption × 0.8 + contact_quality × 0.3 + city_bonus
 city_bonus: 北京/上海 = 3.0, 其他中国城市 = 1.0
 ```
 
 ### 输出
+
 写入 `results/step4_talent.json`：
+
 ```json
 [
   {
