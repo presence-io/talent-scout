@@ -6,26 +6,26 @@
 
 **目标**：在写任何业务代码之前，先把工程化骨架搭好。
 
-- [ ] 创建 `AGENTS.md`：短小精悍，渐进式结构，拆分为多个小文件（根 AGENTS.md + 各 packages 的 AGENTS.md）→ [02 §2.5](docs/02-architecture.md)
-- [ ] 创建 `.gitignore`（output/、cache/、legacy/、node_modules/、dist/）→ [07 §1](docs/07-data-model.md)
-- [ ] 将现有 Python 代码移入 `legacy/` 目录备份
-- [ ] 初始化 PNPM monorepo：`pnpm init`，创建 `pnpm-workspace.yaml`
-- [ ] 创建 `packages/` 子目录结构：`shared`、`data-collector`、`data-processor`、`ai-evaluator`、`dashboard`
-- [ ] 每个子项目 `pnpm init`，统一命名为 `@talent-scout/*`
-- [ ] 配置 TypeScript strict mode（`tsconfig.json` + 各子项目 extends）
-- [ ] 配置 Vitest（`vitest.config.ts`，coverage thresholds 90%）→ [02 §2.1](docs/02-architecture.md)
-- [ ] 配置 ESLint flat config + Prettier → [02 §2.2-2.3](docs/02-architecture.md)
-- [ ] 根 `package.json` scripts：`test`、`lint`、`format`、`check`、`cron:sync` → [02 §2.4](docs/02-architecture.md)
-- [ ] 创建 `scripts/check-deps.js` preinstall hook → [02 §2.6](docs/02-architecture.md)
+- [x] 创建 `AGENTS.md`：短小精悍，渐进式结构，拆分为多个小文件（根 AGENTS.md + 各 packages 的 AGENTS.md）→ [02 §2.5](docs/02-architecture.md)
+- [x] 创建 `.gitignore`（output/、cache/、legacy/、node_modules/、dist/）→ [07 §1](docs/07-data-model.md)
+- [x] 将现有 Python 代码移入 `legacy/` 目录备份
+- [x] 初始化 PNPM monorepo：`pnpm init`，创建 `pnpm-workspace.yaml`
+- [x] 创建 `packages/` 子目录结构：`shared`、`data-collector`、`data-processor`、`ai-evaluator`、`dashboard`
+- [x] 每个子项目 `pnpm init`，统一命名为 `@talent-scout/*`
+- [x] 配置 TypeScript strict mode（`tsconfig.json` + 各子项目 extends）
+- [x] 配置 Vitest（`vitest.config.ts`，coverage thresholds 90%）→ [02 §2.1](docs/02-architecture.md)
+- [x] 配置 ESLint flat config + Prettier → [02 §2.2-2.3](docs/02-architecture.md)
+- [x] 根 `package.json` scripts：`test`、`lint`、`format`、`check`、`cron:sync` → [02 §2.4](docs/02-architecture.md)
+- [x] 创建 `scripts/check-deps.js` preinstall hook → [02 §2.6](docs/02-architecture.md)
 
 ## Phase 1: 共享模块 (@talent-scout/shared)
 
-- [ ] 实现 `talents.yaml` 配置读取（Zod schema 校验）→ [07 §5](docs/07-data-model.md)
-- [ ] 实现 `openclaw.ts` CLI 封装（基于 execa）→ [02 §4](docs/02-architecture.md)、[06 §2](docs/06-openclaw.md)
-- [ ] 实现文件缓存层（cache/、TTL）→ [07 §4](docs/07-data-model.md)
-- [ ] 实现 `readIgnoreList()` 供各模块使用 → [08 §5.1](docs/08-dashboard.md)
-- [ ] TypeScript 类型定义（Signal、Candidate、CandidateFeatures 等）→ [07 §2](docs/07-data-model.md)、[05 §7.2](docs/05-evaluation.md)
-- [ ] 单元测试：config 解析、cache TTL → [09 §2.1](docs/09-testing.md)
+- [x] 实现 `talents.yaml` 配置读取（Zod schema 校验）→ [07 §5](docs/07-data-model.md)
+- [x] 实现 `openclaw.ts` CLI 封装（基于 execa）→ [02 §4](docs/02-architecture.md)、[06 §2](docs/06-openclaw.md)
+- [x] 实现文件缓存层（cache/、TTL）→ [07 §4](docs/07-data-model.md)
+- [x] 实现 `readIgnoreList()` 供各模块使用 → [08 §5.1](docs/08-dashboard.md)
+- [x] TypeScript 类型定义（Signal、Candidate、CandidateFeatures 等）→ [07 §2](docs/07-data-model.md)、[05 §7.2](docs/05-evaluation.md)
+- [x] 单元测试：config 解析、cache TTL → [09 §2.1](docs/09-testing.md)
 
 ## Phase 2: 数据采集 (@talent-scout/data-collector)
 
