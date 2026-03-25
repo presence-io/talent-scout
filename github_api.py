@@ -7,9 +7,10 @@ All methods shell out to `gh api` with pagination and rate-limit sleep.
 import json
 import subprocess
 import time
+from urllib.parse import quote
 
 
-def gh(endpoint, paginate=False, method="GET", jq=None, per_page=100, max_pages=10,
+def gh(endpoint, paginate=False, method="GET", per_page=100, max_pages=10,
        accept=None, search_sleep=2.0):
     """
     Call `gh api`. Returns parsed JSON (list or dict).
@@ -20,23 +21,18 @@ def gh(endpoint, paginate=False, method="GET", jq=None, per_page=100, max_pages=
     results = []
 
     for page in range(1, max_pages + 1):
-        cmd = ["gh", "api", endpoint,
-               "-X", method,
+        # Build URL with pagination
+        sep = "&" if "?" in endpoint else "?"
+        url = f"{endpoint}{sep}per_page={per_page}&page={page}"
+
+        cmd = ["gh", "api", url, "-X", method,
                "--header", "X-GitHub-Api-Version:2022-11-28"]
 
         if accept:
             cmd += ["--header", f"Accept:{accept}"]
 
-        # Add pagination params
-        sep = "&" if "?" in endpoint else "?"
-        url = f"{endpoint}{sep}per_page={per_page}&page={page}"
-        cmd[2] = url
-
-        if jq:
-            cmd += ["--jq", jq]
-
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
         except subprocess.TimeoutExpired:
             print(f"  [TIMEOUT] {endpoint} page {page}")
             break
@@ -60,15 +56,8 @@ def gh(endpoint, paginate=False, method="GET", jq=None, per_page=100, max_pages=
         try:
             data = json.loads(output)
         except json.JSONDecodeError:
-            # jq output: one item per line
-            items = [line for line in output.split("\n") if line.strip()]
-            results.extend(items)
-            if len(items) < per_page:
-                break
-            if not paginate:
-                break
-            time.sleep(search_sleep)
-            continue
+            print(f"  [WARN] JSON decode error, skipping page {page}")
+            break
 
         # Search endpoints return {total_count, items: [...]}
         if isinstance(data, dict) and "items" in data:
@@ -97,9 +86,10 @@ def search_code_owners(filename, path="/", max_pages=10):
     """Search repos with a specific file (e.g. CLAUDE.md), return unique owner logins."""
     q = f"filename:{filename}"
     if path:
-        q += f" path:{path}"
+        q += f"+path:{path}"
+    encoded_q = quote(q, safe="+:")
     owners = set()
-    items = gh(f"/search/code?q={q}&sort=indexed", paginate=True,
+    items = gh(f"/search/code?q={encoded_q}&sort=indexed", paginate=True,
                max_pages=max_pages, search_sleep=2.5)
     for item in items:
         if isinstance(item, dict):
@@ -114,8 +104,9 @@ def search_commits(query, max_pages=3, date_range=None):
     """Search commits by message content. Returns list of {login, repo, message}."""
     q = query
     if date_range:
-        q += f" committer-date:{date_range}"
-    items = gh(f"/search/commits?q={q}&sort=committer-date", paginate=True,
+        q += f"+committer-date:{date_range}"
+    encoded_q = quote(q, safe='+":-.')
+    items = gh(f"/search/commits?q={encoded_q}&sort=committer-date", paginate=True,
                max_pages=max_pages, search_sleep=2.5,
                accept="application/vnd.github.cloak-preview+json")
     results = []
