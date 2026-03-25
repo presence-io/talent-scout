@@ -64,17 +64,17 @@
 
 ## Phase 5: Dashboard (@talent-scout/dashboard)
 
-- [ ] Astro + TailwindCSS + DaisyUI 初始化
-- [ ] 候选人列表页 + 详情页 → [08 §3.1-3.2](docs/08-dashboard.md)
-- [ ] OpenClaw cron 状态页 → [08 §3.3](docs/08-dashboard.md)
-- [ ] 统计页 → [08 §3.4](docs/08-dashboard.md)
-- [ ] API routes + 标注写入 `user-data/` → [08 §4-5](docs/08-dashboard.md)
-- [ ] `lib/` 纯函数提取 + 测试 → [08 §2](docs/08-dashboard.md)、[09](docs/09-testing.md)
-- [ ] 候选人列表页 + 详情页 → [08 §3.1-3.2](docs/08-dashboard.md)
-- [ ] OpenClaw cron 状态页 → [08 §3.3](docs/08-dashboard.md)
-- [ ] 统计页 → [08 §3.4](docs/08-dashboard.md)
-- [ ] API routes + 标注写入 `user-data/` → [08 §4-5](docs/08-dashboard.md)
-- [ ] `lib/` 纯函数提取 + 测试 → [08 §2](docs/08-dashboard.md)、[09](docs/09-testing.md)
+- [x] Astro + TailwindCSS + DaisyUI 初始化
+- [x] 候选人列表页 + 详情页 → [08 §3.1-3.2](docs/08-dashboard.md)
+- [x] OpenClaw cron 状态页 → [08 §3.3](docs/08-dashboard.md)
+- [x] 统计页 → [08 §3.4](docs/08-dashboard.md)
+- [x] API routes + 标注写入 `user-data/` → [08 §4-5](docs/08-dashboard.md)
+- [x] `lib/` 纯函数提取 + 测试 → [08 §2](docs/08-dashboard.md)、[09](docs/09-testing.md)
+- [x] 候选人列表页 + 详情页 → [08 §3.1-3.2](docs/08-dashboard.md)
+- [x] OpenClaw cron 状态页 → [08 §3.3](docs/08-dashboard.md)
+- [x] 统计页 → [08 §3.4](docs/08-dashboard.md)
+- [x] API routes + 标注写入 `user-data/` → [08 §4-5](docs/08-dashboard.md)
+- [x] `lib/` 纯函数提取 + 测试 → [08 §2](docs/08-dashboard.md)、[09](docs/09-testing.md)
 
 ## Phase 6: Cron 调度
 
