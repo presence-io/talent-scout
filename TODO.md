@@ -78,9 +78,9 @@
 
 ## Phase 6: Cron 调度
 
-- [ ] Cron 同步脚本（syncCronJobs 含去重）→ [06 §4.2](docs/06-openclaw.md)
-- [ ] talents.yaml 中配置所有 cron 任务 → [06 §4.1](docs/06-openclaw.md)
-- [ ] E2E pipeline 测试 → [09 §5](docs/09-testing.md)
-- [ ] Cron 同步脚本（syncCronJobs 含去重）→ [06 §4.2](docs/06-openclaw.md)
-- [ ] talents.yaml 中配置所有 cron 任务 → [06 §4.1](docs/06-openclaw.md)
-- [ ] E2E pipeline 测试 → [09 §5](docs/09-testing.md)
+- [x] Cron 同步脚本（syncCronJobs 含去重）→ [06 §4.2](docs/06-openclaw.md)
+- [x] talents.yaml 中配置所有 cron 任务 → [06 §4.1](docs/06-openclaw.md)
+- [x] E2E pipeline 测试 → [09 §5](docs/09-testing.md)
+- [x] Cron 同步脚本（syncCronJobs 含去重）→ [06 §4.2](docs/06-openclaw.md)
+- [x] talents.yaml 中配置所有 cron 任务 → [06 §4.1](docs/06-openclaw.md)
+- [x] E2E pipeline 测试 → [09 §5](docs/09-testing.md)
