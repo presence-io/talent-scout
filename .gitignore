@@ -1,7 +1,8 @@
 .env
 __pycache__/
 *.pyc
-results/*.json
-results/*.csv
+results/step4_*.json
+results/step4_*.csv
+results/all_talent.json
 !results/.gitkeep
 .venv/
