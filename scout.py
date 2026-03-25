@@ -9,7 +9,7 @@ Steps:
   1d  Chinese community repos (stargazers/forks)               → results/step1d_community.json
   1e  Top repo stargazers                                      → results/step1e_stars.json
   2   Merge + dedupe all step1 signals                         → results/step2_merged.json
-  3   Enrich top N with GitHub profiles                        → results/step3_enriched.json
+  3   Enrich top N with GitHub profiles                        → results/step3_profiles.json
   4   (Claude Code) AI analysis                                → results/step4_talent.json
 
 Usage:
@@ -272,62 +272,37 @@ def step_2(config):
     })
 
 
-# ── Step 3: Enrich with profiles ──
+# ── Step 3: Enrich with profiles (no filtering, Claude does that) ──
 
 def step_3(config):
-    """Fetch GitHub profiles for top candidates from step2_merged."""
+    """Fetch GitHub profiles + top repos for top candidates. No filtering — Claude Code judges."""
     print("\n══ Step 3: Profile enrichment ══")
     data = load_step("step2_merged")
     candidates = data["candidates"]
     batch_size = config["api_budget"]["profile_batch_size"]
-    location_keywords = [kw.lower() for kw in config.get("location_keywords", [])]
 
     to_enrich = candidates[:batch_size]
     print(f"  Enriching top {len(to_enrich)} of {len(candidates)} candidates...")
+    print(f"  (fetching profile + top 5 repos per user, ~2 API calls each)")
 
     usernames = [c["username"] for c in to_enrich]
     profiles = gh.get_user_batch(usernames)
     print(f"  Got {len(profiles)} profiles")
 
     enriched = []
-    china_count = 0
     for c in to_enrich:
         profile = profiles.get(c["username"])
-        entry = {**c, "profile": profile, "location_match": False}
-        if profile:
-            loc = (profile.get("location") or "").lower()
-            if loc and any(kw in loc for kw in location_keywords):
-                entry["location_match"] = True
-                china_count += 1
-        enriched.append(entry)
+        enriched.append({**c, "profile": profile})
 
-    # Sort: china matches first, then by score
-    enriched.sort(key=lambda x: (-int(x["location_match"]), -x["raw_score"]))
-
-    # Also include the rest (not enriched) at the bottom
-    rest = candidates[batch_size:]
-    for c in rest:
-        enriched.append({**c, "profile": None, "location_match": False})
-
-    china_matches = [e for e in enriched if e["location_match"]]
-    print(f"\n  China location matches: {china_count}")
-    if china_matches:
-        print(f"  Top 20 China-matched:")
-        for i, c in enumerate(china_matches[:20], 1):
-            p = c["profile"] or {}
-            print(f"    {i:2d}. {c['username']:<22s} {(p.get('name') or ''):<16s} "
-                  f"{(p.get('location') or ''):<20s} score={c['raw_score']:.1f}")
-
-    save_step("step3_enriched", {
-        "step": "3_enriched",
+    save_step("step3_profiles", {
+        "step": "3_profiles",
         "enriched_at": datetime.now().isoformat(),
-        "total_users": len(enriched),
+        "total_candidates": len(enriched),
         "profiles_fetched": len(profiles),
-        "china_location_matches": china_count,
         "candidates": enriched,
     })
 
-    print(f"\n  Next: Claude Code reads results/step3_enriched.json → outputs results/step4_talent.json")
+    print(f"\n  Next: Claude Code reads results/step3_profiles.json and judges candidates")
 
 
 # ── Dry run ──
@@ -360,7 +335,7 @@ def dry_run(config):
     steps.append(("2  Merge", "reads step1*.json", 0, "step2_merged.json"))
 
     batch = config["api_budget"]["profile_batch_size"]
-    steps.append(("3  Enrich", f"up to {batch} profiles", batch, "step3_enriched.json"))
+    steps.append(("3  Enrich", f"up to {batch} profiles", batch, "step3_profiles.json"))
 
     steps.append(("4  AI analysis", "Claude Code reads step3", 0, "step4_talent.json"))
 

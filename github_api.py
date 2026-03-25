@@ -162,7 +162,7 @@ def get_forks_owners(owner, repo, max_pages=5):
 
 
 def get_user(username):
-    """Get user profile."""
+    """Get user profile with full details."""
     data = gh(f"/users/{username}")
     if not isinstance(data, dict) or "login" not in data:
         return None
@@ -175,17 +175,48 @@ def get_user(username):
         "twitter": data.get("twitter_username"),
         "bio": data.get("bio"),
         "company": data.get("company"),
+        "hireable": data.get("hireable"),
         "public_repos": data.get("public_repos", 0),
+        "public_gists": data.get("public_gists", 0),
         "followers": data.get("followers", 0),
+        "following": data.get("following", 0),
         "created_at": data.get("created_at"),
+        "updated_at": data.get("updated_at"),
     }
 
 
+def get_user_repos(username, max_repos=5):
+    """Get user's top repos sorted by stars. Returns list of {name, description, stars, language}."""
+    items = gh(f"/users/{username}/repos?sort=stars&direction=desc",
+               paginate=False, per_page=max_repos, search_sleep=0.1)
+    repos = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        repos.append({
+            "name": item.get("name", ""),
+            "description": (item.get("description") or "")[:100],
+            "stars": item.get("stargazers_count", 0),
+            "language": item.get("language"),
+            "fork": item.get("fork", False),
+        })
+    return repos
+
+
+def get_user_full(username):
+    """Get user profile + top repos in one call pair."""
+    profile = get_user(username)
+    if not profile:
+        return None
+    profile["top_repos"] = get_user_repos(username)
+    return profile
+
+
 def get_user_batch(usernames, progress_every=50):
-    """Fetch profiles for a list of usernames. Returns dict of login→profile."""
+    """Fetch full profiles (profile + top repos) for a list of usernames."""
     profiles = {}
     for i, u in enumerate(usernames):
-        p = get_user(u)
+        p = get_user_full(u)
         if p:
             profiles[u] = p
         if (i + 1) % progress_every == 0:
