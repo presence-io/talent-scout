@@ -29,14 +29,14 @@
 
 ## Phase 2: 数据采集 (@talent-scout/data-collector)
 
-- [ ] 从 legacy Python 迁移 GitHub API 调用逻辑到 TypeScript
-- [ ] 实现 5 个采集源（code signals、commits、topics、community、stargazers）→ [03 §2](docs/03-data-sources.md)
-- [ ] 信号标签统一为 tool-agnostic 格式 → [03 §2.2](docs/03-data-sources.md)
-- [ ] 从 legacy Python 迁移 GitHub API 调用逻辑到 TypeScript
-- [ ] 实现 5 个采集源（code signals、commits、topics、community、stargazers）→ [03 §2](docs/03-data-sources.md)
-- [ ] 信号标签统一为 tool-agnostic 格式 → [03 §2.2](docs/03-data-sources.md)
-- [ ] API 预算控制（rate limit、sleep、max pages）
-- [ ] 集成测试：GitHub API mock → [09 §3](docs/09-testing.md)
+- [x] 从 legacy Python 迁移 GitHub API 调用逻辑到 TypeScript
+- [x] 实现 5 个采集源（code signals、commits、topics、community、stargazers）→ [03 §2](docs/03-data-sources.md)
+- [x] 信号标签统一为 tool-agnostic 格式 → [03 §2.2](docs/03-data-sources.md)
+- [x] 从 legacy Python 迁移 GitHub API 调用逻辑到 TypeScript
+- [x] 实现 5 个采集源（code signals、commits、topics、community、stargazers）→ [03 §2](docs/03-data-sources.md)
+- [x] 信号标签统一为 tool-agnostic 格式 → [03 §2.2](docs/03-data-sources.md)
+- [x] API 预算控制（rate limit、sleep、max pages）
+- [x] 集成测试：GitHub API mock → [09 §3](docs/09-testing.md)
 
 ## Phase 3: 数据处理 (@talent-scout/data-processor)
 
