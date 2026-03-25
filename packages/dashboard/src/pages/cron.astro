@@ -1,0 +1,55 @@
+---
+import Base from '../layouts/Base.astro';
+import { loadConfig } from '@talent-scout/shared';
+
+let cronJobs: { name: string; schedule: string; command: string; description?: string }[] = [];
+let configError: string | null = null;
+
+try {
+  const config = await loadConfig();
+  cronJobs = config.openclaw.cron;
+} catch (err) {
+  configError = err instanceof Error ? err.message : String(err);
+}
+---
+
+<Base title="Cron Jobs">
+  <h1 class="text-2xl font-bold mb-4">Cron Jobs</h1>
+
+  {configError && (
+    <div class="alert alert-warning mb-4">
+      <span>Could not load config: {configError}</span>
+    </div>
+  )}
+
+  {cronJobs.length === 0 && !configError && (
+    <div class="alert alert-info mb-4">
+      <span>No cron jobs configured. Add entries to <code>openclaw.cron</code> in talents.yaml.</span>
+    </div>
+  )}
+
+  {cronJobs.length > 0 && (
+    <div class="overflow-x-auto">
+      <table class="table table-zebra">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Schedule</th>
+            <th>Command</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {cronJobs.map((job) => (
+            <tr>
+              <td class="font-semibold">{job.name}</td>
+              <td><code>{job.schedule}</code></td>
+              <td><code>{job.command}</code></td>
+              <td>{job.description ?? '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</Base>

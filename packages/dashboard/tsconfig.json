@@ -4,6 +4,6 @@
     "outDir": "dist",
     "rootDir": "src"
   },
-  "include": ["src/**/*.ts", "src/**/*.astro"],
+  "include": ["src/lib/**/*.ts", "src/index.ts", "src/pages/**/*.ts"],
   "references": [{ "path": "../shared" }]
 }

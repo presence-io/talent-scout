@@ -1,0 +1,91 @@
+---
+import { join } from 'node:path';
+import Base from '../layouts/Base.astro';
+import type { TalentEntry } from '@talent-scout/shared';
+import { readJsonFile, resolveOutputDir } from '../lib/file';
+import {
+  computeActionDistribution,
+  computeTierDistribution,
+  computeCityDistribution,
+  computeConfidenceBuckets,
+} from '../lib/stats';
+import { formatAction, formatTier } from '../lib/format';
+
+const base = process.cwd();
+const outputDir = resolveOutputDir(base);
+const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.json'), []);
+
+const actionDist = computeActionDistribution(entries);
+const tierDist = computeTierDistribution(entries);
+const cityDist = computeCityDistribution(entries);
+const confidenceBuckets = computeConfidenceBuckets(entries);
+---
+
+<Base title="Statistics">
+  <h1 class="text-2xl font-bold mb-4">Statistics</h1>
+
+  <div class="stats shadow mb-6 w-full">
+    <div class="stat">
+      <div class="stat-title">Total Candidates</div>
+      <div class="stat-value">{entries.length}</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Action Distribution -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h3 class="card-title">Recommended Actions</h3>
+        {actionDist.map((d) => (
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-24 text-sm">{formatAction(d.label)}</span>
+            <progress class="progress progress-primary flex-1" value={d.percentage} max="100"></progress>
+            <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Tier Distribution -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h3 class="card-title">AI Depth Tiers</h3>
+        {tierDist.map((d) => (
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-24 text-sm">{formatTier(d.label)}</span>
+            <progress class="progress progress-secondary flex-1" value={d.percentage} max="100"></progress>
+            <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- City Distribution -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h3 class="card-title">Top Cities</h3>
+        {cityDist.map((d) => (
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-24 text-sm truncate" title={d.label}>{d.label}</span>
+            <progress class="progress progress-accent flex-1" value={d.percentage} max="100"></progress>
+            <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- China Confidence Buckets -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h3 class="card-title">China Confidence</h3>
+        {confidenceBuckets.map((d) => (
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-24 text-sm">{d.label}</span>
+            <progress class="progress progress-info flex-1" value={d.percentage} max="100"></progress>
+            <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</Base>

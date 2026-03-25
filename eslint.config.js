@@ -25,5 +25,5 @@ export default tseslint.config(
     },
     extends: [tseslint.configs.disableTypeChecked],
   },
-  { ignores: ['**/dist/**', 'output/**', 'cache/**', 'legacy/**'] },
+  { ignores: ['**/dist/**', 'output/**', 'cache/**', 'legacy/**', '**/astro.config.*'] },
 );

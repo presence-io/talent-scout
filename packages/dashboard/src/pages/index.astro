@@ -1,0 +1,144 @@
+---
+import { join } from 'node:path';
+import Base from '../layouts/Base.astro';
+import type { TalentEntry, IgnoreList } from '@talent-scout/shared';
+import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '../lib/file';
+import {
+  sortCandidates,
+  filterByAction,
+  filterByCity,
+  filterByAIDepthTier,
+  paginateCandidates,
+} from '../lib/candidates';
+import type { SortField, SortOrder } from '../lib/candidates';
+import { mergeWithAnnotations, mergeWithIgnoreList } from '../lib/merge';
+import type { AnnotationMap } from '../lib/merge';
+import { formatScore, formatAction, formatTier, actionBadgeClass } from '../lib/format';
+
+const base = process.cwd();
+const outputDir = resolveOutputDir(base);
+const userDataDir = resolveUserDataDir(base);
+
+const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.json'), []);
+const annotations = await readJsonFile<AnnotationMap>(join(userDataDir, 'annotations.json'), {});
+const ignoreList = await readJsonFile<IgnoreList>(join(userDataDir, 'ignore-list.json'), {});
+
+let merged = mergeWithAnnotations(entries, annotations);
+merged = mergeWithIgnoreList(merged, ignoreList);
+
+let list = merged.filter((e) => !e.ignored);
+
+const url = Astro.url;
+const action = url.searchParams.get('action');
+if (action) list = filterByAction(list, action as TalentEntry['recommended_action']);
+
+const city = url.searchParams.get('city');
+if (city) list = filterByCity(list, city);
+
+const tier = url.searchParams.get('tier');
+if (tier) list = filterByAIDepthTier(list, tier);
+
+const sortBy = (url.searchParams.get('sort') ?? 'final_score') as SortField;
+const order = (url.searchParams.get('order') ?? 'desc') as SortOrder;
+list = sortCandidates(list, sortBy, order);
+
+const page = Math.max(1, Number(url.searchParams.get('page') ?? '1'));
+const limit = 20;
+const paginated = paginateCandidates(list, page, limit);
+---
+
+<Base title="Candidates">
+  <div class="flex flex-wrap items-center gap-2 mb-4">
+    <select class="select select-bordered select-sm" id="action-filter">
+      <option value="">All Actions</option>
+      <option value="reach_out" selected={action === 'reach_out'}>Reach Out</option>
+      <option value="monitor" selected={action === 'monitor'}>Monitor</option>
+      <option value="skip" selected={action === 'skip'}>Skip</option>
+    </select>
+    <select class="select select-bordered select-sm" id="tier-filter">
+      <option value="">All Tiers</option>
+      <option value="amplifier" selected={tier === 'amplifier'}>Amplifier</option>
+      <option value="builder" selected={tier === 'builder'}>Builder</option>
+      <option value="user" selected={tier === 'user'}>User</option>
+      <option value="consumer" selected={tier === 'consumer'}>Consumer</option>
+    </select>
+    <input
+      type="text"
+      placeholder="Filter by city…"
+      class="input input-bordered input-sm"
+      id="city-filter"
+      value={city ?? ''}
+    />
+    <span class="text-sm opacity-70">{paginated.totalItems} candidates</span>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="table table-zebra table-sm">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Score</th>
+          <th>Skill</th>
+          <th>AI Depth</th>
+          <th>Tier</th>
+          <th>Reach</th>
+          <th>Fit</th>
+          <th>City</th>
+          <th>Action</th>
+          <th>Signals</th>
+        </tr>
+      </thead>
+      <tbody>
+        {paginated.items.map((c) => (
+          <tr>
+            <td>
+              <a href={"/candidate/" + c.username} class="link link-primary">{c.username}</a>
+            </td>
+            <td>{formatScore(c.final_score)}</td>
+            <td>{formatScore(c.skill_score)}</td>
+            <td>{formatScore(c.ai_depth_score)}</td>
+            <td>{formatTier(c.ai_depth_tier)}</td>
+            <td>{formatScore(c.reachability_score)}</td>
+            <td>{formatScore(c.fit_score)}</td>
+            <td>{c.city ?? '—'}</td>
+            <td><span class={"badge " + actionBadgeClass(c.recommended_action)}>{formatAction(c.recommended_action)}</span></td>
+            <td>{c.signal_count}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {paginated.totalPages > 1 && (
+    <div class="join mt-4 flex justify-center">
+      {Array.from({ length: paginated.totalPages }, (_, i) => i + 1).map((p) => (
+        <a
+          href={"/?page=" + p + (action ? "&action=" + action : "") + (tier ? "&tier=" + tier : "") + (city ? "&city=" + city : "")}
+          class={"join-item btn btn-sm" + (p === page ? " btn-active" : "")}
+        >
+          {p}
+        </a>
+      ))}
+    </div>
+  )}
+
+  <script>
+    function applyFilters() {
+      const action = (document.getElementById('action-filter') as HTMLSelectElement).value;
+      const tier = (document.getElementById('tier-filter') as HTMLSelectElement).value;
+      const city = (document.getElementById('city-filter') as HTMLInputElement).value;
+      const params = new URLSearchParams();
+      if (action) params.set('action', action);
+      if (tier) params.set('tier', tier);
+      if (city) params.set('city', city);
+      window.location.href = '/?' + params.toString();
+    }
+    document.getElementById('action-filter')?.addEventListener('change', applyFilters);
+    document.getElementById('tier-filter')?.addEventListener('change', applyFilters);
+    let debounce: ReturnType<typeof setTimeout>;
+    document.getElementById('city-filter')?.addEventListener('input', () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(applyFilters, 400);
+    });
+  </script>
+</Base>

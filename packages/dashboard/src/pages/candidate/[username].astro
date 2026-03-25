@@ -1,0 +1,177 @@
+---
+import { join } from 'node:path';
+import Base from '../../layouts/Base.astro';
+import type { TalentEntry, Candidate, IgnoreList } from '@talent-scout/shared';
+import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '../../lib/file';
+import type { AnnotationMap } from '../../lib/merge';
+import { formatScore, formatAction, formatTier, actionBadgeClass } from '../../lib/format';
+
+const { username } = Astro.params;
+if (!username) return Astro.redirect('/');
+
+const base = process.cwd();
+const outputDir = resolveOutputDir(base);
+const userDataDir = resolveUserDataDir(base);
+
+const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.json'), []);
+const entry = entries.find((e) => e.username === username);
+if (!entry) return Astro.redirect('/');
+
+const candidates = await readJsonFile<Candidate[]>(join(outputDir, 'step4_evaluated.json'), []);
+const candidate = candidates.find((c) => c.username === username) ?? null;
+
+const annotations = await readJsonFile<AnnotationMap>(join(userDataDir, 'annotations.json'), {});
+const ignoreList = await readJsonFile<IgnoreList>(join(userDataDir, 'ignore-list.json'), {});
+const annotation = annotations[username] ?? null;
+const ignored = username in ignoreList;
+
+const profile = candidate?.profile ?? null;
+const identity = candidate?.identity ?? null;
+const signals = candidate?.signals ?? [];
+---
+
+<Base title={username}>
+  <div class="mb-4">
+    <a href="/" class="btn btn-ghost btn-sm">&larr; Back to list</a>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <!-- Left column: profile info -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title">{entry.name ?? username}</h2>
+        <p class="text-sm opacity-70">@{username}</p>
+        {entry.company && <p><span class="font-semibold">Company:</span> {entry.company}</p>}
+        {entry.city && <p><span class="font-semibold">City:</span> {entry.city}</p>}
+        {entry.email && <p><span class="font-semibold">Email:</span> {entry.email}</p>}
+        {entry.blog && <p><span class="font-semibold">Blog:</span> <a href={entry.blog} class="link" target="_blank" rel="noopener noreferrer">{entry.blog}</a></p>}
+        {entry.twitter && <p><span class="font-semibold">Twitter:</span> @{entry.twitter}</p>}
+        <div class="mt-2">
+          <a href={entry.profile_url} class="btn btn-primary btn-sm" target="_blank" rel="noopener noreferrer">GitHub Profile</a>
+        </div>
+        {ignored && <div class="badge badge-error mt-2">Ignored</div>}
+        {annotation && (
+          <div class="mt-2 p-2 bg-base-200 rounded">
+            <p class="text-sm font-semibold">Annotation: {annotation.status}</p>
+            {annotation.note && <p class="text-sm">{annotation.note}</p>}
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- Middle column: scores -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h3 class="card-title text-lg">Scores</h3>
+        <div class="stats stats-vertical shadow">
+          <div class="stat">
+            <div class="stat-title">Final Score</div>
+            <div class="stat-value text-primary">{formatScore(entry.final_score)}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">Skill</div>
+            <div class="stat-value text-sm">{formatScore(entry.skill_score)}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">AI Depth</div>
+            <div class="stat-value text-sm">{formatScore(entry.ai_depth_score)}</div>
+            <div class="stat-desc">{formatTier(entry.ai_depth_tier)}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">Reachability</div>
+            <div class="stat-value text-sm">{formatScore(entry.reachability_score)}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">Fit</div>
+            <div class="stat-value text-sm">{formatScore(entry.fit_score)}</div>
+          </div>
+        </div>
+        <div class="mt-2">
+          <span class={"badge " + actionBadgeClass(entry.recommended_action)}>{formatAction(entry.recommended_action)}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: identity & china confidence -->
+    <div class="space-y-4">
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Identity</h3>
+          <p><span class="font-semibold">China Confidence:</span> {(entry.china_confidence * 100).toFixed(0)}%</p>
+          {identity && identity.signals.length > 0 && (
+            <ul class="list-disc list-inside text-sm">
+              {identity.signals.map((s) => (
+                <li>T{s.tier}: {s.evidence} ({(s.confidence * 100).toFixed(0)}%)</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Summary</h3>
+          <p class="text-sm">{entry.summary}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signals table -->
+  {signals.length > 0 && (
+    <div class="card bg-base-100 shadow mt-4">
+      <div class="card-body">
+        <h3 class="card-title text-lg">Signals ({signals.length})</h3>
+        <div class="overflow-x-auto">
+          <table class="table table-zebra table-sm">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Detail</th>
+                <th>Weight</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {signals.map((s) => (
+                <tr>
+                  <td><code>{s.type}</code></td>
+                  <td class="max-w-xs truncate">{s.detail}</td>
+                  <td>{s.weight}</td>
+                  <td>{s.source}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <!-- Ignore/Unignore button -->
+  <div class="mt-4 flex gap-2">
+    <button
+      id="ignore-btn"
+      class={"btn btn-sm " + (ignored ? "btn-success" : "btn-error")}
+      data-username={username}
+      data-ignored={ignored.toString()}
+    >
+      {ignored ? 'Unignore' : 'Ignore'}
+    </button>
+  </div>
+
+  <script>
+    const btn = document.getElementById('ignore-btn') as HTMLButtonElement;
+    btn?.addEventListener('click', async () => {
+      const username = btn.dataset.username;
+      const isIgnored = btn.dataset.ignored === 'true';
+      const method = isIgnored ? 'DELETE' : 'POST';
+      await fetch('/api/ignore', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+      window.location.reload();
+    });
+  </script>
+</Base>
