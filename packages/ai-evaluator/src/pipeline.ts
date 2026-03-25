@@ -81,7 +81,7 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
 
   // Step 2: Identity detection (rule-based)
   for (const c of candidates) {
-    identifyCandidate(c);
+    c.identity = identifyCandidate(c);
   }
 
   // Step 2b: AI identity inference for gray-area candidates
@@ -92,7 +92,7 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
   // Step 3: Rule-based evaluation for identified Chinese developers
   const identified = candidates.filter((c) => (c.identity?.china_confidence ?? 0) >= 0.5);
   for (const c of identified) {
-    evaluateCandidate(c, config);
+    c.evaluation = evaluateCandidate(c, config);
   }
 
   // Step 4: AI deep evaluation for top candidates
