@@ -55,12 +55,12 @@
 
 ## Phase 4: AI 评估 (@talent-scout/ai-evaluator)
 
-- [ ] OpenClaw agent 注册与调用 → [06 §2-3](docs/06-openclaw.md)
-- [ ] SKILLS.md 迭代机制 → [06 §3](docs/06-openclaw.md)
-- [ ] 批量评估 + 产出 shortlist → [05 §8](docs/05-evaluation.md)
-- [ ] OpenClaw agent 注册与调用 → [06 §2-3](docs/06-openclaw.md)
-- [ ] SKILLS.md 迭代机制 → [06 §3](docs/06-openclaw.md)
-- [ ] 批量评估 + 产出 shortlist → [05 §8](docs/05-evaluation.md)
+- [x] OpenClaw agent 注册与调用 → [06 §2-3](docs/06-openclaw.md)
+- [x] SKILLS.md 迭代机制 → [06 §3](docs/06-openclaw.md)
+- [x] 批量评估 + 产出 shortlist → [05 §8](docs/05-evaluation.md)
+- [x] OpenClaw agent 注册与调用 → [06 §2-3](docs/06-openclaw.md)
+- [x] SKILLS.md 迭代机制 → [06 §3](docs/06-openclaw.md)
+- [x] 批量评估 + 产出 shortlist → [05 §8](docs/05-evaluation.md)
 
 ## Phase 5: Dashboard (@talent-scout/dashboard)
 
