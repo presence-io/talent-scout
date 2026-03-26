@@ -168,10 +168,10 @@ function labelToSignalType(label: string): SignalType {
   // Legacy ai-config:/ai-coauthor: labels are mapped for backward compatibility.
   const legacyMapping: Record<string, SignalType> = {
     'ai-config:claude': 'code:claude-md',
-    'ai-config:cursor': 'code:cursorrules',
-    'ai-config:cline': 'code:clinerules',
+    'ai-config:cursor': 'code:cursor-rules',
+    'ai-config:cline': 'code:cline-rules',
     'ai-config:copilot': 'code:agents-md',
-    'ai-config:windsurf': 'code:windsurfrules',
+    'ai-config:windsurf': 'code:windsurf-rules',
     'ai-coauthor:claude': 'commit:claude-coauthor',
     'ai-coauthor:copilot': 'commit:copilot-coauthor',
   };

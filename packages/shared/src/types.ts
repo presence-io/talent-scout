@@ -2,13 +2,12 @@
 
 export type SignalType =
   | 'code:claude-md'
-  | 'code:cursorrules'
   | 'code:cursor-rules'
   | 'code:cursor-rules-dir'
-  | 'code:clinerules'
+  | 'code:cline-rules'
   | 'code:agents-md'
   | 'code:copilot-instructions'
-  | 'code:windsurfrules'
+  | 'code:windsurf-rules'
   | 'commit:claude-coauthor'
   | 'commit:copilot-coauthor'
   | 'commit:cursor-generated'

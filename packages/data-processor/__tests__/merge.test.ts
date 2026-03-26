@@ -17,7 +17,7 @@ describe('deduplicateSignals', () => {
   it('should keep unique signals', () => {
     const signals = [
       signal({ type: 'code:claude-md', repo: 'a/b', object_id: '1' }),
-      signal({ type: 'code:cursorrules', repo: 'a/b', object_id: '2' }),
+      signal({ type: 'code:cursor-rules', repo: 'a/b', object_id: '2' }),
     ];
     const result = deduplicateSignals(signals);
     expect(result).toHaveLength(2);
@@ -47,7 +47,7 @@ describe('mergeSignalMaps', () => {
       ['alice', [signal({ detail: 'from map1', type: 'code:claude-md', object_id: '1' })]],
     ]);
     const map2 = new Map<string, Signal[]>([
-      ['alice', [signal({ detail: 'from map2', type: 'code:cursorrules', object_id: '2' })]],
+      ['alice', [signal({ detail: 'from map2', type: 'code:cursor-rules', object_id: '2' })]],
       ['bob', [signal({ detail: 'bob signal' })]],
     ]);
 
@@ -76,7 +76,7 @@ describe('mergeSignalMaps', () => {
         'user',
         [
           signal({ weight: 2, type: 'code:claude-md', object_id: '1' }),
-          signal({ weight: 3, type: 'code:cursorrules', object_id: '2' }),
+          signal({ weight: 3, type: 'code:cursor-rules', object_id: '2' }),
         ],
       ],
     ]);
