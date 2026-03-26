@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseIndieDevList } from '../src/rankings.js';
+import { extractUsernamesFromHtml, parseIndieDevList } from '../src/rankings.js';
 
 describe('parseIndieDevList', () => {
   it('should extract GitHub usernames from markdown links', () => {
@@ -102,5 +102,62 @@ describe('parseIndieDevList', () => {
     const result = parseIndieDevList(markdown);
     expect(result).toContain('wtechtec');
     expect(result).toContain('zxcholmes');
+  });
+});
+
+describe('extractUsernamesFromHtml', () => {
+  it('should extract usernames from china-ranking style HTML', () => {
+    const html = `
+<div>
+  <a href="https://github.com/peng-zhihui">@peng-zhihui</a>
+  <a href="https://github.com/michaelliao">@michaelliao</a>
+  <a href="https://github.com/daimajia">@daimajia</a>
+</div>`;
+    const result = extractUsernamesFromHtml(html);
+    expect(result).toContain('peng-zhihui');
+    expect(result).toContain('michaelliao');
+    expect(result).toContain('daimajia');
+    expect(result).toHaveLength(3);
+  });
+
+  it('should extract usernames from githubrank table style HTML', () => {
+    const html = `
+<table>
+  <tr>
+    <td><a href="https://github.com/ruanyf">ruanyf</a></td>
+    <td>Ruan YiFeng</td>
+  </tr>
+  <tr>
+    <td><a href="https://github.com/cloudwu">cloudwu</a></td>
+    <td>云风</td>
+  </tr>
+</table>`;
+    const result = extractUsernamesFromHtml(html);
+    expect(result).toContain('ruanyf');
+    expect(result).toContain('cloudwu');
+    expect(result).toHaveLength(2);
+  });
+
+  it('should deduplicate usernames', () => {
+    const html = `
+<a href="https://github.com/TestUser">Test</a>
+<a href="https://github.com/testuser">Test</a>`;
+    const result = extractUsernamesFromHtml(html);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe('testuser');
+  });
+
+  it('should skip reserved paths', () => {
+    const html = `
+<a href="https://github.com/about">About</a>
+<a href="https://github.com/trending">Trending</a>
+<a href="https://github.com/realuser">Real User</a>`;
+    const result = extractUsernamesFromHtml(html);
+    expect(result).toEqual(['realuser']);
+  });
+
+  it('should handle empty or no-match HTML', () => {
+    expect(extractUsernamesFromHtml('<div>no links</div>')).toEqual([]);
+    expect(extractUsernamesFromHtml('')).toEqual([]);
   });
 });
