@@ -38,6 +38,39 @@ Layer 3: 持续补充（Ongoing Feed）
 - 1c7/chinese-independent-developer 是 GitHub README，用 GitHub API 获取 raw content 后正则解析提取 GitHub 链接
 - 首次运行时手动触发全量抓取，后续由 cron 增量更新
 
+**当前实现细节**（`data-collector/src/rankings.ts`）：
+
+#### china-ranking.aolifu.org
+
+- 网站结构：单页应用，按 followers 数量排序展示约 1000 名中国开发者
+- 每个开发者卡片包含一个 `<a href="https://github.com/{username}">` 链接
+- 抓取方式：Playwright headless Chromium → `page.goto()` with `waitUntil: 'networkidle'` → `page.content()` 提取完整 HTML
+- 解析方式：正则 `href=["']https?://github\.com/({username_pattern})["']` 提取 username
+- 无需分页，所有数据在一页内加载
+- 产出：约 1000 个 `seed:ranking` 类型 Signal
+
+#### githubrank.com
+
+- 网站结构：静态 HTML 表格，1000 行，每行包含 username、name、location、language、repos、followers
+- username 列包含 `<a href="https://github.com/{username}">` 链接
+- 抓取方式：Playwright headless Chromium → `page.goto()` with `waitUntil: 'networkidle'` → `page.content()` 提取 HTML
+- 解析方式：同 china-ranking，使用相同的 `extractUsernamesFromHtml()` 函数
+- 无需 JavaScript 渲染（纯 HTML 表格），但使用 Playwright 确保一致性
+- 产出：约 1000 个 `seed:ranking` 类型 Signal
+
+#### 1c7/chinese-independent-developer
+
+- 数据源：GitHub 仓库 README.md
+- 获取方式：`gh api /repos/1c7/chinese-independent-developer/readme` → base64 decode
+- 解析方式：正则匹配 `https://github.com/{username}` 链接（`parseIndieDevList()`）
+- 产出：数百个 `seed:list` 类型 Signal
+
+#### 缓存策略
+
+- 所有 web-scrape 结果通过 `FileCache` 缓存，默认 TTL 30 天（`cache.ttl.rankings`）
+- 缓存键格式：`ranking_web_{source_name}`
+- GitHub README 通过 `ghApiSingle` 的内置缓存机制
+
 ### 2.2 GitHub AI 信号搜索
 
 沿用 v1 的信号搜索思路，但做以下重要调整：
