@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { join } from 'node:path';
 import type { TalentEntry, Candidate, IgnoreList } from '@talent-scout/shared';
+import { loadShortlist, loadEvaluation } from '@talent-scout/ai-evaluator';
 import {
   readJsonFile,
   writeJsonAtomic,
@@ -19,20 +20,14 @@ export const GET: APIRoute = async ({ params }) => {
   const outputDir = resolveOutputDir(base);
   const userDataDir = resolveUserDataDir(base);
 
-  const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.json'), []);
+  const entries = await loadShortlist(outputDir).catch(() => [] as TalentEntry[]);
   const entry = entries.find((e: TalentEntry) => e.username === username);
   if (!entry) {
     return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 });
   }
 
-  const candidateData = await readJsonFile<Record<string, Candidate> | Candidate[]>(
-    join(outputDir, 'evaluation.json'),
-    {},
-  );
-  const candidateArray = Array.isArray(candidateData)
-    ? candidateData
-    : Object.values(candidateData);
-  const candidate = candidateArray.find((c: Candidate) => c.username === username);
+  const evaluation = await loadEvaluation(outputDir).catch(() => ({}) as Record<string, Candidate>);
+  const candidate = evaluation[username] ?? null;
 
   const annotations = await readJsonFile<AnnotationMap>(join(userDataDir, 'annotations.json'), {});
   const ignoreList = await readJsonFile<IgnoreList>(join(userDataDir, 'ignore-list.json'), {});

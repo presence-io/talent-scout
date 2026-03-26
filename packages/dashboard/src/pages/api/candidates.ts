@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { join } from 'node:path';
-import type { TalentEntry, IgnoreList, RecommendedAction } from '@talent-scout/shared';
+import type { RecommendedAction } from '@talent-scout/shared';
+import { loadShortlist } from '@talent-scout/ai-evaluator';
 import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '../../lib/file.js';
 import {
   sortCandidates,
@@ -12,13 +12,15 @@ import {
 import type { SortField, SortOrder } from '../../lib/candidates.js';
 import { mergeWithAnnotations, mergeWithIgnoreList } from '../../lib/merge.js';
 import type { AnnotationMap } from '../../lib/merge.js';
+import type { IgnoreList } from '@talent-scout/shared';
+import { join } from 'node:path';
 
 export const GET: APIRoute = async ({ url }) => {
   const base = process.cwd();
   const outputDir = resolveOutputDir(base);
   const userDataDir = resolveUserDataDir(base);
 
-  const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.json'), []);
+  const entries = await loadShortlist(outputDir).catch(() => []);
   const annotations = await readJsonFile<AnnotationMap>(join(userDataDir, 'annotations.json'), {});
   const ignoreList = await readJsonFile<IgnoreList>(join(userDataDir, 'ignore-list.json'), {});
 

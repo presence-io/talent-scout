@@ -8,6 +8,8 @@ import { collectFollowerGraphSignals } from './follower-graph.js';
 import { collectAllGitHubSignals } from './github-signals.js';
 import { collectStargazerSignals } from './stargazers.js';
 
+export { loadRawSignals } from './query.js';
+
 /** Merge signal maps into a single map */
 function mergeSignalMaps(...maps: Map<string, Signal[]>[]): Map<string, Signal[]> {
   const merged = new Map<string, Signal[]>();

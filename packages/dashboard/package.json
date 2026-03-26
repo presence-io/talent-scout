@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@talent-scout/shared": "workspace:*",
+    "@talent-scout/ai-evaluator": "workspace:*",
     "astro": "^5.6.1"
   },
   "devDependencies": {

@@ -10,6 +10,7 @@ export { computeRunStats, formatStatsEntry, appendSkillsPending } from './skills
 export type { RunStats } from './skills.js';
 export { runPipeline } from './pipeline.js';
 export type { PipelineOptions } from './pipeline.js';
+export { loadShortlist, loadEvaluation, loadRunStats } from './query.js';
 
 /** CLI entry point: pnpm --filter @talent-scout/ai-evaluator run evaluate */
 async function main(): Promise<void> {
