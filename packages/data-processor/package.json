@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc --build",
-    "process": "tsx src/index.ts",
+    "process": "tsx src/cli.ts",
     "validate:identity": "tsx src/validate-identity.ts"
   },
   "dependencies": {
@@ -16,6 +16,7 @@
     "execa": "^9.5.2"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "tsx": "^4.19.3"
   }
 }

@@ -164,8 +164,9 @@ export async function collectAllGitHubSignals(cache: FileCache): Promise<Map<str
 }
 
 function labelToSignalType(label: string): SignalType {
-  // Map config labels to SignalType enum values
-  const mapping: Record<string, SignalType> = {
+  // The label in talents.yaml is used directly as the SignalType.
+  // Legacy ai-config:/ai-coauthor: labels are mapped for backward compatibility.
+  const legacyMapping: Record<string, SignalType> = {
     'ai-config:claude': 'code:claude-md',
     'ai-config:cursor': 'code:cursorrules',
     'ai-config:cline': 'code:clinerules',
@@ -174,7 +175,7 @@ function labelToSignalType(label: string): SignalType {
     'ai-coauthor:claude': 'commit:claude-coauthor',
     'ai-coauthor:copilot': 'commit:copilot-coauthor',
   };
-  return mapping[label] ?? ('code:claude-md' as SignalType);
+  return legacyMapping[label] ?? (label as SignalType);
 }
 
 function encodeSearchQuery(q: string): string {

@@ -20,8 +20,14 @@ export const GET: APIRoute = async ({ params }) => {
     return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 });
   }
 
-  const candidates = await readJsonFile<Candidate[]>(join(outputDir, 'step4_evaluated.json'), []);
-  const candidate = candidates.find((c: Candidate) => c.username === username);
+  const candidateData = await readJsonFile<Record<string, Candidate> | Candidate[]>(
+    join(outputDir, 'step4_evaluated.json'),
+    {},
+  );
+  const candidateArray = Array.isArray(candidateData)
+    ? candidateData
+    : Object.values(candidateData);
+  const candidate = candidateArray.find((c: Candidate) => c.username === username);
 
   const annotations = await readJsonFile<AnnotationMap>(join(userDataDir, 'annotations.json'), {});
   const ignoreList = await readJsonFile<IgnoreList>(join(userDataDir, 'ignore-list.json'), {});

@@ -45,7 +45,9 @@ export function extractSkillFeatures(profile: GitHubProfile): SkillFeatures {
     owned_repo_count: ownedRepos.length,
     max_repo_stars: maxStars,
     active_months: recentMonths.size,
-    recent_contributions: profile.public_repos, // proxy
+    // Estimate recent contributions from active months and repo count.
+    // TODO: Replace with actual Events API data (commit/PR/issue/review counts).
+    recent_contributions: recentMonths.size * 4 + ownedRepos.length,
     language_count: languages.size,
     followers_log: Math.log10(profile.followers + 1),
     fork_ratio: forkRatio,

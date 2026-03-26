@@ -54,7 +54,7 @@ describe('collectCodeSignals', () => {
     } as never);
 
     const config = makeConfig({
-      code_signals: [{ filename: 'CLAUDE.md', path: '/', weight: 2.0, label: 'ai-config:claude' }],
+      code_signals: [{ filename: 'CLAUDE.md', path: '/', weight: 2.0, label: 'code:claude-md' }],
     });
     const cache = makeMockCache();
     const result = await collectCodeSignals(config, cache);
