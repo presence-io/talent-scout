@@ -1,7 +1,8 @@
 ---
 import { join } from 'node:path';
 import Base from '@/layouts/Base.astro';
-import type { TalentEntry, Candidate, IgnoreList } from '@talent-scout/shared';
+import type { IgnoreList } from '@talent-scout/shared';
+import { loadShortlist, loadEvaluation } from '@talent-scout/ai-evaluator';
 import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '@/lib/file';
 import type { AnnotationMap } from '@/lib/merge';
 import { formatScore, formatAction, formatTier, actionBadgeClass } from '@/lib/format';
@@ -13,15 +14,12 @@ const base = process.cwd();
 const outputDir = resolveOutputDir(base);
 const userDataDir = resolveUserDataDir(base);
 
-const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.json'), []);
+const entries = await loadShortlist(outputDir);
 const entry = entries.find((e) => e.username === username);
 if (!entry) return Astro.redirect('/');
 
-const candidateData = await readJsonFile<Record<string, Candidate> | Candidate[]>(
-  join(outputDir, 'evaluation.json'),
-  {}
-);
-const candidateArray = Array.isArray(candidateData) ? candidateData : Object.values(candidateData);
+const candidateData = await loadEvaluation(outputDir);
+const candidateArray = Object.values(candidateData);
 const candidate = candidateArray.find((c) => c.username === username) ?? null;
 
 const annotations = await readJsonFile<AnnotationMap>(join(userDataDir, 'annotations.json'), {});

@@ -1,7 +1,8 @@
 ---
 import { join } from 'node:path';
 import Base from '@/layouts/Base.astro';
-import type { TalentEntry, IgnoreList, RecommendedAction } from '@talent-scout/shared';
+import type { IgnoreList, RecommendedAction } from '@talent-scout/shared';
+import { loadShortlist } from '@talent-scout/ai-evaluator';
 import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '@/lib/file';
 import {
   sortCandidates,
@@ -19,7 +20,7 @@ const base = process.cwd();
 const outputDir = resolveOutputDir(base);
 const userDataDir = resolveUserDataDir(base);
 
-const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.json'), []);
+const entries = await loadShortlist(outputDir);
 const annotations = await readJsonFile<AnnotationMap>(join(userDataDir, 'annotations.json'), {});
 const ignoreList = await readJsonFile<IgnoreList>(join(userDataDir, 'ignore-list.json'), {});
 
