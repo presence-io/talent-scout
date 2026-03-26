@@ -176,6 +176,9 @@ importers:
       esbuild:
         specifier: ^0.27.4
         version: 0.27.4
+      execa:
+        specifier: ^9.6.1
+        version: 9.6.1
       tsx:
         specifier: ^4.19.3
         version: 4.21.0

@@ -36,6 +36,8 @@ export default defineConfig({
         'packages/data-processor/src/cli.ts',
         'packages/skills/src/commands.ts',
         'packages/skills/src/query.ts',
+        // Build script / packaging helpers should not count toward unit test coverage
+        'packages/skills/src/clawhub-bundle.ts',
 
         // External-service I/O boundaries
         'packages/shared/src/github.ts',
