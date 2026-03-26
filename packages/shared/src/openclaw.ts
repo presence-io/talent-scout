@@ -22,11 +22,17 @@ export async function callAgent(agentKey: string, request: AgentRequest): Promis
     throw new Error(`Unknown agent key: "${agentKey}". Check openclaw.agents in talents.yaml.`);
   }
 
-  const { stdout } = await execa(
-    'openclaw',
-    ['agent', '--message', JSON.stringify(request), '--json'],
-    { timeout: agentConfig.timeout * 1000 },
-  );
+  const args = ['agent', '--message', JSON.stringify(request), '--json'];
+  if (agentConfig.name) {
+    args.push('--agent-name', agentConfig.name);
+  }
+  if (agentConfig.workspace) {
+    args.push('--workspace', agentConfig.workspace);
+  }
+
+  const { stdout } = await execa('openclaw', args, {
+    timeout: agentConfig.timeout * 1000,
+  });
 
   return JSON.parse(stdout) as AgentResult;
 }
