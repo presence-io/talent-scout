@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
-import { loadShortlist } from '@talent-scout/ai-evaluator';
+import { loadShortlist, loadStatsHistory } from '@talent-scout/ai-evaluator';
+import { dirname } from 'node:path';
 import { resolveOutputDir } from '@/lib/file';
 import {
   computeActionDistribution,
@@ -8,12 +9,15 @@ import {
   computeCityDistribution,
   computeConfidenceBuckets,
   computeSignalTypeDistribution,
+  resolveHeadlineTotal,
 } from '@/lib/stats';
 import { formatAction, formatTier } from '@/lib/format';
 
 const base = process.cwd();
 const outputDir = resolveOutputDir(base);
 const entries = await loadShortlist(outputDir).catch(() => []);
+const history = await loadStatsHistory(dirname(outputDir)).catch(() => []);
+const headlineTotal = resolveHeadlineTotal(entries, history);
 
 const actionDist = computeActionDistribution(entries);
 const tierDist = computeTierDistribution(entries);
@@ -28,7 +32,7 @@ const signalDist = computeSignalTypeDistribution(entries);
   <div class="stats mb-6 w-full shadow">
     <div class="stat">
       <div class="stat-title">Total Candidates</div>
-      <div class="stat-value">{entries.length}</div>
+      <div class="stat-value">{headlineTotal}</div>
     </div>
   </div>
 

@@ -29,6 +29,11 @@ export interface HistoryTrends {
   } | null;
 }
 
+export function resolveHeadlineTotal(entries: TalentEntry[], history: RunStats[]): number {
+  const latest = history.at(-1);
+  return latest?.total_candidates ?? entries.length;
+}
+
 /** Compute trends from historical stats. Returns recent points and delta from last two runs. */
 export function computeHistoryTrends(history: RunStats[], maxPoints = 20): HistoryTrends {
   const recent = history.slice(-maxPoints);

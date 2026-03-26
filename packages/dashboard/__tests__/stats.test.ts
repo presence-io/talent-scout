@@ -9,6 +9,7 @@ import {
   computeHistoryTrends,
   computeSignalTypeDistribution,
   computeTierDistribution,
+  resolveHeadlineTotal,
 } from '../src/lib/stats.js';
 
 function entry(overrides: Partial<TalentEntry> = {}): TalentEntry {
@@ -171,5 +172,20 @@ describe('computeHistoryTrends', () => {
     );
     const trends = computeHistoryTrends(history, 10);
     expect(trends.points).toHaveLength(10);
+  });
+});
+
+describe('resolveHeadlineTotal', () => {
+  it('prefers the latest historical total', () => {
+    const total = resolveHeadlineTotal(
+      [entry(), entry()],
+      [makeRunStats({ total_candidates: 2313 })]
+    );
+    expect(total).toBe(2313);
+  });
+
+  it('falls back to shortlist length without history', () => {
+    const total = resolveHeadlineTotal([entry(), entry(), entry()], []);
+    expect(total).toBe(3);
   });
 });
