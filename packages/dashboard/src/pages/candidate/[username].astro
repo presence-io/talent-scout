@@ -17,7 +17,10 @@ const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.jso
 const entry = entries.find((e) => e.username === username);
 if (!entry) return Astro.redirect('/');
 
-const candidateData = await readJsonFile<Record<string, Candidate> | Candidate[]>(join(outputDir, 'evaluation.json'), {});
+const candidateData = await readJsonFile<Record<string, Candidate> | Candidate[]>(
+  join(outputDir, 'evaluation.json'),
+  {},
+);
 const candidateArray = Array.isArray(candidateData) ? candidateData : Object.values(candidateData);
 const candidate = candidateArray.find((c) => c.username === username) ?? null;
 
@@ -42,21 +45,61 @@ const signals = candidate?.signals ?? [];
       <div class="card-body">
         <h2 class="card-title">{entry.name ?? username}</h2>
         <p class="text-sm opacity-70">@{username}</p>
-        {entry.company && <p><span class="font-semibold">Company:</span> {entry.company}</p>}
-        {entry.city && <p><span class="font-semibold">City:</span> {entry.city}</p>}
-        {entry.email && <p><span class="font-semibold">Email:</span> {entry.email}</p>}
-        {entry.blog && <p><span class="font-semibold">Blog:</span> <a href={entry.blog} class="link" target="_blank" rel="noopener noreferrer">{entry.blog}</a></p>}
-        {entry.twitter && <p><span class="font-semibold">Twitter:</span> @{entry.twitter}</p>}
+        {
+          entry.company && (
+            <p>
+              <span class="font-semibold">Company:</span> {entry.company}
+            </p>
+          )
+        }
+        {
+          entry.city && (
+            <p>
+              <span class="font-semibold">City:</span> {entry.city}
+            </p>
+          )
+        }
+        {
+          entry.email && (
+            <p>
+              <span class="font-semibold">Email:</span> {entry.email}
+            </p>
+          )
+        }
+        {
+          entry.blog && (
+            <p>
+              <span class="font-semibold">Blog:</span>{' '}
+              <a href={entry.blog} class="link" target="_blank" rel="noopener noreferrer">
+                {entry.blog}
+              </a>
+            </p>
+          )
+        }
+        {
+          entry.twitter && (
+            <p>
+              <span class="font-semibold">Twitter:</span> @{entry.twitter}
+            </p>
+          )
+        }
         <div class="mt-2">
-          <a href={entry.profile_url} class="btn btn-primary btn-sm" target="_blank" rel="noopener noreferrer">GitHub Profile</a>
+          <a
+            href={entry.profile_url}
+            class="btn btn-primary btn-sm"
+            target="_blank"
+            rel="noopener noreferrer">GitHub Profile</a
+          >
         </div>
         {ignored && <div class="badge badge-error mt-2">Ignored</div>}
-        {annotation && (
-          <div class="mt-2 p-2 bg-base-200 rounded">
-            <p class="text-sm font-semibold">Annotation: {annotation.status}</p>
-            {annotation.note && <p class="text-sm">{annotation.note}</p>}
-          </div>
-        )}
+        {
+          annotation && (
+            <div class="mt-2 p-2 bg-base-200 rounded">
+              <p class="text-sm font-semibold">Annotation: {annotation.status}</p>
+              {annotation.note && <p class="text-sm">{annotation.note}</p>}
+            </div>
+          )
+        }
       </div>
     </div>
 
@@ -88,7 +131,9 @@ const signals = candidate?.signals ?? [];
           </div>
         </div>
         <div class="mt-2">
-          <span class={"badge " + actionBadgeClass(entry.recommended_action)}>{formatAction(entry.recommended_action)}</span>
+          <span class={'badge ' + actionBadgeClass(entry.recommended_action)}
+            >{formatAction(entry.recommended_action)}</span
+          >
         </div>
       </div>
     </div>
@@ -98,14 +143,21 @@ const signals = candidate?.signals ?? [];
       <div class="card bg-base-100 shadow">
         <div class="card-body">
           <h3 class="card-title text-lg">Identity</h3>
-          <p><span class="font-semibold">China Confidence:</span> {(entry.china_confidence * 100).toFixed(0)}%</p>
-          {identity && identity.signals.length > 0 && (
-            <ul class="list-disc list-inside text-sm">
-              {identity.signals.map((s) => (
-                <li>T{s.tier}: {s.evidence} ({(s.confidence * 100).toFixed(0)}%)</li>
-              ))}
-            </ul>
-          )}
+          <p>
+            <span class="font-semibold">China Confidence:</span>
+            {(entry.china_confidence * 100).toFixed(0)}%
+          </p>
+          {
+            identity && identity.signals.length > 0 && (
+              <ul class="list-disc list-inside text-sm">
+                {identity.signals.map((s) => (
+                  <li>
+                    T{s.tier}: {s.evidence} ({(s.confidence * 100).toFixed(0)}%)
+                  </li>
+                ))}
+              </ul>
+            )
+          }
         </div>
       </div>
 
@@ -119,35 +171,39 @@ const signals = candidate?.signals ?? [];
   </div>
 
   <!-- Signals table -->
-  {signals.length > 0 && (
-    <div class="card bg-base-100 shadow mt-4">
-      <div class="card-body">
-        <h3 class="card-title text-lg">Signals ({signals.length})</h3>
-        <div class="overflow-x-auto">
-          <table class="table table-zebra table-sm">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Detail</th>
-                <th>Weight</th>
-                <th>Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {signals.map((s) => (
+  {
+    signals.length > 0 && (
+      <div class="card bg-base-100 shadow mt-4">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Signals ({signals.length})</h3>
+          <div class="overflow-x-auto">
+            <table class="table table-zebra table-sm">
+              <thead>
                 <tr>
-                  <td><code>{s.type}</code></td>
-                  <td class="max-w-xs truncate">{s.detail}</td>
-                  <td>{s.weight}</td>
-                  <td>{s.source}</td>
+                  <th>Type</th>
+                  <th>Detail</th>
+                  <th>Weight</th>
+                  <th>Source</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {signals.map((s) => (
+                  <tr>
+                    <td>
+                      <code>{s.type}</code>
+                    </td>
+                    <td class="max-w-xs truncate">{s.detail}</td>
+                    <td>{s.weight}</td>
+                    <td>{s.source}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  )}
+    )
+  }
 
   <!-- Annotation & Ignore controls -->
   <div class="card bg-base-100 shadow mt-4">
@@ -155,16 +211,33 @@ const signals = candidate?.signals ?? [];
       <h3 class="card-title text-lg">Actions</h3>
       <div class="flex flex-wrap gap-2 items-end">
         <div class="flex gap-2">
-          <button class="btn btn-sm btn-success annotation-btn" data-action="approved" data-username={username}>Approve</button>
-          <button class="btn btn-sm btn-warning annotation-btn" data-action="noted" data-username={username}>Note</button>
-          <button class="btn btn-sm btn-error annotation-btn" data-action="rejected" data-username={username}>Reject</button>
+          <button
+            class="btn btn-sm btn-success annotation-btn"
+            data-action="approved"
+            data-username={username}>Approve</button
+          >
+          <button
+            class="btn btn-sm btn-warning annotation-btn"
+            data-action="noted"
+            data-username={username}>Note</button
+          >
+          <button
+            class="btn btn-sm btn-error annotation-btn"
+            data-action="rejected"
+            data-username={username}>Reject</button
+          >
         </div>
         <div class="form-control flex-1 min-w-48">
-          <input type="text" id="annotation-note" placeholder="Optional note..." class="input input-bordered input-sm w-full" />
+          <input
+            type="text"
+            id="annotation-note"
+            placeholder="Optional note..."
+            class="input input-bordered input-sm w-full"
+          />
         </div>
         <button
           id="ignore-btn"
-          class={"btn btn-sm btn-outline " + (ignored ? "btn-success" : "btn-error")}
+          class={'btn btn-sm btn-outline ' + (ignored ? 'btn-success' : 'btn-error')}
           data-username={username}
           data-ignored={ignored.toString()}
         >

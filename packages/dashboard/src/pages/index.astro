@@ -90,45 +90,77 @@ const paginated = paginateCandidates(list, page, limit);
         </tr>
       </thead>
       <tbody>
-        {paginated.items.map((c) => (
-          <tr>
-            <td>
-              <a href={"/candidate/" + c.username} class="link link-primary">{c.username}</a>
-            </td>
-            <td>{formatScore(c.final_score)}</td>
-            <td>{formatScore(c.skill_score)}</td>
-            <td>{formatScore(c.ai_depth_score)}</td>
-            <td>{formatTier(c.ai_depth_tier)}</td>
-            <td>{formatScore(c.reachability_score)}</td>
-            <td>{formatScore(c.fit_score)}</td>
-            <td>{c.city ?? '—'}</td>
-            <td><span class={"badge " + actionBadgeClass(c.recommended_action)}>{formatAction(c.recommended_action)}</span></td>
-            <td>{c.signal_count}</td>
-            <td>
-              <div class="flex gap-1">
-                <button class="btn btn-xs btn-success quick-annotate" data-username={c.username} data-action="approved" title="Approve">✓</button>
-                <button class="btn btn-xs btn-error quick-annotate" data-username={c.username} data-action="rejected" title="Reject">✗</button>
-              </div>
-              {c.annotation && <span class="badge badge-xs badge-outline ml-1">{c.annotation.status}</span>}
-            </td>
-          </tr>
-        ))}
+        {
+          paginated.items.map((c) => (
+            <tr>
+              <td>
+                <a href={'/candidate/' + c.username} class="link link-primary">
+                  {c.username}
+                </a>
+              </td>
+              <td>{formatScore(c.final_score)}</td>
+              <td>{formatScore(c.skill_score)}</td>
+              <td>{formatScore(c.ai_depth_score)}</td>
+              <td>{formatTier(c.ai_depth_tier)}</td>
+              <td>{formatScore(c.reachability_score)}</td>
+              <td>{formatScore(c.fit_score)}</td>
+              <td>{c.city ?? '—'}</td>
+              <td>
+                <span class={'badge ' + actionBadgeClass(c.recommended_action)}>
+                  {formatAction(c.recommended_action)}
+                </span>
+              </td>
+              <td>{c.signal_count}</td>
+              <td>
+                <div class="flex gap-1">
+                  <button
+                    class="btn btn-xs btn-success quick-annotate"
+                    data-username={c.username}
+                    data-action="approved"
+                    title="Approve"
+                  >
+                    ✓
+                  </button>
+                  <button
+                    class="btn btn-xs btn-error quick-annotate"
+                    data-username={c.username}
+                    data-action="rejected"
+                    title="Reject"
+                  >
+                    ✗
+                  </button>
+                </div>
+                {c.annotation && (
+                  <span class="badge badge-xs badge-outline ml-1">{c.annotation.status}</span>
+                )}
+              </td>
+            </tr>
+          ))
+        }
       </tbody>
     </table>
   </div>
 
-  {paginated.totalPages > 1 && (
-    <div class="join mt-4 flex justify-center">
-      {Array.from({ length: paginated.totalPages }, (_, i) => i + 1).map((p) => (
-        <a
-          href={"/?page=" + p + (action ? "&action=" + action : "") + (tier ? "&tier=" + tier : "") + (city ? "&city=" + city : "")}
-          class={"join-item btn btn-sm" + (p === page ? " btn-active" : "")}
-        >
-          {p}
-        </a>
-      ))}
-    </div>
-  )}
+  {
+    paginated.totalPages > 1 && (
+      <div class="join mt-4 flex justify-center">
+        {Array.from({ length: paginated.totalPages }, (_, i) => i + 1).map((p) => (
+          <a
+            href={
+              '/?page=' +
+              p +
+              (action ? '&action=' + action : '') +
+              (tier ? '&tier=' + tier : '') +
+              (city ? '&city=' + city : '')
+            }
+            class={'join-item btn btn-sm' + (p === page ? ' btn-active' : '')}
+          >
+            {p}
+          </a>
+        ))}
+      </div>
+    )
+  }
 
   <script>
     function applyFilters() {
