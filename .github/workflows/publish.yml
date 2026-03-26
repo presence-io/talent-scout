@@ -1,0 +1,48 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Publishing version $VERSION"
+          pnpm -r exec -- npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Build
+        run: pnpm -r run build
+
+      - name: Check (typecheck + lint + format + test)
+        run: pnpm check
+
+      - name: Publish packages
+        run: |
+          pnpm --filter @talent-scout/shared publish --access public --no-git-checks
+          pnpm --filter @talent-scout/data-collector publish --access public --no-git-checks
+          pnpm --filter @talent-scout/data-processor publish --access public --no-git-checks
+          pnpm --filter @talent-scout/ai-evaluator publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
