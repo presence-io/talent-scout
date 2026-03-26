@@ -1,12 +1,14 @@
 import {
   FileCache,
   type Signal,
+  findOrCreateRunDir,
   loadConfig,
   resolveCacheDir,
   resolveOutputDir,
 } from '@talent-scout/shared';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { readFile, writeFile } from 'node:fs/promises';
+import { basename, join, resolve } from 'node:path';
 
 import { collectCommunitySignals } from './community.js';
 import { collectFollowerGraphSignals } from './follower-graph.js';
@@ -28,51 +30,83 @@ function mergeSignalMaps(...maps: Map<string, Signal[]>[]): Map<string, Signal[]
   return merged;
 }
 
-/** Run the full data collection pipeline */
+/**
+ * Run or resume a collector. If the output file already exists, skip the
+ * collector and load from disk instead. Otherwise run and save immediately.
+ */
+async function collectOrLoad(
+  filePath: string,
+  label: string,
+  collector: () => Promise<Map<string, Signal[]>>
+): Promise<Map<string, Signal[]>> {
+  const step = basename(filePath, '.json');
+
+  if (existsSync(filePath)) {
+    console.log(`Resuming: loading existing ${label} from ${step}.json`);
+    const raw = await readFile(filePath, 'utf-8');
+    const data = JSON.parse(raw) as { candidates: Record<string, Signal[]> };
+    return new Map(Object.entries(data.candidates));
+  }
+
+  console.log(`Collecting ${label}...`);
+  const result = await collector();
+  await saveSignalMap(filePath, result, step);
+  return result;
+}
+
+/** Run the full data collection pipeline with resume support. */
 export async function runCollect(): Promise<void> {
   const config = await loadConfig();
   const cache = new FileCache(resolve(resolveCacheDir(), 'github'));
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const outputDir = resolve(resolveOutputDir(), 'raw', timestamp);
-  await mkdir(outputDir, { recursive: true });
+  const rawBase = resolve(resolveOutputDir(), 'raw');
+  const outputDir = await findOrCreateRunDir(rawBase);
 
-  // Collect from all sources
-  console.log('Collecting GitHub signals...');
-  const githubSignals = await collectAllGitHubSignals(cache);
+  // Each collector saves immediately on completion. On resume, completed
+  // collectors are loaded from disk; only the interrupted one re-runs
+  // (individual API pages are also cached by ghApi).
+  const githubSignals = await collectOrLoad(
+    join(outputDir, 'github-signals.json'),
+    'GitHub signals',
+    () => collectAllGitHubSignals(cache)
+  );
 
-  console.log('Collecting community signals...');
-  const communitySignals = await collectCommunitySignals(config, cache);
+  const communitySignals = await collectOrLoad(
+    join(outputDir, 'community.json'),
+    'community signals',
+    () => collectCommunitySignals(config, cache)
+  );
 
-  console.log('Collecting stargazer signals...');
-  const stargazerSignals = await collectStargazerSignals(config, cache);
+  const stargazerSignals = await collectOrLoad(
+    join(outputDir, 'stargazers.json'),
+    'stargazer signals',
+    () => collectStargazerSignals(config, cache)
+  );
 
   // Merge all signals
   const allSignals = mergeSignalMaps(githubSignals, communitySignals, stargazerSignals);
-
-  // Save raw outputs
-  await saveSignalMap(join(outputDir, 'github-signals.json'), githubSignals, 'github-signals');
-  await saveSignalMap(join(outputDir, 'community.json'), communitySignals, 'community');
-  await saveSignalMap(join(outputDir, 'stargazers.json'), stargazerSignals, 'stargazers');
-
   console.log(`Total: ${String(allSignals.size)} unique users from initial collection`);
 
-  // Follower graph expansion is done later after identity pass
-  await writeJsonAtomic(join(outputDir, 'follower-graph.json'), {
-    step: 'follower-graph',
-    collected_at: new Date().toISOString(),
-    note: 'Run after identity pass with seed users',
-    user_count: 0,
-    candidates: {},
-  });
+  // Follower graph expansion placeholder
+  if (!existsSync(join(outputDir, 'follower-graph.json'))) {
+    await writeJsonAtomic(join(outputDir, 'follower-graph.json'), {
+      step: 'follower-graph',
+      collected_at: new Date().toISOString(),
+      note: 'Run after identity pass with seed users',
+      user_count: 0,
+      candidates: {},
+    });
+  }
 
+  // Mark run complete so future runs create a new directory
+  await writeFile(join(outputDir, '.complete'), new Date().toISOString());
   console.log(`Raw data saved to ${outputDir}`);
 }
 
 /** Run follower graph expansion (separate step, after identity pass) */
 export async function runGraphExpansion(seedUsers: string[]): Promise<Map<string, Signal[]>> {
   const config = await loadConfig();
-  const cache = new FileCache(resolve('cache/github'));
+  const cache = new FileCache(resolve(resolveCacheDir(), 'github'));
   return collectFollowerGraphSignals(config, cache, seedUsers);
 }
 

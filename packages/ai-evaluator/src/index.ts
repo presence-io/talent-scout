@@ -40,7 +40,14 @@ async function main(): Promise<void> {
   await symlink(timestamp, latestLink);
 }
 
-main().catch((err: unknown) => {
-  console.error('Pipeline failed:', err);
-  process.exitCode = 1;
-});
+// Only run main when executed directly (not imported)
+const isDirectExecution =
+  process.argv[1]?.endsWith('/ai-evaluator/src/index.ts') ||
+  process.argv[1]?.endsWith('/ai-evaluator/dist/index.js');
+
+if (isDirectExecution) {
+  main().catch((err: unknown) => {
+    console.error('Pipeline failed:', err);
+    process.exitCode = 1;
+  });
+}

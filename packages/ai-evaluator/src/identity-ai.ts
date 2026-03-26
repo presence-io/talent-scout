@@ -1,5 +1,5 @@
 import type { Candidate, TalentConfig } from '@talent-scout/shared';
-import { callAgent } from '@talent-scout/shared';
+import { Checkpoint, callAgent } from '@talent-scout/shared';
 
 interface AIIdentityInference {
   username: string;
@@ -15,17 +15,27 @@ interface AIIdentityInference {
  *
  * Mutates candidates in place — updates identity.china_confidence,
  * identity.city, and identity.ai_assisted when AI provides stronger signals.
+ *
+ * If a checkpoint is provided, already-processed usernames are skipped
+ * and progress is persisted after each batch.
  */
 export async function inferIdentityBatch(
   candidates: Candidate[],
-  config: TalentConfig
+  config: TalentConfig,
+  checkpoint?: Checkpoint
 ): Promise<number> {
+  const done = new Set((checkpoint?.get('ai_identity_done') as string[] | undefined) ?? []);
+
   const grayArea = candidates.filter((c) => {
+    if (done.has(c.username)) return false;
     const conf = c.identity?.china_confidence ?? 0;
     return conf > 0.3 && conf < 0.7;
   });
 
   if (grayArea.length === 0) return 0;
+  if (done.size > 0) {
+    console.log(`  Resuming AI identity: skipping ${String(done.size)} already processed`);
+  }
 
   const batchSize = config.openclaw.batch_size;
   let processed = 0;
@@ -56,6 +66,10 @@ export async function inferIdentityBatch(
       c.identity.ai_assisted = true;
       processed++;
     }
+
+    // Persist progress after each batch
+    for (const c of batch) done.add(c.username);
+    if (checkpoint) await checkpoint.mark('ai_identity_done', [...done]);
   }
 
   return processed;

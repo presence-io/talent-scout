@@ -1,5 +1,5 @@
 import type { Candidate, TalentConfig } from '@talent-scout/shared';
-import { callAgent } from '@talent-scout/shared';
+import { Checkpoint, callAgent } from '@talent-scout/shared';
 
 interface AIEvalResult {
   username: string;
@@ -13,17 +13,26 @@ interface AIEvalResult {
  *
  * Candidates must already have rule-based evaluation attached.
  * Only processes up to `config.evaluation.max_ai_evaluations` candidates.
+ *
+ * If a checkpoint is provided, already-processed usernames are skipped
+ * and progress is persisted after each batch.
  */
 export async function deepEvaluateBatch(
   candidates: Candidate[],
-  config: TalentConfig
+  config: TalentConfig,
+  checkpoint?: Checkpoint
 ): Promise<number> {
+  const done = new Set((checkpoint?.get('deep_eval_done') as string[] | undefined) ?? []);
+
   const eligible = candidates
-    .filter((c) => c.evaluation)
+    .filter((c) => c.evaluation && !done.has(c.username))
     .sort((a, b) => (b.evaluation?.final_score ?? 0) - (a.evaluation?.final_score ?? 0))
     .slice(0, config.evaluation.max_ai_evaluations);
 
   if (eligible.length === 0) return 0;
+  if (done.size > 0) {
+    console.log(`  Resuming deep eval: skipping ${String(done.size)} already processed`);
+  }
 
   const batchSize = config.openclaw.batch_size;
   let processed = 0;
@@ -50,6 +59,10 @@ export async function deepEvaluateBatch(
         processed++;
       }
     }
+
+    // Persist progress after each batch
+    for (const c of batch) done.add(c.username);
+    if (checkpoint) await checkpoint.mark('deep_eval_done', [...done]);
   }
 
   return processed;

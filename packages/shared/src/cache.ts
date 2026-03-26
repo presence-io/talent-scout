@@ -139,6 +139,8 @@ export class FileCache {
   }
 
   private keyToPath(key: string): string {
-    return join(this.baseDir, `${key}.json`);
+    // Sanitize characters that may cause filesystem issues in URL-based keys
+    const safe = key.replace(/[?&#=]/g, '_');
+    return join(this.baseDir, `${safe}.json`);
   }
 }

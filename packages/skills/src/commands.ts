@@ -6,6 +6,7 @@ import {
   mergeCandidateRecords,
 } from '@talent-scout/data-processor';
 import {
+  findOrCreateRunDir,
   isIgnored,
   loadConfig,
   readIgnoreList,
@@ -112,9 +113,8 @@ export async function runEvaluateCommand(): Promise<void> {
   const outputBase = resolveOutputDir();
   const userDataDir = resolveUserDataDir();
   const inputDir = resolve(outputBase, 'processed', 'latest');
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const outputDir = resolve(outputBase, 'evaluated', timestamp);
-  await mkdir(outputDir, { recursive: true });
+  const evalBase = resolve(outputBase, 'evaluated');
+  const outputDir = await findOrCreateRunDir(evalBase);
 
   await runPipeline({
     inputDir,
@@ -123,11 +123,13 @@ export async function runEvaluateCommand(): Promise<void> {
     skipAI: process.argv.includes('--skip-ai'),
   });
 
-  const latestLink = join(outputBase, 'evaluated', 'latest');
+  // Mark complete and update latest symlink
+  await writeFile(join(outputDir, '.complete'), new Date().toISOString());
+  const latestLink = join(evalBase, 'latest');
   try {
     await rm(latestLink);
   } catch {
     /* ignore */
   }
-  await symlink(timestamp, latestLink);
+  await symlink(outputDir, latestLink);
 }

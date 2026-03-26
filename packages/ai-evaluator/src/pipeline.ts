@@ -1,5 +1,5 @@
 import { evaluateCandidate, identifyCandidate } from '@talent-scout/data-processor';
-import { isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
+import { Checkpoint, isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
 import type { Candidate } from '@talent-scout/shared';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -72,9 +72,17 @@ async function attachProfiles(candidates: Candidate[], inputDir: string): Promis
  * 4. Optional AI deep evaluation for top candidates
  * 5. Produce shortlist
  * 6. Write output + update SKILLS
+ *
+ * A checkpoint file in the output directory allows the pipeline to resume
+ * after interruption — expensive AI batch calls are skipped for usernames
+ * that were already processed.
  */
 export async function runPipeline(options: PipelineOptions): Promise<void> {
   const config = await loadConfig();
+
+  await mkdir(options.outputDir, { recursive: true });
+  const checkpoint = new Checkpoint(join(options.outputDir, '_checkpoint.json'));
+  await checkpoint.load();
 
   // Step 1: Load data
   let candidates = await loadCandidates(options.inputDir);
@@ -91,7 +99,7 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
 
   // Step 2b: AI identity inference for gray-area candidates
   if (!options.skipAI) {
-    await inferIdentityBatch(candidates, config);
+    await inferIdentityBatch(candidates, config, checkpoint);
   }
 
   // Step 3: Rule-based evaluation for identified Chinese developers
@@ -102,19 +110,21 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
 
   // Step 4: AI deep evaluation for top candidates
   if (!options.skipAI) {
-    await deepEvaluateBatch(identified, config);
+    await deepEvaluateBatch(identified, config, checkpoint);
   }
 
   // Step 5: Produce shortlist
   const shortlist = produceShortlist(identified);
 
   // Step 6: Write output
-  await mkdir(options.outputDir, { recursive: true });
   await writeOutput(options.outputDir, candidates, shortlist);
 
   // Step 7: Update SKILLS-pending
   const stats = computeRunStats(candidates);
   await appendSkillsPending(dirname(options.outputDir), stats);
+
+  // Pipeline complete — remove checkpoint
+  await checkpoint.remove();
 
   logSummary(stats, shortlist.length);
 }
