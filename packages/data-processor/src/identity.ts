@@ -372,6 +372,20 @@ function matchEmailDomain(email: string | null): IdentitySignal | null {
   return null;
 }
 
+function matchSeedLists(candidate: Candidate): IdentitySignal | null {
+  const seedSignals = candidate.signals.filter(
+    (s) => s.type === 'seed:ranking' || s.type === 'seed:list'
+  );
+  if (seedSignals.length === 0) return null;
+  const sources = [...new Set(seedSignals.map((s) => s.source))];
+  return {
+    tier: 1,
+    type: 'seed:list-match',
+    confidence: 0.88,
+    evidence: `Found in ${String(seedSignals.length)} seed list(s): ${sources.join(', ')}`,
+  };
+}
+
 // ── Tier 2 Detectors ──
 
 function matchBio(bio: string | null): IdentitySignal | null {
@@ -492,6 +506,17 @@ function matchCommitChinese(candidate: Candidate): IdentitySignal | null {
   return null;
 }
 
+function matchFollowerGraph(candidate: Candidate): IdentitySignal | null {
+  const followerSignals = candidate.signals.filter((s) => s.type === 'graph:follower');
+  if (followerSignals.length < 3) return null;
+  return {
+    tier: 3,
+    type: 'graph:china-follower-cluster',
+    confidence: 0.6,
+    evidence: `Followed by ${String(followerSignals.length)} confirmed Chinese developers`,
+  };
+}
+
 // ── Tier 4 Detectors ──
 
 function matchPinyinName(candidate: Candidate): IdentitySignal | null {
@@ -610,6 +635,9 @@ export function identifyCandidate(candidate: Candidate): IdentityResult {
   const emailSignal = matchEmailDomain(profile.email);
   if (emailSignal) signals.push(emailSignal);
 
+  const seedSignal = matchSeedLists(candidate);
+  if (seedSignal) signals.push(seedSignal);
+
   // Tier 2
   const bioSignal = matchBio(profile.bio);
   if (bioSignal) signals.push(bioSignal);
@@ -635,6 +663,9 @@ export function identifyCandidate(candidate: Candidate): IdentityResult {
 
     const commitChineseSignal = matchCommitChinese(candidate);
     if (commitChineseSignal) signals.push(commitChineseSignal);
+
+    const followerGraphSignal = matchFollowerGraph(candidate);
+    if (followerGraphSignal) signals.push(followerGraphSignal);
 
     // Tier 4
     const pinyinSignal = matchPinyinName(candidate);

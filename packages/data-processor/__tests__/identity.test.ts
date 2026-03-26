@@ -354,4 +354,57 @@ describe('identifyCandidate', () => {
     expect(result.signals.some((s) => s.tier === 1)).toBe(true);
     expect(result.signals.some((s) => s.tier === 3)).toBe(false);
   });
+
+  it('should detect seed list match as Tier 1', () => {
+    const candidate: Candidate = {
+      username: 'testuser',
+      signals: [
+        {
+          type: 'seed:list',
+          detail: 'Listed in chinese-independent-developer',
+          weight: 5,
+          source: 'ranking:chinese-independent-developer',
+        },
+      ],
+      signal_score: 5,
+      is_ai_coding_enthusiast: false,
+      profile: makeProfile(),
+    };
+    const result = identifyCandidate(candidate);
+    expect(result.signals.some((s) => s.type === 'seed:list-match')).toBe(true);
+    expect(result.signals.find((s) => s.type === 'seed:list-match')?.tier).toBe(1);
+    expect(result.china_confidence).toBe(0.95);
+  });
+
+  it('should detect follower graph cluster as Tier 3', () => {
+    const candidate: Candidate = {
+      username: 'testuser',
+      signals: [
+        { type: 'graph:follower', detail: 'user1', weight: 1, source: 'graph' },
+        { type: 'graph:follower', detail: 'user2', weight: 1, source: 'graph' },
+        { type: 'graph:follower', detail: 'user3', weight: 1, source: 'graph' },
+      ],
+      signal_score: 3,
+      is_ai_coding_enthusiast: false,
+      profile: makeProfile(),
+    };
+    const result = identifyCandidate(candidate);
+    expect(result.signals.some((s) => s.type === 'graph:china-follower-cluster')).toBe(true);
+    expect(result.china_confidence).toBeGreaterThan(0);
+  });
+
+  it('should not trigger follower graph with fewer than 3 followers', () => {
+    const candidate: Candidate = {
+      username: 'testuser',
+      signals: [
+        { type: 'graph:follower', detail: 'user1', weight: 1, source: 'graph' },
+        { type: 'graph:follower', detail: 'user2', weight: 1, source: 'graph' },
+      ],
+      signal_score: 2,
+      is_ai_coding_enthusiast: false,
+      profile: makeProfile(),
+    };
+    const result = identifyCandidate(candidate);
+    expect(result.signals.some((s) => s.type === 'graph:china-follower-cluster')).toBe(false);
+  });
 });
