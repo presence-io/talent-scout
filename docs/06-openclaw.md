@@ -1,6 +1,6 @@
 # DESIGN-v2-06: OpenClaw 集成
 
-> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md)
+> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md) · [10-distribution](10-distribution.md)
 
 ## 1. 集成原则
 
@@ -13,7 +13,20 @@
 - 可以通过 OpenClaw 配置切换后端模型（Claude、GPT、本地模型等），项目代码无需改动
 - 天然集成 OpenClaw 的 memory、session、skills 生态
 
+当项目作为 skill 发布到 ClawHub 时，skill bundle 自身也必须遵守 Agent Skills 规范：根目录包含 `SKILL.md`，可选 `scripts/`、`references/`、`assets/`，并通过这些薄封装去调用 `@talent-scout/*` 的能力，而不是在 skill 内重写主逻辑。详见 [10-distribution](10-distribution.md)。
+
 ## 2. Agent 调用方式
+
+### 2.0 `@talent-scout/skills` 作为统一技能入口
+
+项目对 ClawHub / OpenClaw 暴露的 skill 不再按子包拆分，而是统一由 `@talent-scout/skills` 提供一个总控入口。这个包负责：
+
+- 提供可发布的 `SKILL.md` 与 references / scripts
+- 把采集、处理、评估、查询、运维命令整理为可被模型调度的统一命令面
+- 提供启动 / 暂停 / 同步 OpenClaw cron 的能力
+- 在 IM channel / TUI 中提供文字化查询，而不是浏览器 UI
+
+其他包继续专注于业务逻辑与可复用查询接口，不直接对外承担 skill 发布职责。
 
 ### 2.1 基本调用模式
 
@@ -68,11 +81,11 @@ openclaw:
 - **Agent**：`talent-evaluator`
 - **预计调用量**：top 200 候选人
 
-### 3.3 SKILLS.md 更新
+### 3.3 运行时 skill patch 生成
 
 - **触发条件**：每次运行结束后
 - **输入**：本次运行的统计数据 + 异常样本 + 与上次运行的对比
-- **输出**：SKILLS.md 的更新建议（追加到文件末尾，人工确认后合入）
+- **输出**：兼容 patch 的建议，写入工作区而不是直接改写包内文件
 - **Agent**：对应模块的 agent
 - **预计调用量**：每次运行 1 次
 
@@ -91,7 +104,7 @@ openclaw:
 }
 ```
 
-批量大小需要在 SKILLS.md 中根据实践调整。过大会导致 context window 不足，过小会浪费 API 调用次数。初始建议 batch_size = 10。
+批量大小需要根据运行效果持续校准。过大会导致 context window 不足，过小会浪费 API 调用次数。初始建议 batch_size = 10。
 
 ## 4. Cron 调度
 
@@ -195,69 +208,73 @@ openclaw cron run --name talent-collect
 openclaw cron disable --name talent-evaluate
 ```
 
-## 5. SKILLS.md 自我进化机制
+## 5. Skill Patch 自我进化机制
+
+注意：这里讨论的是“运行时技能增强”，不是直接修改包源码。`SKILL.md` 是 `@talent-scout/skills` 的发布入口；各包内部可以维护只读的内置 skill 基线，但运行时新增经验必须进入工作区 patch，而不是改写 npm 包内容。
 
 ### 5.1 核心理念
 
-每个使用 AI 的模块都维护一个 SKILLS.md 文件，记录该模块在迭代过程中积累的经验。OpenClaw agent 在执行任务时会自动读取 SKILLS.md，从而"记住"之前的经验并应用到新一轮处理中。
+每个使用 AI 的模块都可以提供只读的内置 skill 基线，记录该模块在发布版本时已经验证过的经验。OpenClaw agent 在运行时除了读取这些内置技能外，还会读取工作区中的兼容 patch，从而把后续获得的经验叠加到当前版本上。
 
 这形成了一个自我进化闭环：
 
-```
-运行 → 产出结果 → 分析异常/误判 → 更新 SKILLS.md → 下次运行时 agent 更准
-```
-
-### 5.2 SKILLS.md 内容结构
-
-每个模块的 SKILLS.md 应包含以下章节：
-
-```markdown
-# [模块名] SKILLS
-
-## 已知规则
-
-在此记录通过实践验证的规则和模式。
-- Location "PRC" 应视为中国大陆
-- Email @bytedance.com 用户均为中国开发者
-- ...
-
-## 边缘案例
-
-在此记录仅靠规则难以处理的边缘案例和处理决策。
-- 用户 xxx：location 为空但 bio 中提到 "based in Beijing" → 判为中国
-- ...
-
-## 参数校准历史
-
-在此记录参数调整的记录和效果。
-- 2025-06-01: identity confidence 阈值从 0.5 调整为 0.45，recall 提升 5%
-- ...
-
-## 待改进方向
-
-在此记录已知的不足和未来改进方向。
-- 简繁体检测对混用场景不准确
-- ...
+```text
+运行 → 产出结果 → 分析异常/误判 → 生成 skill patch → 下次运行时 overlay 生效
 ```
 
-### 5.3 更新流程
+### 5.2 Patch 存储位置与格式
 
-1. 每次运行结束后，`ai-evaluator` 的 review 步骤将本次运行的结果与上次对比
-2. 识别新增的误判案例、效果异常等
-3. 组织成 prompt 发给 OpenClaw agent，请求生成 SKILLS.md 更新建议
-4. 更新建议追加到 SKILLS.md 的对应章节
-5. **守卫机制**：SKILLS.md 的更新建议默认不自动生效，而是写入 `SKILLS-pending.md`，由人工 review 后合入
+所有运行时 patch 都写入工作区数据目录，例如：
 
-自动更新存在写入错误经验的风险（如果某次运行的数据本身有偏差，AI 可能会总结出错误的规则）。pending 文件 + 人工确认是必要的安全网。随着信心提升，可以逐步放开为自动合入。
+```text
+workspace-data/
+└── skill-patches/
+  ├── talent-skills/
+  │   ├── 2026-03-26T120000Z-identity-threshold.md
+  │   └── 2026-03-28T090000Z-query-alias.md
+  └── manifests/
+    └── applied.json
+```
 
-### 5.4 与 OpenClaw Memory 的关系
+单个 patch 建议使用 Markdown + YAML frontmatter，至少包含：
+
+```yaml
+id: identity-threshold-2026-03-26
+target: ai-evaluator
+applies_to: ">=0.2.0 <0.3.0"
+kind: calibration
+priority: 10
+```
+
+正文用于补充规则、示例、参数调整或查询别名。
+
+### 5.3 边界与兼容性
+
+patch 机制必须受到明确边界约束：
+
+- 不修改任何 npm 包源码、`package.json`、测试或构建产物
+- 不写回包内 `SKILL.md` / 内置 skills 文件
+- 只允许增强指令、补充示例、调整阈值建议、增加查询别名和解释模板
+- 通过 `applies_to` 的 semver 范围保证向后兼容
+- 当内置 skill 升级导致 patch 不兼容时，系统应跳过该 patch 并记录告警，而不是强行应用
+
+### 5.4 更新流程
+
+1. 每次运行结束后，review 步骤分析新增误判和新模式
+2. 生成 patch 建议，而不是直接修改源码
+3. 将 patch 写入 `workspace-data/skill-patches/`
+4. `@talent-scout/skills` 在下一次启动时加载内置 skill 基线和所有兼容 patch
+5. 若 patch 效果稳定，可以在后续正式版本中人工吸收为内置技能
+
+### 5.5 与 OpenClaw Memory 的关系
 
 OpenClaw 自身也有 memory 系统（`openclaw memory`）。两者的定位不同：
 
-- **SKILLS.md**：项目级知识，随项目代码提交到 git，所有运行环境共享，可人工审阅
+- **内置 skills**：项目级知识，随 npm 包与 skill 版本发布，所有运行环境共享，只能通过正常版本升级改变
+- **workspace skill patches**：用户工作区级知识，存在 `workspace-data/skill-patches/` 中，可随运行逐步积累
 - **OpenClaw Memory**：agent 级知识，存在 OpenClaw 本地状态中，主要用于 session 间的上下文延续
 
-建议 SKILLS.md 作为权威知识源，OpenClaw Memory 作为 agent 运行时的辅助记忆。两者不冲突。
+建议“内置 skills + workspace patch”作为权威知识源，OpenClaw Memory 作为 agent 运行时的辅助记忆。两者不冲突。
 
 ## 6. 辩证备注
 

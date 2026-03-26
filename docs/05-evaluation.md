@@ -186,7 +186,7 @@ function computeAIDepthScore(f: AIDepthFeatures): { score: number; tier: string 
 | 代码审查效率 | PR review 响应时间 + 处理量 | AI 辅助的 reviewer 处理更快 |
 | 项目启动速度 | 从 repo 创建到首个 release 的间隔 | AI 辅助的项目启动更快 |
 
-**重要约束**：生产效率基准应按语言分开设置。Go 项目的 commit 密度和 Python 项目天然不同。在积累足够样本后，基准参数应自动回归更新（通过 SKILLS.md 记录各语言的统计分布）。
+**重要约束**：生产效率基准应按语言分开设置。Go 项目的 commit 密度和 Python 项目天然不同。在积累足够样本后，基准参数应自动回归更新；更新结果不直接改写包内实现，而是以兼容的 skill patch 形式写入工作区，由 `@talent-scout/skills` 在运行时叠加。
 
 ## 5. 轴 3：可联系性 (reachability_score: 1-10)
 

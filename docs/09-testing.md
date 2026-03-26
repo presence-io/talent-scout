@@ -1,6 +1,6 @@
 # DESIGN-v2-09: 测试与持续迭代
 
-> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md)
+> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md) · [10-distribution](10-distribution.md)
 
 ## 1. 测试策略总览
 
@@ -48,6 +48,15 @@
 | `lib/format.ts` | 分数格式化、日期格式化、城市名标准化 |
 | `lib/merge.ts` | output 数据与 user-data 数据的合并逻辑 |
 | `lib/ignore.ts` | 忽略名单读写、查询 |
+
+#### skills 模块
+
+| 测试对象 | 场景 |
+|---------|------|
+| `query.ts` | 文本查询命令映射、候选人查询、统计查询、错误提示 |
+| `cron.ts` | 启动 / 暂停 / 同步 OpenClaw cron 的参数编排 |
+| `patches.ts` | patch 加载、优先级排序、semver 兼容性判定、冲突跳过 |
+| `renderers.ts` | 面向 IM / TUI 的文本渲染 |
 
 > **Dashboard UI（Astro 页面、`<script>` 标签）不做单元测试**。但 `lib/` 中的所有纯函数必须测试。逻辑不应存在于 `<script>` 标签中（见 [08-dashboard](DESIGN-v2-08-dashboard.md)）。
 
@@ -247,7 +256,7 @@ Status: ✓ PASS
 ]
 ```
 
-这些误判案例会在 SKILLS.md 更新流程中被 AI agent 分析，提出规则改进建议。
+这些误判案例会在 skill patch 生成流程中被 AI agent 分析，提出规则改进建议；测试中还应覆盖 patch 对旧版本和新版本的兼容性判定。
 
 ## 5. E2E Pipeline 测试
 

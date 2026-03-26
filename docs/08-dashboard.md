@@ -1,6 +1,6 @@
 # DESIGN-v2-08: Dashboard
 
-> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md)
+> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md) · [10-distribution](10-distribution.md)
 
 ## 1. 定位
 
@@ -11,6 +11,8 @@
 - 对候选人进行人工标注（approved / rejected / noted），反馈写回 JSON
 - 查看系统运行统计和趋势
 
+Dashboard 不是唯一的数据消费入口。与之并行的还有 `@talent-scout/skills` 提供的 IM channel / TUI 文本查询界面。两者必须复用同一套查询接口，而不是各自重新解析底层 JSON。
+
 **不是**一个需要部署到线上的生产级 SaaS。
 
 ## 2. 技术选型
@@ -20,7 +22,7 @@
 | 框架 | Astro (SSR mode) | 默认零 JS、Server Islands 按需交互、API routes 原生支持 |
 | UI | TailwindCSS + DaisyUI | 快速搭建、丰富的预制组件、主题统一 |
 | 交互 Islands | 使用 Astro 原生客户端脚本（`<script>`） | 避免引入 React/Vue 等框架（交互需求不复杂） |
-| 数据源 | 直接读写本地文件 | 无需数据库中间层 |
+| 数据源 | 调用共享查询层，再由查询层读写本地文件 | 方便 Dashboard 与 `@talent-scout/skills` 复用 |
 | 运行方式 | `astro dev` 本地开发服务器 | 不需要 build + deploy |
 
 > **安全性**：Dashboard 仅在本地运行，不暴露到公网，无需登录或权限控制。
@@ -111,9 +113,11 @@ pages/
 
 ## 4. API Routes
 
+这些 API route 只是 Web 适配层。真正的数据读取、筛选、聚合逻辑应下沉到各业务包暴露的查询函数中，由 Dashboard API 和 `@talent-scout/skills` 共用。
+
 ### 4.1 GET /api/candidates
 
-从 `output/latest/shortlist.json` 或 `output/all_talent.json` 读取候选人列表。
+从共享查询层读取候选人列表；共享查询层再从 `workspace-data/output/latest/shortlist.json` 等文件中读取底层数据。
 
 Query params：
 
@@ -125,11 +129,11 @@ Query params：
 
 ### 4.2 GET /api/candidate/[username]
 
-从 `output/latest/evaluation.json` 读取指定候选人的完整数据。
+从共享查询层读取指定候选人的完整数据。
 
 ### 4.3 PATCH /api/candidate/[username]
 
-接收人工标注，写入 `output/annotations.json`：
+接收人工标注，写入 `workspace-data/user-data/annotations.json`：
 
 ```json
 {
@@ -146,14 +150,14 @@ Query params：
 
 ### 4.4 GET /api/stats
 
-汇总统计数据，从 `output/latest/` 各文件中计算。
+汇总统计数据，通过共享查询层从 `workspace-data/output/latest/` 各文件中计算。
 
 ## 5. 用户数据隔离
 
-Dashboard 产生的用户数据**必须与 pipeline 抓取/评估的数据完全隔离**，存放在独立目录 `user-data/` 中：
+Dashboard 产生的用户数据**必须与 pipeline 抓取/评估的数据完全隔离**，存放在独立目录 `workspace-data/user-data/` 中：
 
 ```
-user-data/
+workspace-data/user-data/
 ├── annotations.json    # 人工标注（approved/rejected/noted）
 ├── notes.json          # 候选人备注（自由文本）
 ├── score-overrides.json # 手动分数修正
@@ -162,10 +166,10 @@ user-data/
 
 设计原则：
 
-- **Pipeline 永不读写 `user-data/`**：抓取和评估只写入 `output/`，保证可重跑
-- **Dashboard 读 `output/` + `user-data/`**：展示时 merge 两个来源的数据
-- **Dashboard 只写 `user-data/`**：标注、备注、分数修正都写到用户数据目录
-- **`user-data/` 提交到 git**：这是用户的工作成果，需要版本控制
+- **Pipeline 永不读写 `workspace-data/user-data/`**：抓取和评估只写入 `workspace-data/output/`，保证可重跑
+- **Dashboard 读 `workspace-data/output/` + `workspace-data/user-data/`**：展示时 merge 两个来源的数据
+- **Dashboard 只写 `workspace-data/user-data/`**：标注、备注、分数修正都写到用户数据目录
+- **`workspace-data/` 不提交到 git**：这是运行态与用户工作区状态
 
 ### 5.1 忽略名单 (ignore-list.json)
 
@@ -185,7 +189,7 @@ interface IgnoreList {
 
 ### 5.2 标注写入机制
 
-- **只写 `user-data/` 目录**：不修改 `output/` 中的评估结果文件，保持评估数据的不可变性
+- **只写 `workspace-data/user-data/` 目录**：不修改 `workspace-data/output/` 中的评估结果文件，保持评估数据的不可变性
 - **追加式更新**：每次标注操作读取 → merge → 写回，不覆盖其他标注
 - **JSON 原子写入**：先写临时文件，再 rename，避免写入中断导致数据损坏
 
@@ -214,11 +218,12 @@ pnpm --filter dashboard run dev
 # → http://localhost:4321
 
 # Dashboard 读取的数据路径
-# output: ../../output/latest/ (只读)
-# user-data: ../../user-data/ (读写)
+# workspace-data/output/latest/ (只读)
+# workspace-data/user-data/ (读写)
 # 可通过环境变量覆盖:
-#   TALENT_OUTPUT_DIR=/path/to/output
-#   TALENT_USER_DATA_DIR=/path/to/user-data
+#   TALENT_WORKSPACE_DIR=/path/to/workspace-data
+#   TALENT_OUTPUT_DIR=/path/to/workspace-data/output
+#   TALENT_USER_DATA_DIR=/path/to/workspace-data/user-data
 ```
 
 ## 7. 辩证备注

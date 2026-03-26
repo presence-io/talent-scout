@@ -1,6 +1,6 @@
 # DESIGN-v2-07: 数据模型与存储
 
-> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md)
+> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md) · [10-distribution](10-distribution.md)
 
 ## 1. 存储策略
 
@@ -16,38 +16,43 @@
 ### 目录结构
 
 ```
-output/
-├── raw/
-│   └── 2026-03-25_013000/         # 每次采集的原始数据
-│       ├── github-signals.json     # GitHub 信号搜索结果
-│       ├── rankings.json           # 排行榜采集结果
-│       ├── community.json          # 社区 repo 互动者
-│       └── follower-graph.json     # follower 图扩展结果
-│
-├── processed/
-│   └── 2026-03-25_030000/         # 每次处理的中间和最终结果
-│       ├── merged.json             # 合并去重后的候选池
-│       ├── identity.json           # 身份识别结果
-│       ├── enriched.json           # 特征补全后的候选人
-│       └── scored.json             # 多轴评分结果
-│
-├── evaluated/
-│   └── 2026-03-25_050000/         # AI 评估结果
-│       ├── evaluation.json         # 完整评估数据
-│       ├── shortlist.json          # 精选候选人列表
-│       └── shortlist.csv           # CSV 格式（方便导入）
-│
-└── latest -> processed/2026-03-25_030000/  # 符号链接
-
-cache/
-├── github/
-│   ├── users/                      # profile 缓存，按 username hash 存储
-│   │   ├── zhangsan.json           # { data: {...}, fetched_at: "...", ttl: 86400 }
-│   │   └── ...
-│   ├── repos/                      # repo 信息缓存
-│   ├── search/                     # search API 响应缓存
-│   └── events/                     # events API 响应缓存
-└── rankings/                       # 外部排行榜快照
+workspace-data/
+├── output/
+│   ├── raw/
+│   │   └── 2026-03-25_013000/
+│   │       ├── github-signals.json
+│   │       ├── rankings.json
+│   │       ├── community.json
+│   │       └── follower-graph.json
+│   ├── processed/
+│   │   └── 2026-03-25_030000/
+│   │       ├── merged.json
+│   │       ├── identity.json
+│   │       ├── enriched.json
+│   │       └── scored.json
+│   ├── evaluated/
+│   │   └── 2026-03-25_050000/
+│   │       ├── evaluation.json
+│   │       ├── shortlist.json
+│   │       └── shortlist.csv
+│   └── latest -> evaluated/2026-03-25_050000/
+├── user-data/
+│   ├── annotations.json
+│   ├── notes.json
+│   ├── score-overrides.json
+│   └── ignore-list.json
+├── skill-patches/
+│   ├── talent-skills/
+│   │   └── 2026-03-25T060000Z-query-alias.md
+│   └── manifests/
+│       └── applied.json
+└── cache/
+  ├── github/
+  │   ├── users/
+  │   ├── repos/
+  │   ├── search/
+  │   └── events/
+  └── rankings/
     ├── china-ranking_2026-03.json
     └── githubrank_2026-03.json
 
@@ -59,20 +64,17 @@ seeds/
 └── README.md                       # 种子数据说明
 ```
 
-### 符号链接 `output/latest`
+### 符号链接 `workspace-data/output/latest`
 
-每次运行成功后，更新 `output/latest` 指向最新产出目录。Dashboard 和后续步骤始终读取 `output/latest` 目录，不需要知道具体时间戳。
+每次运行成功后，更新 `workspace-data/output/latest` 指向最新评估结果目录。Dashboard、`@talent-scout/skills` 以及其他查询入口始终读取这个路径，不需要知道具体时间戳。
 
 ### `.gitignore` 配置
 
 所有生成的文件和目录必须在 `.gitignore` 中排除：
 
 ```gitignore
-# 运行产出
-output/
-
-# API 缓存
-cache/
+# 运行工作区
+workspace-data/
 
 # v1 Python 代码备份
 legacy/
@@ -94,7 +96,7 @@ dist/
 .DS_Store
 ```
 
-注意：`seeds/` 目录不应被忽略，它包含提交到 git 的种子数据和 golden set。
+注意：`seeds/` 目录不应被忽略，它包含提交到 git 的种子数据和 golden set。`workspace-data/` 则是纯运行态目录，既服务 Dashboard，也服务 `@talent-scout/skills` 的查询和 patch 机制。
 
 ## 2. 核心 TypeScript 类型定义
 
