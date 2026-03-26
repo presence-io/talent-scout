@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
-import { loadConfig } from '@talent-scout/shared';
+import { loadConfig, readIgnoreList, isIgnored } from '@talent-scout/shared';
 import type { Candidate } from '@talent-scout/shared';
 import { identifyCandidate, evaluateCandidate } from '@talent-scout/data-processor';
 
@@ -15,6 +15,8 @@ export interface PipelineOptions {
   inputDir: string;
   /** Directory to write evaluation output and shortlist */
   outputDir: string;
+  /** Path to ignore-list.json */
+  ignoreListPath?: string;
   /** Skip OpenClaw AI calls (rule-based only) */
   skipAI?: boolean;
 }
@@ -76,8 +78,12 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
   const config = await loadConfig();
 
   // Step 1: Load data
-  const candidates = await loadCandidates(options.inputDir);
+  let candidates = await loadCandidates(options.inputDir);
   await attachProfiles(candidates, options.inputDir);
+
+  // Step 1b: Filter out ignored users
+  const ignoreList = await readIgnoreList(options.ignoreListPath);
+  candidates = candidates.filter((c) => !isIgnored(ignoreList, c.username));
 
   // Step 2: Identity detection (rule-based)
   for (const c of candidates) {

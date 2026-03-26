@@ -24,6 +24,7 @@ async function main(): Promise<void> {
   await runPipeline({
     inputDir,
     outputDir,
+    ignoreListPath: join(baseDir, 'user-data', 'ignore-list.json'),
     skipAI,
   });
 
