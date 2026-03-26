@@ -43,6 +43,7 @@ cache/
 *.db
 *.bak
 .playwright-mcp/
+tsconfig.tsbuildinfo
 
 # Astro
 .astro/
