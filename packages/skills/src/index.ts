@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+
 import { runCollectCommand, runEvaluateCommand, runProcessCommand } from './commands.js';
 
 export async function runPipelineCommand(): Promise<void> {
@@ -196,8 +198,7 @@ async function main(): Promise<void> {
 
 // Only run main when executed directly (not imported)
 const isDirectExecution =
-  process.argv[1]?.endsWith('/skills/src/index.ts') ||
-  process.argv[1]?.endsWith('/skills/dist/index.js');
+  process.argv[1] !== undefined && pathToFileURL(process.argv[1]).href === import.meta.url;
 
 if (isDirectExecution) {
   main().catch((err: unknown) => {

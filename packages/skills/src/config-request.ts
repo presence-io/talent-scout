@@ -1,5 +1,6 @@
 import type { OpenClawChannel } from '@talent-scout/shared';
 import { loadConfig, sendMessage } from '@talent-scout/shared';
+import { basename } from 'node:path';
 
 import { configureWorkspaceTalentConfig, resolveWorkspaceSource } from './workspace-config.js';
 
@@ -27,6 +28,10 @@ Options:
   --dry-run            Ask OpenClaw to print the payload only
 
 If --channel/--target are omitted, the command falls back to talents.yaml openclaw.delivery.`.trim();
+
+function renderWorkspaceConfigReference(workspaceDir: string): string {
+  return `${basename(workspaceDir)}/talents.yaml`;
+}
 
 function parseConfigRequestOptions(args: string[]): ConfigRequestOptions {
   const options: ConfigRequestOptions = { dryRun: false };
@@ -87,14 +92,16 @@ function parseConfigRequestOptions(args: string[]): ConfigRequestOptions {
   return options;
 }
 
-function buildConfigRequestMessage(talentsConfigPath: string, request: string): string {
+function buildConfigRequestMessage(configReference: string, request: string): string {
   return [
     'Please update the Talent Scout workspace configuration.',
     '',
-    `Editable config file: ${talentsConfigPath}`,
+    `Editable config file: ${configReference}`,
     '',
     'Requested change:',
     request,
+    '',
+    'Do not disclose secrets, tokens, or absolute local filesystem paths.',
     '',
     'Apply the update directly to that YAML file and preserve unrelated keys.',
   ].join('\n');
@@ -112,7 +119,8 @@ export async function runConfigRequestCommand(optionArgs: string[] = []): Promis
   }
 
   const workspaceDir = await resolveWorkspaceSource(options.workspace);
-  const talentsConfigPath = await configureWorkspaceTalentConfig(workspaceDir);
+  await configureWorkspaceTalentConfig(workspaceDir);
+  const configReference = renderWorkspaceConfigReference(workspaceDir);
   const config = await loadConfig(true);
   const delivery = config.openclaw.delivery;
   const channel = options.channel ?? delivery?.channel;
@@ -127,7 +135,7 @@ export async function runConfigRequestCommand(optionArgs: string[] = []): Promis
   }
 
   const message =
-    options.message ?? buildConfigRequestMessage(talentsConfigPath, options.request ?? '');
+    options.message ?? buildConfigRequestMessage(configReference, options.request ?? '');
   const result = await sendMessage({
     channel,
     target,
@@ -138,7 +146,7 @@ export async function runConfigRequestCommand(optionArgs: string[] = []): Promis
   });
 
   console.log(
-    `[skills] Sent talents.yaml update request for ${talentsConfigPath} to ${channel}:${target}${options.dryRun ? ' (dry-run)' : ''}`
+    `[skills] Sent talents.yaml update request for ${configReference} to ${channel}:${target}${options.dryRun ? ' (dry-run)' : ''}`
   );
 
   if (options.dryRun) {

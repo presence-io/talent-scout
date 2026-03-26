@@ -128,8 +128,11 @@ skill bundle 发布至少需要补充以下校验：
 发布命令可采用：
 
 ```bash
-clawhub publish packages/skills
+pnpm --filter @talent-scout/skills run bundle:clawhub
+clawhub publish packages/skills/dist/clawhub/chinese-talent-scout
 ```
+
+原因：Agent Skills 规范要求 `SKILL.md` 的 `name` 字段必须与发布目录名一致。源码目录 `packages/skills/` 本身不应直接作为最终发布目录；应先打包成一个符合规范、可独立运行的 bundle 目录，再交给 ClawHub。
 
 若使用 `clawhub sync`，也应显式约束同步范围，避免误发布工作区内无关目录。
 

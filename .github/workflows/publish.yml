@@ -12,9 +12,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
@@ -23,6 +23,9 @@ jobs:
         run: |
           corepack enable
           pnpm install --frozen-lockfile
+
+      - name: Check (typecheck + lint + format + test)
+        run: pnpm check
 
       - name: Set version from tag
         run: |
@@ -33,9 +36,6 @@ jobs:
       - name: Build
         run: pnpm -r run build
 
-      - name: Check (typecheck + lint + format + test)
-        run: pnpm check
-
       - name: Publish packages
         run: |
           pnpm --filter @talent-scout/shared publish --access public --no-git-checks
@@ -44,13 +44,3 @@ jobs:
           pnpm --filter @talent-scout/ai-evaluator publish --access public --no-git-checks
           pnpm --filter @talent-scout/skills publish --access public --no-git-checks
           pnpm --filter @talent-scout/dashboard publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Validate skill bundle
-        run: |
-          if command -v skills-ref &>/dev/null; then
-            skills-ref validate ./packages/skills
-          else
-            echo "skills-ref not found, skipping skill validation"
-          fi

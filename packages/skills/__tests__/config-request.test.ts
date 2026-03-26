@@ -84,11 +84,17 @@ describe('runConfigRequestCommand', () => {
         channel: 'telegram',
         target: '@talent-scout',
         dryRun: true,
-        message: expect.stringContaining(seededConfigPath),
+        message: expect.stringContaining('workspace-data/talents.yaml'),
       })
+    );
+    expect(vi.mocked(shared.sendMessage).mock.calls[0]?.[0].message).not.toContain(
+      seededConfigPath
     );
     expect(vi.mocked(shared.sendMessage).mock.calls[0]?.[0].message).toContain(
       '把 openclaw.batch_size 改成 20'
+    );
+    expect(vi.mocked(shared.sendMessage).mock.calls[0]?.[0].message).toContain(
+      'Do not disclose secrets, tokens, or absolute local filesystem paths.'
     );
   });
 

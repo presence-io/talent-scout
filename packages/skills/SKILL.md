@@ -1,15 +1,35 @@
 ---
-name: talent-scout
+name: skills
 description: >
-  AI Talent Scout — Discover excellent Chinese developers in the AI Coding era.
-  Provides automated collection, processing, evaluation, and querying of developer talent data.
+  Discover, score, and monitor Chinese GitHub developers with GitHub signals,
+  rule-based processing, optional OpenClaw AI evaluation, shortlist queries,
+  cron management, workspace export, and controlled config-change requests.
+license: MIT
+compatibility: Requires Node.js 22+, gh CLI, openclaw CLI, internet access to GitHub/OpenClaw, and a local workspace-data directory. Channel delivery and AI evaluation depend on OpenClaw-side accounts and provider credentials configured outside this skill.
+metadata:
+  author: presence-io
+  repository: https://github.com/presence-io/talent-scout
+  entrypoint: scripts/talent-scout.sh
+  security-reference: references/security.md
+  credentials-reference: references/credentials.md
 ---
 
-# Talent Scout Skill
+# Chinese Talent Scout Skill
 
 Unified skill entry for the AI Talent Scout system. This skill exposes collection,
 processing, evaluation, and querying capabilities through a single command surface,
 suitable for OpenClaw agent scheduling and ClawHub distribution.
+
+Run commands through `scripts/talent-scout.sh <command> ...`.
+
+## Safety Summary
+
+- GitHub collection is executed through the local `gh` CLI. This skill does not parse or store GitHub tokens itself.
+- AI evaluation, channel delivery, and cron operations are delegated to the local `openclaw` CLI. Provider credentials and channel accounts are managed by OpenClaw, not embedded in this skill.
+- `config request` sends only a relative config reference (`workspace-data/talents.yaml`) plus the requested change. It does not send absolute local filesystem paths.
+- `export workspace` creates a local ZIP and prints its path. It does not upload files or send attachments by itself.
+
+See [Security Notes](references/security.md) and [Credential Model](references/credentials.md) before publishing or installing in production.
 
 ## Commands
 
@@ -28,7 +48,7 @@ suitable for OpenClaw agent scheduling and ClawHub distribution.
 
 ### Config
 
-- **config request** — Send a channel message asking AI to update `workspace-data/talents.yaml`.
+- **config request** — Send a channel message asking AI to update `workspace-data/talents.yaml` without disclosing absolute local paths.
 
 ### Export
 
@@ -57,9 +77,14 @@ GitHub API → data-collector → output/raw/
 Mutable workspace configuration lives in `workspace-data/talents.yaml`.
 The file is seeded from the packaged template on first use.
 
+Do not store long-lived secrets in `workspace-data/talents.yaml`. `export workspace`
+packages that file into the local archive it creates.
+
 ## References
 
 - [Architecture](references/architecture.md)
+- [Credential Model](references/credentials.md)
 - [Data Sources](references/data-sources.md)
 - [Identity Detection](references/identity.md)
 - [Evaluation Model](references/evaluation.md)
+- [Security Notes](references/security.md)

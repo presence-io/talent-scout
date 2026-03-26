@@ -7,6 +7,8 @@
 
 `@talent-scout/skills` 是对 OpenClaw 和 ClawHub 暴露的统一 skill 包。它不重写业务逻辑，而是把采集、处理、评估、查询和 cron 管理整理成单一命令面，既适合 OpenClaw agent 调用，也适合本地命令行使用。
 
+ClawHub 发布时不要直接发布 `packages/skills`。根据 Agent Skills 规范，发布目录名必须与 `SKILL.md` 的 `name` 字段一致；因此需要先构建一个合规的 bundle 目录，再发布该 bundle。
+
 从现在开始，skills 也负责 `workspace-data/talents.yaml` 的生命周期：包内自带默认模板，首次需要写工作区时会自动复制到 `workspace-data/`，后续命令统一读取这份工作区配置。
 
 ## 角色定位
@@ -50,7 +52,7 @@ pnpm --filter @talent-scout/skills run skill cron enable talent-pipeline
 
 `export workspace` 只会把整个 `workspace-data/` 打包成 `workspace-data.zip`，然后把 zip 的绝对路径打印出来并返回给 OpenClaw。这个 skill 不负责把文件发到 Telegram/Slack/Discord；如果你想把压缩包发给终端用户，应该再调用另一个专门负责文件投递的 OpenClaw skill。
 
-`config request` 不直接改 YAML；它会把 `workspace-data/talents.yaml` 的绝对路径和用户需求拼成一条 channel 消息，再交给 OpenClaw 侧的 AI 去实际修改。这样 skills 只负责路由和上下文，不负责理解具体配置语义。
+`config request` 不直接改 YAML；它会把 `workspace-data/talents.yaml` 的相对引用和用户需求拼成一条 channel 消息，再交给 OpenClaw 侧的 AI 去实际修改。这样 skills 只负责路由和上下文，不负责理解具体配置语义，同时避免把本机绝对路径泄露到外部 channel。
 
 这条命令依赖 `openclaw message send` 对应的 channel 在当前环境里可用。即使传了 `--dry-run`，OpenClaw 仍然会检查 channel 是否已配置。
 
@@ -122,10 +124,27 @@ ClawHub 发布是这个包的特殊职责。根据项目分发设计，推荐在
 ```bash
 pnpm add -g clawhub
 clawhub login
-clawhub publish packages/skills
+pnpm --filter @talent-scout/skills run bundle:clawhub
+clawhub publish packages/skills/dist/clawhub/chinese-talent-scout
 ```
 
+这个 bundle 会：
+
+- 复制符合规范的 `SKILL.md`
+- 复制 `references/` 和 `talents.yaml`
+- 生成自包含的 `scripts/talent-scout.mjs` 与 `scripts/talent-scout.sh`
+- 把发布目录名固定为 `chinese-talent-scout`，与 `SKILL.md` 的 `name` 保持一致
+
+如果你希望 ClawHub 上的 slug 使用别的唯一值，可以在 publish 时显式传 `--slug`，但 bundle 目录名与 `SKILL.md` 名称仍必须匹配。
+
 如果你使用 `clawhub sync`，请显式限制同步范围，避免把工作区里无关的 skill 一并发布。
+
+## 安全与审核说明
+
+- 凭据预期见 [references/credentials.md](./references/credentials.md)
+- 安全边界见 [references/security.md](./references/security.md)
+- `export workspace` 只创建本地 zip，不上传文件
+- `config request --dry-run` 可用于检查实际发出的消息内容
 
 ## 如何在本地 OpenClaw 环境测试
 
@@ -144,11 +163,12 @@ pnpm --filter @talent-scout/skills run skill query shortlist
 
 ### 2. 再验证 OpenClaw skill 装载
 
-OpenClaw 会在工作区的 `skills/` 目录加载 skill。一个简单的本地测试方式是把 `packages/skills` 复制或软链接到某个 OpenClaw 工作区中：
+OpenClaw 会在工作区的 `skills/` 目录加载 skill。一个简单的本地测试方式是先构建 bundle，再把 bundle 目录复制或软链接到某个 OpenClaw 工作区中：
 
 ```bash
+pnpm --filter @talent-scout/skills run bundle:clawhub
 mkdir -p ~/openclaw-workspace/skills
-ln -s "$(pwd)/packages/skills" ~/openclaw-workspace/skills/talent-scout
+ln -s "$(pwd)/packages/skills/dist/clawhub/chinese-talent-scout" ~/openclaw-workspace/skills/chinese-talent-scout
 cd ~/openclaw-workspace
 openclaw
 ```
@@ -170,7 +190,7 @@ openclaw
 如果你已经把 skill 发布到 ClawHub，也可以在 OpenClaw 工作区直接执行：
 
 ```bash
-openclaw skills install talent-scout
+openclaw skills install chinese-talent-scout
 ```
 
 ## 什么时候改这个包
