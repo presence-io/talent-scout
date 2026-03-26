@@ -56,7 +56,7 @@ describe('resolveOutputDir', () => {
   it('defaults to base/output', () => {
     const orig = process.env['TALENT_OUTPUT_DIR'];
     delete process.env['TALENT_OUTPUT_DIR'];
-    expect(resolveOutputDir('/base')).toBe('/base/output');
+    expect(resolveOutputDir('/base')).toBe('/base/output/evaluated/latest');
     if (orig !== undefined) {
       process.env['TALENT_OUTPUT_DIR'] = orig;
     }

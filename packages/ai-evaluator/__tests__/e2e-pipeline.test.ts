@@ -131,9 +131,9 @@ describe('E2E pipeline', () => {
       user_cn: makeCandidate('user_cn'),
       user_us: makeCandidate('user_us'),
     };
-    await writeFile(join(testDir, 'step2_merged.json'), JSON.stringify(candidates, null, 2));
+    await writeFile(join(testDir, 'merged.json'), JSON.stringify(candidates, null, 2));
 
-    // Prepare fixture data: step3_profiles.json
+    // Prepare fixture data: profiles.json
     const profiles: Record<string, ReturnType<typeof makeProfile>> = {
       user_cn: makeProfile('user_cn'),
       user_us: {
@@ -143,7 +143,7 @@ describe('E2E pipeline', () => {
         email: 'user_us@example.com',
       },
     };
-    await writeFile(join(testDir, 'step3_profiles.json'), JSON.stringify(profiles, null, 2));
+    await writeFile(join(testDir, 'profiles.json'), JSON.stringify(profiles, null, 2));
 
     // Run the pipeline with skipAI (no OpenClaw calls needed)
     await runPipeline({
@@ -152,8 +152,8 @@ describe('E2E pipeline', () => {
       skipAI: true,
     });
 
-    // Verify step4_evaluated.json was created and is valid
-    const evalRaw = await readFile(join(testDir, 'step4_evaluated.json'), 'utf-8');
+    // Verify evaluation.json was created and is valid
+    const evalRaw = await readFile(join(testDir, 'evaluation.json'), 'utf-8');
     const evaluated = JSON.parse(evalRaw) as Record<string, Candidate>;
 
     expect(evaluated).toHaveProperty('user_cn');
@@ -193,8 +193,8 @@ describe('E2E pipeline', () => {
   });
 
   test('empty candidate set produces empty shortlist', async () => {
-    await writeFile(join(testDir, 'step2_merged.json'), '{}');
-    await writeFile(join(testDir, 'step3_profiles.json'), '{}');
+    await writeFile(join(testDir, 'merged.json'), '{}');
+    await writeFile(join(testDir, 'profiles.json'), '{}');
 
     await runPipeline({
       inputDir: testDir,

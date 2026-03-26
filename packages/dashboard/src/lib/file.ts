@@ -18,7 +18,7 @@ export async function writeJsonAtomic(filePath: string, data: unknown): Promise<
 }
 
 export function resolveOutputDir(base: string): string {
-  return process.env['TALENT_OUTPUT_DIR'] ?? join(base, 'output');
+  return process.env['TALENT_OUTPUT_DIR'] ?? join(base, 'output', 'evaluated', 'latest');
 }
 
 export function resolveUserDataDir(base: string): string {

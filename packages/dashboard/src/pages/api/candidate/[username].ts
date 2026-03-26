@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ params }) => {
   }
 
   const candidateData = await readJsonFile<Record<string, Candidate> | Candidate[]>(
-    join(outputDir, 'step4_evaluated.json'),
+    join(outputDir, 'evaluation.json'),
     {},
   );
   const candidateArray = Array.isArray(candidateData)

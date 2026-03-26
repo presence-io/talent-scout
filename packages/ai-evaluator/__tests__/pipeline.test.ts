@@ -64,7 +64,7 @@ describe('runPipeline', () => {
   });
 
   async function writeInputFiles(candidates: Record<string, Candidate>): Promise<void> {
-    await writeFile(join(inputDir, 'step2_merged.json'), JSON.stringify(candidates));
+    await writeFile(join(inputDir, 'merged.json'), JSON.stringify(candidates));
 
     const profiles: Record<string, unknown> = {};
     for (const [username, c] of Object.entries(candidates)) {
@@ -72,7 +72,7 @@ describe('runPipeline', () => {
         profiles[username] = c.profile;
       }
     }
-    await writeFile(join(inputDir, 'step3_profiles.json'), JSON.stringify(profiles));
+    await writeFile(join(inputDir, 'profiles.json'), JSON.stringify(profiles));
   }
 
   it('should run pipeline end-to-end with skipAI', async () => {
@@ -90,7 +90,7 @@ describe('runPipeline', () => {
 
     // Verify output files were written
     const { readFile } = await import('node:fs/promises');
-    const evaluated = JSON.parse(await readFile(join(outputDir, 'step4_evaluated.json'), 'utf-8'));
+    const evaluated = JSON.parse(await readFile(join(outputDir, 'evaluation.json'), 'utf-8'));
     expect(evaluated).toHaveProperty('user1');
 
     const shortlist = JSON.parse(await readFile(join(outputDir, 'shortlist.json'), 'utf-8'));

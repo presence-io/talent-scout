@@ -11,7 +11,7 @@ import { produceShortlist } from './shortlist.js';
 import { computeRunStats, appendSkillsPending } from './skills.js';
 
 export interface PipelineOptions {
-  /** Directory containing step2_merged.json and step3_profiles.json */
+  /** Directory containing merged.json and profiles.json */
   inputDir: string;
   /** Directory to write evaluation output and shortlist */
   outputDir: string;
@@ -43,16 +43,16 @@ interface ProfileData {
   };
 }
 
-/** Load merged candidates from step2_merged.json. */
+/** Load merged candidates from merged.json. */
 async function loadCandidates(inputDir: string): Promise<Candidate[]> {
-  const raw = await readFile(join(inputDir, 'step2_merged.json'), 'utf-8');
+  const raw = await readFile(join(inputDir, 'merged.json'), 'utf-8');
   const data = JSON.parse(raw) as MergedData;
   return Object.values(data);
 }
 
-/** Attach profiles from step3_profiles.json to candidates. */
+/** Attach profiles from profiles.json to candidates. */
 async function attachProfiles(candidates: Candidate[], inputDir: string): Promise<void> {
-  const raw = await readFile(join(inputDir, 'step3_profiles.json'), 'utf-8');
+  const raw = await readFile(join(inputDir, 'profiles.json'), 'utf-8');
   const profiles = JSON.parse(raw) as ProfileData;
 
   for (const c of candidates) {
@@ -124,7 +124,7 @@ async function writeOutput(
     evaluated[c.username] = c;
   }
 
-  await writeFile(join(outputDir, 'step4_evaluated.json'), JSON.stringify(evaluated, null, 2));
+  await writeFile(join(outputDir, 'evaluation.json'), JSON.stringify(evaluated, null, 2));
   await writeFile(join(outputDir, 'shortlist.json'), JSON.stringify(shortlist, null, 2));
 }
 
