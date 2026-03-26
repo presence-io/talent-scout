@@ -165,6 +165,106 @@ const CHINA_SOCIAL_PATTERNS = [
   /v2ex\.com/,
 ];
 
+// Common Chinese surname syllables for pinyin detection (Tier 4)
+const PINYIN_SURNAMES = [
+  'wang',
+  'li',
+  'zhang',
+  'liu',
+  'chen',
+  'yang',
+  'huang',
+  'zhao',
+  'wu',
+  'zhou',
+  'xu',
+  'sun',
+  'ma',
+  'zhu',
+  'hu',
+  'guo',
+  'lin',
+  'he',
+  'gao',
+  'luo',
+  'zheng',
+  'liang',
+  'xie',
+  'han',
+  'tang',
+  'feng',
+  'deng',
+  'cao',
+  'peng',
+  'zeng',
+  'xiao',
+  'tian',
+  'dong',
+  'pan',
+  'yuan',
+  'cai',
+  'jiang',
+  'yu',
+  'du',
+  'ye',
+  'cheng',
+  'wei',
+  'su',
+  'lu',
+  'ding',
+  'ren',
+  'shen',
+  'yao',
+  'lv',
+  'song',
+  'qin',
+  'cui',
+];
+
+// Common pinyin given name fragments
+const PINYIN_GIVEN = [
+  'wei',
+  'fang',
+  'na',
+  'min',
+  'jing',
+  'li',
+  'qiang',
+  'lei',
+  'jun',
+  'yong',
+  'jie',
+  'ping',
+  'chao',
+  'xin',
+  'hua',
+  'guang',
+  'ming',
+  'hong',
+  'hai',
+  'bo',
+  'yan',
+  'lin',
+  'tao',
+  'gang',
+  'hao',
+  'kai',
+  'peng',
+  'long',
+  'rui',
+  'xiang',
+  'zhi',
+  'wen',
+  'yi',
+  'ning',
+  'sheng',
+  'ting',
+  'yu',
+  'yang',
+  'chun',
+  'qiu',
+];
+
 // CJK Unified Ideographs range for simplified Chinese detection
 const CJK_RANGE = /[\u4e00-\u9fff]/;
 // Japanese kana ranges (hiragana + katakana)
@@ -332,6 +432,125 @@ function matchSocialLinks(blog: string | null, bio: string | null): IdentitySign
   return null;
 }
 
+function matchProfileReadme(candidate: Candidate): IdentitySignal | null {
+  const profile = candidate.profile;
+  if (!profile) return null;
+  const profileRepo = profile.recent_repos.find(
+    (r) => r.full_name.toLowerCase() === `${profile.login}/${profile.login}`.toLowerCase(),
+  );
+  if (!profileRepo) return null;
+  if (profileRepo.description && containsSimplifiedChinese(profileRepo.description)) {
+    return {
+      tier: 2,
+      type: 'readme:profile-chinese',
+      confidence: 0.75,
+      evidence: `Profile repo "${profileRepo.full_name}" description contains simplified Chinese`,
+    };
+  }
+  return null;
+}
+
+// ── Tier 3 Detectors ──
+
+function matchRepoDescriptions(candidate: Candidate): IdentitySignal | null {
+  const repos = candidate.profile?.recent_repos;
+  if (!repos || repos.length === 0) return null;
+  let chineseCount = 0;
+  for (const repo of repos.slice(0, 10)) {
+    if (repo.description && containsSimplifiedChinese(repo.description)) {
+      chineseCount++;
+    }
+  }
+  if (chineseCount >= 2) {
+    return {
+      tier: 3,
+      type: 'repo:description-chinese',
+      confidence: 0.55,
+      evidence: `${String(chineseCount)} of recent repos have simplified Chinese descriptions`,
+    };
+  }
+  return null;
+}
+
+function matchCommitChinese(candidate: Candidate): IdentitySignal | null {
+  const commitSignals = candidate.signals.filter((s) => s.type.startsWith('commit:'));
+  if (commitSignals.length === 0) return null;
+  let chineseCount = 0;
+  for (const s of commitSignals) {
+    if (s.detail && containsSimplifiedChinese(s.detail)) {
+      chineseCount++;
+    }
+  }
+  if (chineseCount >= 3) {
+    return {
+      tier: 3,
+      type: 'commit:message-chinese',
+      confidence: 0.5,
+      evidence: `${String(chineseCount)} commit messages contain simplified Chinese`,
+    };
+  }
+  return null;
+}
+
+// ── Tier 4 Detectors ──
+
+function matchPinyinName(candidate: Candidate): IdentitySignal | null {
+  const name = candidate.profile?.name;
+  if (!name) return null;
+  const normalized = name.toLowerCase().trim();
+  const parts = normalized.split(/[\s-]+/).filter(Boolean);
+  if (parts.length < 2 || parts.length > 4) return null;
+
+  const firstPart = parts[0];
+  const lastPart = parts[parts.length - 1];
+  if (!firstPart || !lastPart) return null;
+  const hasSurname = PINYIN_SURNAMES.includes(firstPart);
+  const hasGivenInAny = parts.slice(1).some((p) => PINYIN_GIVEN.includes(p));
+
+  // Also check reverse order (some people write given name first)
+  const hasSurnameReverse = PINYIN_SURNAMES.includes(lastPart);
+  const hasGivenReverse = parts.slice(0, -1).some((p) => PINYIN_GIVEN.includes(p));
+
+  if ((hasSurname && hasGivenInAny) || (hasSurnameReverse && hasGivenReverse)) {
+    return {
+      tier: 4,
+      type: 'name:pinyin',
+      confidence: 0.25,
+      evidence: `Name "${name}" matches Chinese pinyin pattern`,
+    };
+  }
+  return null;
+}
+
+function matchCommitTimezone(candidate: Candidate): IdentitySignal | null {
+  const timestamps = candidate.signals
+    .filter((s) => s.occurred_at)
+    .map((s) => new Date(s.occurred_at as string));
+
+  if (timestamps.length < 10) return null;
+
+  // Check if most activity falls in UTC+8 working hours (09:00-23:00 UTC+8 = 01:00-15:00 UTC)
+  let utcPlus8Count = 0;
+  for (const ts of timestamps) {
+    const utcHour = ts.getUTCHours();
+    // UTC+8 active hours: 9am-11pm local = 1am-3pm UTC
+    if (utcHour >= 1 && utcHour <= 15) {
+      utcPlus8Count++;
+    }
+  }
+
+  const ratio = utcPlus8Count / timestamps.length;
+  if (ratio >= 0.7) {
+    return {
+      tier: 4,
+      type: 'timezone:utc-plus-8',
+      confidence: 0.2,
+      evidence: `${(ratio * 100).toFixed(0)}% of activity timestamps align with UTC+8 active hours`,
+    };
+  }
+  return null;
+}
+
 // ── Confidence Computation ──
 
 export function computeChinaConfidence(signals: IdentitySignal[]): number {
@@ -384,12 +603,14 @@ export function identifyCandidate(candidate: Candidate): IdentityResult {
 
   const signals: IdentitySignal[] = [];
 
+  // Tier 1
   const locationSignal = matchExplicitLocation(profile);
   if (locationSignal) signals.push(locationSignal);
 
   const emailSignal = matchEmailDomain(profile.email);
   if (emailSignal) signals.push(emailSignal);
 
+  // Tier 2
   const bioSignal = matchBio(profile.bio);
   if (bioSignal) signals.push(bioSignal);
 
@@ -401,6 +622,27 @@ export function identifyCandidate(candidate: Candidate): IdentityResult {
 
   const socialSignal = matchSocialLinks(profile.blog, profile.bio);
   if (socialSignal) signals.push(socialSignal);
+
+  const profileReadmeSignal = matchProfileReadme(candidate);
+  if (profileReadmeSignal) signals.push(profileReadmeSignal);
+
+  // Only proceed to Tier 3/4 if conclusion is still uncertain
+  const earlyConfidence = computeChinaConfidence(signals);
+  if (earlyConfidence < 0.8) {
+    // Tier 3
+    const repoDescSignal = matchRepoDescriptions(candidate);
+    if (repoDescSignal) signals.push(repoDescSignal);
+
+    const commitChineseSignal = matchCommitChinese(candidate);
+    if (commitChineseSignal) signals.push(commitChineseSignal);
+
+    // Tier 4
+    const pinyinSignal = matchPinyinName(candidate);
+    if (pinyinSignal) signals.push(pinyinSignal);
+
+    const timezoneSignal = matchCommitTimezone(candidate);
+    if (timezoneSignal) signals.push(timezoneSignal);
+  }
 
   return {
     china_confidence: computeChinaConfidence(signals),
