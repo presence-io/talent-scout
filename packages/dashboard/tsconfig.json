@@ -1,9 +1,17 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src/lib/**/*.ts", "src/index.ts", "src/pages/**/*.ts"],
-  "references": [{ "path": "../shared" }]
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src"
+    },
+    "include": [
+        "src/lib/**/*.ts",
+        "src/index.ts",
+        "src/pages/**/*.ts"
+    ],
+    "references": [
+        {
+            "path": "../shared"
+        }
+    ]
 }

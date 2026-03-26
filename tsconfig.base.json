@@ -1,24 +1,26 @@
 {
-  "compilerOptions": {
-    "target": "ES2023",
-    "module": "Node16",
-    "moduleResolution": "Node16",
-    "lib": ["ES2023"],
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "composite": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "exactOptionalPropertyTypes": false,
-    "noUncheckedIndexedAccess": true
-  }
+    "compilerOptions": {
+        "target": "ES2023",
+        "module": "Node16",
+        "moduleResolution": "Node16",
+        "lib": [
+            "ES2023"
+        ],
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "composite": true,
+        "outDir": "dist",
+        "rootDir": "src",
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "exactOptionalPropertyTypes": false,
+        "noUncheckedIndexedAccess": true
+    }
 }
