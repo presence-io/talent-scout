@@ -1,7 +1,10 @@
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
+
+import { resolveWorkspaceConfigPath } from './workspace.js';
 
 // ── Zod schemas matching talents.yaml structure ──
 
@@ -98,6 +101,25 @@ const OpenClawAgentSchema = z.object({
   timeout: z.number().default(120),
 });
 
+const OpenClawChannelSchema = z.enum([
+  'telegram',
+  'whatsapp',
+  'discord',
+  'irc',
+  'googlechat',
+  'slack',
+  'signal',
+  'imessage',
+  'line',
+]);
+
+const OpenClawDeliverySchema = z.object({
+  channel: OpenClawChannelSchema,
+  target: z.string(),
+  account: z.string().optional(),
+  thread_id: z.string().optional(),
+});
+
 const CronJobSchema = z.object({
   name: z.string(),
   schedule: z.string(),
@@ -109,6 +131,7 @@ const OpenClawConfigSchema = z.object({
   agents: z.record(z.string(), OpenClawAgentSchema).default({}),
   batch_size: z.number().default(10),
   cron: z.array(CronJobSchema).default([]),
+  delivery: OpenClawDeliverySchema.optional(),
 });
 
 const CacheTtlSchema = z.object({
@@ -145,6 +168,20 @@ export type TalentConfig = z.infer<typeof TalentConfigSchema>;
 
 let cachedConfig: TalentConfig | null = null;
 
+export function resolveTalentConfigPath(base?: string): string {
+  if (process.env['TALENT_CONFIG']) {
+    return resolve(process.env['TALENT_CONFIG']);
+  }
+
+  const root = base ?? process.env['INIT_CWD'] ?? process.cwd();
+  const workspaceConfigPath = resolveWorkspaceConfigPath(root);
+  if (existsSync(workspaceConfigPath)) {
+    return workspaceConfigPath;
+  }
+
+  return resolve(join(root, 'talents.yaml'));
+}
+
 export async function loadConfigFromPath(configPath: string): Promise<TalentConfig> {
   const raw = await readFile(resolve(configPath), 'utf-8');
   const parsed: unknown = parseYaml(raw);
@@ -153,14 +190,14 @@ export async function loadConfigFromPath(configPath: string): Promise<TalentConf
 
 /**
  * Load and validate talents.yaml from the project root.
- * Uses TALENT_CONFIG env var if set, otherwise defaults to `$PWD/talents.yaml`.
+ * Uses TALENT_CONFIG env var if set, otherwise prefers `workspace-data/talents.yaml`
+ * and falls back to `$PWD/talents.yaml`.
  * Results are cached in-memory after the first load.
  */
 export async function loadConfig(forceReload = false): Promise<TalentConfig> {
   if (cachedConfig && !forceReload) return cachedConfig;
 
-  const root = process.env['INIT_CWD'] ?? process.cwd();
-  const configPath = resolve(process.env['TALENT_CONFIG'] ?? join(root, 'talents.yaml'));
+  const configPath = resolveTalentConfigPath();
   cachedConfig = await loadConfigFromPath(configPath);
   return cachedConfig;
 }

@@ -4,6 +4,7 @@ import Base from '@/layouts/Base.astro';
 import type { IgnoreList, RecommendedAction } from '@talent-scout/shared';
 import { loadShortlist } from '@talent-scout/ai-evaluator';
 import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '@/lib/file';
+import { loadDashboardCapabilities } from '@/lib/dashboard-config';
 import {
   sortCandidates,
   filterByAction,
@@ -19,6 +20,7 @@ import { formatScore, formatAction, formatTier, actionBadgeClass } from '@/lib/f
 const base = process.cwd();
 const outputDir = resolveOutputDir(base);
 const userDataDir = resolveUserDataDir(base);
+const dashboardCapabilities = loadDashboardCapabilities();
 
 const entries = await loadShortlist(outputDir);
 const annotations = await readJsonFile<AnnotationMap>(join(userDataDir, 'annotations.json'), {});
@@ -73,6 +75,14 @@ const paginated = paginateCandidates(list, page, limit);
     <span class="text-sm opacity-70">{paginated.totalItems} candidates</span>
   </div>
 
+  {
+    dashboardCapabilities.readOnly && (
+      <div class="alert alert-info mb-4">
+        <span>Quick annotation is unavailable while the dashboard is reading a workspace zip.</span>
+      </div>
+    )
+  }
+
   <div class="overflow-x-auto">
     <table class="table-zebra table-sm table">
       <thead>
@@ -113,24 +123,28 @@ const paginated = paginateCandidates(list, page, limit);
               </td>
               <td>{c.signal_count}</td>
               <td>
-                <div class="flex gap-1">
-                  <button
-                    class="btn btn-xs btn-success quick-annotate"
-                    data-username={c.username}
-                    data-action="approved"
-                    title="Approve"
-                  >
-                    ✓
-                  </button>
-                  <button
-                    class="btn btn-xs btn-error quick-annotate"
-                    data-username={c.username}
-                    data-action="rejected"
-                    title="Reject"
-                  >
-                    ✗
-                  </button>
-                </div>
+                {dashboardCapabilities.canMutate ? (
+                  <div class="flex gap-1">
+                    <button
+                      class="btn btn-xs btn-success quick-annotate"
+                      data-username={c.username}
+                      data-action="approved"
+                      title="Approve"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      class="btn btn-xs btn-error quick-annotate"
+                      data-username={c.username}
+                      data-action="rejected"
+                      title="Reject"
+                    >
+                      ✗
+                    </button>
+                  </div>
+                ) : (
+                  <span class="text-xs opacity-60">Read only</span>
+                )}
                 {c.annotation && (
                   <span class="badge badge-xs badge-outline ml-1">{c.annotation.status}</span>
                 )}
@@ -182,18 +196,20 @@ const paginated = paginateCandidates(list, page, limit);
       debounce = setTimeout(applyFilters, 400);
     });
 
-    document.querySelectorAll('.quick-annotate').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const el = btn as HTMLButtonElement;
-        const username = el.dataset.username;
-        const action = el.dataset.action;
-        await fetch(`/api/candidate/${username}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action }),
+    if (document.querySelector('.quick-annotate')) {
+      document.querySelectorAll('.quick-annotate').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const el = btn as HTMLButtonElement;
+          const username = el.dataset.username;
+          const action = el.dataset.action;
+          await fetch(`/api/candidate/${username}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action }),
+          });
+          window.location.reload();
         });
-        window.location.reload();
       });
-    });
+    }
   </script>
 </Base>

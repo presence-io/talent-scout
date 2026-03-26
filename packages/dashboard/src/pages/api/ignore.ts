@@ -2,9 +2,21 @@ import type { IgnoreEntry, IgnoreList } from '@talent-scout/shared';
 import type { APIRoute } from 'astro';
 import { join } from 'node:path';
 
+import { assertDashboardWritable } from '@/lib/dashboard-config.js';
 import { readJsonFile, resolveUserDataDir, writeJsonAtomic } from '@/lib/file.js';
 
 export const POST: APIRoute = async ({ request }) => {
+  try {
+    assertDashboardWritable();
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'Dashboard is read only.',
+      }),
+      { status: 403 }
+    );
+  }
+
   const body = (await request.json()) as { username?: string; reason?: string };
   if (!body.username) {
     return new Response(JSON.stringify({ error: 'Missing username' }), {
@@ -29,6 +41,17 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 export const DELETE: APIRoute = async ({ request }) => {
+  try {
+    assertDashboardWritable();
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'Dashboard is read only.',
+      }),
+      { status: 403 }
+    );
+  }
+
   const body = (await request.json()) as { username?: string };
   if (!body.username) {
     return new Response(JSON.stringify({ error: 'Missing username' }), {

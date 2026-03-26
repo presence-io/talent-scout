@@ -9,8 +9,10 @@ export async function runPipelineCommand(): Promise<void> {
 }
 
 export { runCollectCommand, runProcessCommand, runEvaluateCommand } from './commands.js';
+export { runConfigRequestCommand } from './config-request.js';
 export { cronStatus, cronSync, cronRuns, cronRun, cronDisable, cronEnable } from './cron.js';
 export type { CronRunInfo } from './cron.js';
+export { runExportWorkspaceCommand } from './export.js';
 export { queryShortlist, queryCandidate, queryStats } from './query.js';
 export { loadPatches, applyPatches, satisfiesVersion, writeAppliedManifest } from './patches.js';
 export { renderShortlistText, renderCandidateText, renderStatsText } from './renderers.js';
@@ -27,6 +29,8 @@ Commands:
   query shortlist      Show shortlist
   query candidate <u>  Show candidate details
   query stats          Show run statistics
+  export workspace     Zip workspace-data and print the resulting file path
+  config request       Send a channel message describing a talents.yaml change request
   cron status          Show cron job configuration
   cron sync            Sync cron jobs to OpenClaw
   cron runs            List recent cron run history
@@ -39,6 +43,11 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const command = args[0];
   const subcommand = args[1];
+
+  if (command && ['collect', 'process', 'evaluate', 'pipeline', 'cron'].includes(command)) {
+    const { configureWorkspaceTalentConfig } = await import('./workspace-config.js');
+    await configureWorkspaceTalentConfig();
+  }
 
   switch (command) {
     case 'collect':
@@ -87,6 +96,34 @@ async function main(): Promise<void> {
         default:
           console.error(`Unknown query subcommand: ${String(subcommand)}`);
           console.log(USAGE);
+          process.exitCode = 1;
+      }
+      break;
+    }
+    case 'export': {
+      const { EXPORT_WORKSPACE_USAGE, runExportWorkspaceCommand } = await import('./export.js');
+
+      switch (subcommand) {
+        case 'workspace':
+          await runExportWorkspaceCommand(args.slice(2));
+          break;
+        default:
+          console.error(`Unknown export subcommand: ${String(subcommand)}`);
+          console.log(EXPORT_WORKSPACE_USAGE);
+          process.exitCode = 1;
+      }
+      break;
+    }
+    case 'config': {
+      const { CONFIG_REQUEST_USAGE, runConfigRequestCommand } = await import('./config-request.js');
+
+      switch (subcommand) {
+        case 'request':
+          await runConfigRequestCommand(args.slice(2));
+          break;
+        default:
+          console.error(`Unknown config subcommand: ${String(subcommand)}`);
+          console.log(CONFIG_REQUEST_USAGE);
           process.exitCode = 1;
       }
       break;

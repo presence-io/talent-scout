@@ -43,6 +43,86 @@ export interface CronJob {
   command: string;
 }
 
+export type OpenClawChannel =
+  | 'telegram'
+  | 'whatsapp'
+  | 'discord'
+  | 'irc'
+  | 'googlechat'
+  | 'slack'
+  | 'signal'
+  | 'imessage'
+  | 'line';
+
+export interface MessageSendOptions {
+  channel: OpenClawChannel;
+  target: string;
+  message?: string;
+  media?: string;
+  account?: string;
+  threadId?: string;
+  dryRun?: boolean;
+  silent?: boolean;
+  verbose?: boolean;
+  forceDocument?: boolean;
+}
+
+export interface MessageSendResult {
+  [key: string]: unknown;
+}
+
+/** Send a message through an OpenClaw channel, optionally with an attachment. */
+export async function sendMessage(options: MessageSendOptions): Promise<MessageSendResult> {
+  if (!options.message && !options.media) {
+    throw new Error('OpenClaw messages require either message text or a media attachment.');
+  }
+
+  const args = [
+    'message',
+    'send',
+    '--channel',
+    options.channel,
+    '--target',
+    options.target,
+    '--json',
+  ];
+
+  if (options.account) {
+    args.push('--account', options.account);
+  }
+
+  if (options.message) {
+    args.push('--message', options.message);
+  }
+
+  if (options.media) {
+    args.push('--media', options.media);
+  }
+
+  if (options.threadId) {
+    args.push('--thread-id', options.threadId);
+  }
+
+  if (options.dryRun) {
+    args.push('--dry-run');
+  }
+
+  if (options.silent) {
+    args.push('--silent');
+  }
+
+  if (options.verbose) {
+    args.push('--verbose');
+  }
+
+  if (options.forceDocument) {
+    args.push('--force-document');
+  }
+
+  const { stdout } = await execa('openclaw', args);
+  return stdout.trim() ? (JSON.parse(stdout) as MessageSendResult) : {};
+}
+
 /**
  * Sync cron jobs defined in talents.yaml to OpenClaw.
  * - New jobs are added.

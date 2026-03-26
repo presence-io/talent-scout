@@ -32,6 +32,7 @@ export default defineConfig({
         'packages/shared/src/types.ts',
 
         // CLI entry points (tested via E2E, not unit)
+        'packages/dashboard/bin/**',
         'packages/data-processor/src/cli.ts',
         'packages/skills/src/commands.ts',
         'packages/skills/src/query.ts',

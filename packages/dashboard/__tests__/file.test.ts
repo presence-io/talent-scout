@@ -4,7 +4,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { findProjectRoot, loadDashboardConfig } from '../src/lib/dashboard-config.js';
+import {
+  assertDashboardWritable,
+  findProjectRoot,
+  loadDashboardCapabilities,
+  loadDashboardConfig,
+} from '../src/lib/dashboard-config.js';
 import {
   listRunHistory,
   readJsonFile,
@@ -22,6 +27,7 @@ afterEach(() => {
   delete process.env.TALENT_SCOUT_DASHBOARD_PROJECT_ROOT;
   delete process.env.TALENT_SCOUT_DASHBOARD_WORKSPACE_DIR;
   delete process.env.TALENT_SCOUT_DASHBOARD_TALENTS_CONFIG;
+  delete process.env.TALENT_SCOUT_DASHBOARD_READ_ONLY;
 });
 
 describe('readJsonFile', () => {
@@ -70,12 +76,14 @@ describe('dashboard config', () => {
 
   it('resolves output and user-data relative to discovered project root', async () => {
     await writeJsonAtomic(join(testDir, 'talents.yaml'), { ok: true });
+    await writeJsonAtomic(join(testDir, 'workspace-data', 'talents.yaml'), { ok: true });
 
     const config = loadDashboardConfig(join(testDir, 'packages', 'dashboard'));
     expect(config.projectRoot).toBe(testDir);
     expect(config.workspaceDir).toBe(join(testDir, 'workspace-data'));
     expect(config.outputDir).toBe(join(testDir, 'workspace-data', 'output', 'evaluated', 'latest'));
     expect(config.userDataDir).toBe(join(testDir, 'workspace-data', 'user-data'));
+    expect(config.talentsConfigPath).toBe(join(testDir, 'workspace-data', 'talents.yaml'));
   });
 
   it('prefers environment overrides for runtime paths', async () => {
@@ -98,6 +106,19 @@ describe('dashboard config', () => {
     );
     expect(config.userDataDir).toBe(join(testDir, customWorkspaceDir, 'user-data'));
     expect(config.talentsConfigPath).toBe(join(testDir, customTalentsConfig));
+  });
+
+  it('exposes read-only dashboard capabilities from the runtime env', () => {
+    process.env.TALENT_SCOUT_DASHBOARD_READ_ONLY = '1';
+
+    expect(loadDashboardCapabilities()).toEqual({
+      readOnly: true,
+      canMutate: false,
+      showOpenClawFeatures: false,
+    });
+    expect(() => assertDashboardWritable()).toThrow(
+      'Dashboard is running in read-only mode from a workspace archive. Local edits are disabled.'
+    );
   });
 });
 

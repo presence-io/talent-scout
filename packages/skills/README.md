@@ -7,6 +7,8 @@
 
 `@talent-scout/skills` 是对 OpenClaw 和 ClawHub 暴露的统一 skill 包。它不重写业务逻辑，而是把采集、处理、评估、查询和 cron 管理整理成单一命令面，既适合 OpenClaw agent 调用，也适合本地命令行使用。
 
+从现在开始，skills 也负责 `workspace-data/talents.yaml` 的生命周期：包内自带默认模板，首次需要写工作区时会自动复制到 `workspace-data/`，后续命令统一读取这份工作区配置。
+
 ## 角色定位
 
 - 对外，这是唯一应该安装到 OpenClaw/ClawHub 的 skill 入口
@@ -37,9 +39,39 @@ pnpm --filter @talent-scout/skills run skill pipeline
 pnpm --filter @talent-scout/skills run skill query shortlist
 pnpm --filter @talent-scout/skills run skill query candidate huandu
 pnpm --filter @talent-scout/skills run skill query stats
+pnpm --filter @talent-scout/skills run skill export workspace
+pnpm --filter @talent-scout/skills run skill export workspace --output /tmp/talent-scout.zip
+pnpm --filter @talent-scout/skills run skill config request --request "把 openclaw.batch_size 改成 20"
 pnpm --filter @talent-scout/skills run skill cron status
 pnpm --filter @talent-scout/skills run skill cron sync
+pnpm --filter @talent-scout/skills run skill cron disable talent-pipeline
+pnpm --filter @talent-scout/skills run skill cron enable talent-pipeline
 ```
+
+`export workspace` 只会把整个 `workspace-data/` 打包成 `workspace-data.zip`，然后把 zip 的绝对路径打印出来并返回给 OpenClaw。这个 skill 不负责把文件发到 Telegram/Slack/Discord；如果你想把压缩包发给终端用户，应该再调用另一个专门负责文件投递的 OpenClaw skill。
+
+`config request` 不直接改 YAML；它会把 `workspace-data/talents.yaml` 的绝对路径和用户需求拼成一条 channel 消息，再交给 OpenClaw 侧的 AI 去实际修改。这样 skills 只负责路由和上下文，不负责理解具体配置语义。
+
+这条命令依赖 `openclaw message send` 对应的 channel 在当前环境里可用。即使传了 `--dry-run`，OpenClaw 仍然会检查 channel 是否已配置。
+
+如果你想让 `config request` 自动知道应该发到哪个 IM 目标，可以在 `workspace-data/talents.yaml` 里提供默认投递目标：
+
+```yaml
+openclaw:
+  delivery:
+    channel: telegram
+    target: '@your-handle'
+```
+
+如果工作区里还没有 `workspace-data/talents.yaml`，以下命令会先自动从包内模板复制一份：
+
+- `collect`
+- `process`
+- `evaluate`
+- `pipeline`
+- `cron *`
+- `export workspace`
+- `config request`
 
 ## 代码结构
 
@@ -47,9 +79,12 @@ pnpm --filter @talent-scout/skills run skill cron sync
 - `src/index.ts`: 命令分发器
 - `src/commands.ts`: collect/process/evaluate 的薄包装
 - `src/query.ts`: shortlist、candidate、stats 查询
+- `src/export.ts`: workspace-data 打包与 zip 路径返回
+- `src/config-request.ts`: talents.yaml 变更请求消息拼装与发送
 - `src/cron.ts`: OpenClaw cron 控制
 - `src/renderers.ts`: 终端文本渲染
 - `src/patches.ts`: 运行时 skill patch overlay
+- `src/workspace-config.ts`: workspace-data/talents.yaml 初始化与路径解析
 - `references/`: 发布给 skill 消费者的参考文档
 
 ## 设计思想
@@ -125,7 +160,11 @@ openclaw
 ```
 
 ```text
-请使用 talent-scout skill 把 talents.yaml 里的 cron 同步到 OpenClaw。
+请使用 talent-scout skill 把 workspace-data/talents.yaml 里的 cron 同步到 OpenClaw。
+```
+
+```text
+请使用 talent-scout skill 导出当前 workspace-data，并告诉我 zip 文件的本地绝对路径。
 ```
 
 如果你已经把 skill 发布到 ClawHub，也可以在 OpenClaw 工作区直接执行：

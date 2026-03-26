@@ -8,7 +8,9 @@
 
 Talent Scout 用来持续发现和评估“AI Coding 时代值得关注的中文开发者”。
 
-它把一次完整的人才发现工作拆成四件事：收集线索、整理候选人、做 AI 辅助评估、把结果展示给招聘方或研究者。仓库根目录只讲你如何开始使用这个系统；具体实现、算法和开发细节请看各子项目 README。
+它的核心体验不是“本地跑几个脚本”，而是把一组稳定的 skill 命令暴露给 OpenClaw。只要你的 OpenClaw 已经接入某个 IM/channel，用户就可以直接发自然语言消息，请它跑 pipeline、查看 shortlist、启停 cron、请求修改配置，或者导出当前工作区给 Dashboard 使用。
+
+仓库根目录只讲你如何开始使用和部署这套体验；更细的实现、算法和开发细节请看各子项目 README。
 
 ## 这个项目适合谁
 
@@ -19,20 +21,20 @@ Talent Scout 用来持续发现和评估“AI Coding 时代值得关注的中文
 ## 你能用它做什么
 
 - 通过 GitHub 线索、社区榜单和 AI 工具使用痕迹建立候选池
-- 用统一的 `talents.yaml` 管理目标画像、阈值、数据源和定时任务
+- 让 OpenClaw 用自然语言驱动 `collect / process / evaluate / pipeline / cron / config request` 等操作
 - 通过 OpenClaw agent 做灰区身份判断和深度评估
-- 在本地 Dashboard 中查看 shortlist、统计分布和人工标注
+- 把当前 `workspace-data/` 打包成 zip，交给其他 OpenClaw skill 发到 IM，或本地用 Dashboard 只读查看
 
 ## 工作流概览
 
 ```mermaid
 flowchart LR
-  A[talents.yaml] --> B[Collect]
-  B --> C[Process]
-  C --> D[Evaluate]
-  D --> E[Shortlist]
-  E --> F[OpenClaw Query]
-  E --> G[Dashboard]
+  A[IM / OpenClaw Channel] --> B[talent-scout skill]
+  B --> C[Collect / Process / Evaluate / Cron]
+  C --> D[workspace-data]
+  D --> E[Query / Shortlist]
+  D --> F[Export ZIP]
+  F --> G[Dashboard Read-Only]
 ```
 
 ## 快速开始
@@ -45,6 +47,8 @@ flowchart LR
 - pnpm 10+
 - GitHub CLI `gh`
 - OpenClaw CLI `openclaw`
+
+如果你要使用 `config request` 这类“通过 IM/channel 让 AI 修改配置”的能力，还需要在 OpenClaw 里先配置一个可用的消息 channel/account。
 
 安装依赖：
 
@@ -71,9 +75,17 @@ openclaw skills install talent-scout
 pnpm --filter @talent-scout/skills run skill pipeline
 ```
 
-### 3. 编写 `talents.yaml`
+### 3. 理解配置文件的位置
 
-`talents.yaml` 是整个系统的唯一配置入口。你不需要一次写满所有字段，先把目标画像、OpenClaw agent 和最关心的线索源配置好就够了。
+当前真正会被 skills 和 dashboard 读取的，是 `workspace-data/talents.yaml`。
+
+它的生命周期是这样的：
+
+1. `@talent-scout/skills` 包内自带一个默认模板。
+2. 第一次需要写工作区时，skills 会自动把模板复制到 `workspace-data/talents.yaml`。
+3. 后续的 collect / process / evaluate / pipeline / cron / config request 都读取这份工作区配置。
+
+仓库根目录的 `talents.yaml` 更适合作为默认样例和开发参考，而不是长期运行时唯一真源。
 
 一个适合起步的示例：
 
@@ -93,8 +105,10 @@ ranking_sources:
 
 target_profile:
   preferred_cities:
-    - Shanghai
-    - Hangzhou
+    - name: Shanghai
+      bonus: 1
+    - name: Hangzhou
+      bonus: 1
   preferred_languages:
     - TypeScript
     - Python
@@ -111,12 +125,19 @@ openclaw:
       workspace: ./packages/ai-evaluator
       timeout: 180
   batch_size: 10
+  delivery:
+    channel: telegram
+    target: '@your-openclaw-channel'
   cron:
     - name: talent-pipeline
       schedule: "0 1 * * 0"
       command: "cd {{project_dir}} && pnpm --filter @talent-scout/skills run skill pipeline"
       description: "Weekly full pipeline"
 ```
+
+如果你不想手工改 YAML，也可以稍后通过 `config request` 让 OpenClaw 代你修改这份工作区配置。
+
+注意：`config request` 依赖 `openclaw message send`。即使使用 `--dry-run`，OpenClaw 也会先检查对应 channel 是否在当前环境可用。
 
 完整字段定义请参考 [docs/07-data-model.md](./docs/07-data-model.md) 和各子项目 README。
 
@@ -137,12 +158,12 @@ pnpm pipeline
 
 ### 5. 在 OpenClaw 中触发常见任务
 
-安装完 skill 并开启新 session 后，可以直接用自然语言触发最典型的功能。下面是三个适合直接复制的例子。
+安装完 skill 并开启新 session 后，可以直接用自然语言触发已经实现好的命令面。下面这些例子都对应当前 skills 中真实存在的功能。
 
 场景一：让 agent 跑一次完整流程
 
 ```text
-请使用 talent-scout skill 按当前工作区的 talents.yaml 跑一次完整 pipeline。
+请使用 talent-scout skill 按当前工作区的 workspace-data/talents.yaml 跑一次完整 pipeline。
 ```
 
 场景二：查看当前 shortlist
@@ -151,21 +172,54 @@ pnpm pipeline
 请读取当前 shortlist，列出最值得联系的前 10 位候选人，并说明理由。
 ```
 
-场景三：同步定时任务到 OpenClaw
+场景三：请求修改工作区配置
 
 ```text
-请把 talents.yaml 中定义的 cron 同步到 OpenClaw，并告诉我有哪些任务被创建或更新了。
+请使用 talent-scout skill 请求 AI 修改 workspace-data/talents.yaml，把 openclaw.batch_size 改成 20。
 ```
+
+场景四：同步并启停定时任务
+
+```text
+请把 workspace-data/talents.yaml 中定义的 cron 同步到 OpenClaw，并告诉我有哪些任务被创建或更新了。
+```
+
+```text
+请使用 talent-scout skill 暂停 talent-pipeline 这个 cron。
+```
+
+```text
+请使用 talent-scout skill 恢复 talent-pipeline 这个 cron。
+```
+
+场景五：导出给 Dashboard 使用的 zip
+
+```text
+请使用 talent-scout skill 导出当前 workspace-data，并把 zip 文件的本地绝对路径告诉我。
+```
+
+`talent-scout` skill 本身只负责生成 zip 并返回路径，不负责把文件发到 Telegram/Slack/Discord。如果你希望把这个 zip 发给用户，需要再调用另一个专门负责文件投递的 OpenClaw skill。
+
+同样地，`config request` 也要求目标 channel 在当前 OpenClaw 环境里是可用的；如果 channel 没有配置好，命令会在发送阶段失败。
+
+用户拿到 zip 之后，可以本地启动 Dashboard：
+
+```bash
+npx @talent-scout/dashboard --workspace /absolute/path/to/workspace-data.zip
+```
+
+此时 Dashboard 会自动进入只读模式。
 
 ## 一个容易理解的使用案例
 
 假设你每周都要更新一份“值得主动联系的中文 AI 工程师名单”，可以按下面操作：
 
-1. 修改 `talents.yaml`，把目标城市和偏好的技术栈改成你的招聘方向。
+1. 先让 skills 初始化 `workspace-data/talents.yaml`，或者手工复制模板并改成你的招聘方向。
 2. 运行 `pnpm pipeline`，生成最新候选池。
 3. 在 OpenClaw 中让 `talent-scout` 总结 shortlist，先用自然语言筛出高优先级候选人。
-4. 打开 Dashboard，查看这些人的证据链、人工标注和运行统计。
-5. 如果你准备长期运行，再把 cron 同步到 OpenClaw，让系统自动每周刷新。
+4. 如果需要改配置，不直接手改脚本，而是让 `talent-scout` 发起一次 `config request`。
+5. 如果你准备长期运行，再把 cron 同步到 OpenClaw，并按需要启停具体任务。
+6. 如果你想把结果发给别人看，就先导出 zip，再交给其他文件投递 skill，或本地用 Dashboard 打开。
 
 ## 去哪里看细节
 

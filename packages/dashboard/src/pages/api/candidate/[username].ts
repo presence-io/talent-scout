@@ -3,6 +3,7 @@ import type { Candidate, IgnoreList, TalentEntry } from '@talent-scout/shared';
 import type { APIRoute } from 'astro';
 import { join } from 'node:path';
 
+import { assertDashboardWritable } from '@/lib/dashboard-config.js';
 import { readJsonFile, resolveOutputDir, resolveUserDataDir, writeJsonAtomic } from '@/lib/file';
 import type { Annotation, AnnotationMap } from '@/lib/merge';
 
@@ -44,6 +45,17 @@ export const GET: APIRoute = async ({ params }) => {
 };
 
 export const PATCH: APIRoute = async ({ params, request }) => {
+  try {
+    assertDashboardWritable();
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : 'Dashboard is read only.',
+      }),
+      { status: 403 }
+    );
+  }
+
   const { username } = params;
   if (!username) {
     return new Response(JSON.stringify({ error: 'Missing username' }), {

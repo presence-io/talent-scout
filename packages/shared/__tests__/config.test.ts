@@ -85,6 +85,24 @@ describe('TalentConfigSchema', () => {
     expect(result.openclaw.cron[0]).toMatchObject({ name: 'talent-collect' });
   });
 
+  it('should parse openclaw delivery defaults', () => {
+    const result = TalentConfigSchema.parse({
+      openclaw: {
+        delivery: {
+          channel: 'telegram',
+          target: '@talent-scout',
+          thread_id: '42',
+        },
+      },
+    });
+
+    expect(result.openclaw.delivery).toMatchObject({
+      channel: 'telegram',
+      target: '@talent-scout',
+      thread_id: '42',
+    });
+  });
+
   it('should parse target_profile with preferred_cities', () => {
     const result = TalentConfigSchema.parse({
       target_profile: {
@@ -100,20 +118,31 @@ describe('TalentConfigSchema', () => {
 describe('loadConfig', () => {
   let tmpDir: string;
   let originalEnv: string | undefined;
+  let originalWorkspaceEnv: string | undefined;
+  let originalCwd: string;
 
   beforeEach(async () => {
     tmpDir = makeTmpDir();
     await mkdir(tmpDir, { recursive: true });
     resetConfigCache();
     originalEnv = process.env['TALENT_CONFIG'];
+    originalWorkspaceEnv = process.env['TALENT_WORKSPACE'];
+    originalCwd = process.cwd();
   });
 
   afterEach(() => {
     resetConfigCache();
+    process.chdir(originalCwd);
     if (originalEnv === undefined) {
       delete process.env['TALENT_CONFIG'];
     } else {
       process.env['TALENT_CONFIG'] = originalEnv;
+    }
+
+    if (originalWorkspaceEnv === undefined) {
+      delete process.env['TALENT_WORKSPACE'];
+    } else {
+      process.env['TALENT_WORKSPACE'] = originalWorkspaceEnv;
     }
   });
 
@@ -164,5 +193,19 @@ evaluation:
     await writeFile(configPath, 'api_budget:\n  max_total_calls: 999\n');
     const reloaded = await loadConfig(true);
     expect(reloaded.api_budget.max_total_calls).toBe(999);
+  });
+
+  it('should prefer the workspace talents.yaml when TALENT_WORKSPACE is set', async () => {
+    await mkdir(join(tmpDir, 'workspace-data'), { recursive: true });
+    await writeFile(join(tmpDir, 'talents.yaml'), 'api_budget:\n  max_total_calls: 100\n');
+    await writeFile(
+      join(tmpDir, 'workspace-data', 'talents.yaml'),
+      'api_budget:\n  max_total_calls: 999\n'
+    );
+    delete process.env['TALENT_CONFIG'];
+    process.env['TALENT_WORKSPACE'] = join(tmpDir, 'workspace-data');
+
+    const config = await loadConfig(true);
+    expect(config.api_budget.max_total_calls).toBe(999);
   });
 });

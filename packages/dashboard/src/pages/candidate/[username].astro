@@ -4,6 +4,7 @@ import Base from '@/layouts/Base.astro';
 import type { IgnoreList } from '@talent-scout/shared';
 import { loadShortlist, loadEvaluation } from '@talent-scout/ai-evaluator';
 import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '@/lib/file';
+import { loadDashboardCapabilities } from '@/lib/dashboard-config';
 import type { AnnotationMap } from '@/lib/merge';
 import { formatScore, formatAction, formatTier, actionBadgeClass } from '@/lib/format';
 
@@ -13,6 +14,7 @@ if (!username) return Astro.redirect('/');
 const base = process.cwd();
 const outputDir = resolveOutputDir(base);
 const userDataDir = resolveUserDataDir(base);
+const dashboardCapabilities = loadDashboardCapabilities();
 
 const entries = await loadShortlist(outputDir);
 const entry = entries.find((e) => e.username === username);
@@ -207,41 +209,58 @@ const signals = candidate?.signals ?? [];
   <div class="card bg-base-100 mt-4 shadow">
     <div class="card-body">
       <h3 class="card-title text-lg">Actions</h3>
-      <div class="flex flex-wrap items-end gap-2">
-        <div class="flex gap-2">
-          <button
-            class="btn btn-sm btn-success annotation-btn"
-            data-action="approved"
-            data-username={username}>Approve</button
-          >
-          <button
-            class="btn btn-sm btn-warning annotation-btn"
-            data-action="noted"
-            data-username={username}>Note</button
-          >
-          <button
-            class="btn btn-sm btn-error annotation-btn"
-            data-action="rejected"
-            data-username={username}>Reject</button
-          >
-        </div>
-        <div class="form-control min-w-48 flex-1">
-          <input
-            type="text"
-            id="annotation-note"
-            placeholder="Optional note..."
-            class="input input-bordered input-sm w-full"
-          />
-        </div>
-        <button
-          id="ignore-btn"
-          class={'btn btn-sm btn-outline ' + (ignored ? 'btn-success' : 'btn-error')}
-          data-username={username}
-          data-ignored={ignored.toString()}
-        >
-          {ignored ? 'Unignore' : 'Ignore'}
-        </button>
-      </div>
+      {
+        dashboardCapabilities.canMutate ? (
+          <div class="flex flex-wrap items-end gap-2">
+            <div class="flex gap-2">
+              <button
+                class="btn btn-sm btn-success annotation-btn"
+                data-action="approved"
+                data-username={username}
+              >
+                Approve
+              </button>
+              <button
+                class="btn btn-sm btn-warning annotation-btn"
+                data-action="noted"
+                data-username={username}
+              >
+                Note
+              </button>
+              <button
+                class="btn btn-sm btn-error annotation-btn"
+                data-action="rejected"
+                data-username={username}
+              >
+                Reject
+              </button>
+            </div>
+            <div class="form-control min-w-48 flex-1">
+              <input
+                type="text"
+                id="annotation-note"
+                placeholder="Optional note..."
+                class="input input-bordered input-sm w-full"
+              />
+            </div>
+            <button
+              id="ignore-btn"
+              class={'btn btn-sm btn-outline ' + (ignored ? 'btn-success' : 'btn-error')}
+              data-username={username}
+              data-ignored={ignored.toString()}
+            >
+              {ignored ? 'Unignore' : 'Ignore'}
+            </button>
+          </div>
+        ) : (
+          <div class="alert alert-info">
+            <span>
+              This workspace was opened from a zip archive, so annotations and ignore-list edits are
+              disabled.
+            </span>
+          </div>
+        )
+      }
     </div>
   </div>
 

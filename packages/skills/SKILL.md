@@ -3,7 +3,6 @@ name: talent-scout
 description: >
   AI Talent Scout — Discover excellent Chinese developers in the AI Coding era.
   Provides automated collection, processing, evaluation, and querying of developer talent data.
-version: 0.1.0
 ---
 
 # Talent Scout Skill
@@ -27,10 +26,22 @@ suitable for OpenClaw agent scheduling and ClawHub distribution.
 - **query candidate `<username>`** — Show details for a specific candidate.
 - **query stats** — Show run statistics and distributions.
 
+### Config
+
+- **config request** — Send a channel message asking AI to update `workspace-data/talents.yaml`.
+
+### Export
+
+- **export workspace** — Package the current `workspace-data/` directory as a ZIP and return the local archive path.
+
 ### Cron
 
 - **cron status** — Show configured cron jobs.
 - **cron sync** — Sync cron jobs to OpenClaw.
+- **cron runs** — Show recent OpenClaw cron run history.
+- **cron run `<name>`** — Show details for a specific cron run.
+- **cron disable `<name>`** — Disable a cron job.
+- **cron enable `<name>`** — Enable a cron job.
 
 ## Data Flow
 
@@ -43,7 +54,8 @@ GitHub API → data-collector → output/raw/
 
 ## Configuration
 
-All configuration is centralized in `talents.yaml` at the project root.
+Mutable workspace configuration lives in `workspace-data/talents.yaml`.
+The file is seeded from the packaged template on first use.
 
 ## References
 

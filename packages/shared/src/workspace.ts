@@ -1,4 +1,4 @@
-import { resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 
 /**
  * Determine the effective project root.
@@ -15,7 +15,13 @@ function effectiveRoot(base?: string): string {
  */
 export function resolveWorkspaceDir(base?: string): string {
   if (process.env['TALENT_WORKSPACE']) return resolve(process.env['TALENT_WORKSPACE']);
+  if (base && basename(resolve(base)) === 'workspace-data') return resolve(base);
   return resolve(effectiveRoot(base), 'workspace-data');
+}
+
+/** Resolve the workspace-scoped talents.yaml path: `workspace-data/talents.yaml`. */
+export function resolveWorkspaceConfigPath(base?: string): string {
+  return resolve(resolveWorkspaceDir(base), 'talents.yaml');
 }
 
 /** Resolve the output directory root: `workspace-data/output`. */

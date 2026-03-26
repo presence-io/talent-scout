@@ -7,6 +7,8 @@
 
 `@talent-scout/dashboard` 是一个本地 Astro 界面，用来浏览 shortlist、查看单个候选人的证据链、写人工标注，以及管理 OpenClaw cron 的运行状态。它不是线上 SaaS，而是工作区里的运营台。
 
+如果 dashboard 是通过 `workspace-data.zip` 启动的，它会自动进入只读模式：人工标注、忽略名单等写操作不可用，所有依赖本机 OpenClaw 的入口也会隐藏。
+
 ## 开发前提
 
 - Node.js 22+
@@ -26,10 +28,11 @@ Dashboard 现在统一通过配置文件管理运行路径，不再依赖 `TALEN
 
 配置入口是 [dashboard.config.mjs](./dashboard.config.mjs)。默认行为是：
 
-- 自动向上查找包含 `talents.yaml` 或 `pnpm-workspace.yaml` 的项目根目录
+- 自动向上查找包含 `workspace-data/talents.yaml`、`talents.yaml` 或 `pnpm-workspace.yaml` 的项目根目录
 - 从该根目录下读取 `workspace-data/`
 - 使用 `workspace-data/output/evaluated/latest` 作为评估结果目录
 - 使用 `workspace-data/user-data` 作为人工标注目录
+- 优先读取 `workspace-data/talents.yaml` 作为运行配置
 
 默认配置已经适配当前仓库，因此通常不需要额外设置任何参数。
 
@@ -42,7 +45,7 @@ pnpm --filter @talent-scout/dashboard run dev
 如果你是直接运行已发布包，也可以启动 package 内置的 standalone 服务：
 
 ```bash
-npx @talent-scout/dashboard --host 0.0.0.0 --port 4321 --project-root . --workspace-dir workspace-data
+npx @talent-scout/dashboard --host 0.0.0.0 --port 4321 --workspace ./workspace-data.zip
 ```
 
 CLI 使用 `yargs` 解析参数，支持这些运行时选项：
@@ -50,8 +53,17 @@ CLI 使用 `yargs` 解析参数，支持这些运行时选项：
 - `--host`: 监听地址，默认 `localhost`
 - `--port`: 监听端口，默认 `4321`
 - `--project-root`: 项目根目录；相对路径基于当前命令执行目录
-- `--workspace-dir`: 工作区目录；相对路径基于项目根目录
+- `--workspace`: `workspace-data/` 目录，或 `@talent-scout/skills export workspace` 生成的 zip
+- `--workspace-dir`: `--workspace` 的兼容别名
 - `--talents-config`: `talents.yaml` 路径；相对路径基于项目根目录
+
+当 `--workspace` 指向 zip 时，dashboard 会把压缩包自动解压到系统临时目录，并在进程退出时删除这些临时文件。
+
+zip 工作区会自动开启只读模式：
+
+- 候选人标注、忽略名单等本地写操作全部禁用
+- Cron/OpenClaw 页面入口隐藏，直接访问时也只显示说明
+- 不再假设本机安装了 `openclaw`
 
 如果你要预览构建产物：
 
@@ -64,10 +76,12 @@ pnpm --filter @talent-scout/dashboard run preview
 
 ## 在 `workspace-data` 上工作的方式
 
-Dashboard 读写两个目录：
+Dashboard 在普通本地模式下读写两个目录：
 
 - 读取 `workspace-data/output/evaluated/latest`
 - 写入 `workspace-data/user-data`
+
+并且会从 `workspace-data/talents.yaml` 读取工作区级配置。这个文件由 `@talent-scout/skills` 在需要时从包内模板复制出来，之后由工作区自己维护。
 
 这意味着它既能看到最新评估结果，也能把人工标注、忽略名单等“运营层数据”与 pipeline 产物隔离开。
 
@@ -85,7 +99,7 @@ Dashboard 读写两个目录：
 export default {
   projectRoot: '../talent-scout-prod',
   workspaceDir: 'workspace-data',
-  talentsConfigFile: 'talents.yaml',
+  talentsConfigFile: 'workspace-data/talents.yaml',
 };
 ```
 

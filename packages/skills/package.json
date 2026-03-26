@@ -22,6 +22,7 @@
     "dist",
     "src",
     "SKILL.md",
+    "talents.yaml",
     "references",
     "scripts"
   ],
@@ -30,12 +31,14 @@
     "skill": "tsx src/index.ts"
   },
   "dependencies": {
-    "@talent-scout/shared": "workspace:*",
+    "@talent-scout/ai-evaluator": "workspace:*",
     "@talent-scout/data-collector": "workspace:*",
     "@talent-scout/data-processor": "workspace:*",
-    "@talent-scout/ai-evaluator": "workspace:*"
+    "@talent-scout/shared": "workspace:*",
+    "adm-zip": "^0.5.16"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
     "@types/node": "^25.5.0",
     "tsx": "^4.19.3"
   }

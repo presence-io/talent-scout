@@ -11,6 +11,8 @@
 - 对候选人进行人工标注（approved / rejected / noted），反馈写回 JSON
 - 查看系统运行统计和趋势
 
+如果 Dashboard 是通过 `workspace-data.zip` 启动的，它必须降级为只读模式：不允许写人工标注、忽略名单等用户数据，也不显示依赖本机 OpenClaw 的 cron 相关入口。
+
 Dashboard 不是唯一的数据消费入口。与之并行的还有 `@talent-scout/skills` 提供的 IM channel / TUI 文本查询界面。两者必须复用同一套查询接口，而不是各自重新解析底层 JSON。
 
 **不是**一个需要部署到线上的生产级 SaaS。
@@ -25,7 +27,7 @@ Dashboard 不是唯一的数据消费入口。与之并行的还有 `@talent-sco
 | 数据源 | 调用共享查询层，再由查询层读写本地文件 | 方便 Dashboard 与 `@talent-scout/skills` 复用 |
 | 运行方式 | `astro dev` 本地开发服务器 | 不需要 build + deploy |
 
-> **安全性**：Dashboard 仅在本地运行，不暴露到公网，无需登录或权限控制。
+> **安全性**：Dashboard 仅在本地运行，不暴露到公网，无需登录或权限控制。来自 zip 的只读工作区也不应假设宿主机安装了 `openclaw`。
 
 ### 为什么不用 React / Vue
 
@@ -78,6 +80,8 @@ pages/
 | 分页 | 每页 50 条，DaisyUI pagination |
 | 快速标注 | 每行末尾有 ✓ / ✗ / 📝 按钮，点击即提交 PATCH |
 
+当工作区来自 zip 时，快速标注入口应隐藏或替换为只读提示。
+
 ### 3.2 候选人详情页 (candidate/[username].astro)
 
 | 区域 | 内容 |
@@ -89,6 +93,8 @@ pages/
 | AI 摘要 | 自然语言的候选人评估总结 |
 | 标注区域 | 文本框 + approved/rejected/noted 选择 |
 
+当工作区来自 zip 时，这个区域应仅显示只读说明，不提供任何写操作按钮。
+
 ### 3.3 OpenClaw 状态页 (cron.astro)
 
 | 区域 | 内容 |
@@ -97,6 +103,8 @@ pages/
 | 执行状态 | 通过 `openclaw cron runs` 获取各任务最近 5 次执行的状态/时间/耗时 |
 | 手动触发 | 每行有「Run Now」按钮，调用 `openclaw cron run --name {name}` |
 | 同步按钮 | 将 `talents.yaml` 中的 cron 配置同步到 OpenClaw（调用 `cron:sync`） |
+
+当 Dashboard 读取的是 zip 快照时，整个 `cron.astro` 入口应从导航中隐藏；如果用户直接访问该页面，只展示说明而不加载任何 OpenClaw 数据。
 
 ### 3.4 统计页 (stats.astro)
 
@@ -148,6 +156,8 @@ Query params：
 
 `annotations.json` 是独立文件，不混入评估结果。Dashboard 展示时 merge 显示。
 
+如果 Dashboard 处于只读模式，`PATCH` 必须直接返回 `403`，不能尝试写本地文件。
+
 ### 4.4 GET /api/stats
 
 汇总统计数据，通过共享查询层从 `workspace-data/output/evaluated/latest/` 各文件中计算。
@@ -170,6 +180,8 @@ workspace-data/user-data/
 - **Dashboard 读 `workspace-data/output/` + `workspace-data/user-data/`**：展示时 merge 两个来源的数据
 - **Dashboard 只写 `workspace-data/user-data/`**：标注、备注、分数修正都写到用户数据目录
 - **`workspace-data/` 不提交到 git**：这是运行态与用户工作区状态
+
+`workspace-data/` 里还应包含工作区自己的 `talents.yaml`。默认模板来自 `@talent-scout/skills` 包，首次写入工作区前先复制进去，之后 collector、processor、evaluator、dashboard 都优先读取这份工作区配置，而不是仓库根目录的模板文件。
 
 ### 5.1 忽略名单 (ignore-list.json)
 
@@ -225,9 +237,9 @@ pnpm --filter dashboard run dev
 
 推荐做法是通过 `dashboard.config.mjs` 管理路径，而不是在代码中散落 `process.env` 判断。配置项至少包括：
 
-- `projectRoot`: 可选。为空时自动向上查找包含 `talents.yaml` 或 `pnpm-workspace.yaml` 的根目录。
+- `projectRoot`: 可选。为空时自动向上查找包含 `workspace-data/talents.yaml`、`talents.yaml` 或 `pnpm-workspace.yaml` 的根目录。
 - `workspaceDir`: 工作区数据目录，默认是 `workspace-data`。
-- `talentsConfigFile`: Dashboard 读取 cron 配置时使用的 `talents.yaml` 路径。
+- `talentsConfigFile`: Dashboard 读取工作区配置时使用的 `talents.yaml` 路径，默认应指向 `workspace-data/talents.yaml`。
 
 因此，Dashboard 不再需要单独的 `TALENT_OUTPUT_DIR` 或 `TALENT_USER_DATA_DIR`。`output` 与 `user-data` 都应从 `workspaceDir` 派生，避免出现 README、代码和设计文档三套路径语义。
 

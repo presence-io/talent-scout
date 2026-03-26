@@ -25,6 +25,12 @@ describe('workspace path resolution', () => {
       expect(resolveWorkspaceDir('/my/project')).toBe(resolve('/my/project', 'workspace-data'));
     });
 
+    it('accepts a base path that already points at workspace-data', () => {
+      expect(resolveWorkspaceDir('/my/project/workspace-data')).toBe(
+        resolve('/my/project/workspace-data')
+      );
+    });
+
     it('uses INIT_CWD when no base and no TALENT_WORKSPACE', () => {
       delete process.env['TALENT_WORKSPACE'];
       process.env['INIT_CWD'] = '/monorepo/root';

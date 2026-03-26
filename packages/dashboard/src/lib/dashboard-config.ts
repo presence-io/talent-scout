@@ -19,19 +19,29 @@ export interface DashboardConfig {
   talentsConfigPath: string;
 }
 
+export interface DashboardCapabilities {
+  readOnly: boolean;
+  canMutate: boolean;
+  showOpenClawFeatures: boolean;
+}
+
 const ROOT_MARKERS = ['talents.yaml', 'pnpm-workspace.yaml'];
 const DEFAULT_CONFIG: Required<Omit<DashboardConfigInput, 'projectRoot'>> & {
   projectRoot: string | null;
 } = {
   projectRoot: null,
   workspaceDir: 'workspace-data',
-  talentsConfigFile: 'talents.yaml',
+  talentsConfigFile: 'workspace-data/talents.yaml',
 };
 
 const DASHBOARD_CONFIG_ENV = {
   projectRoot: 'TALENT_SCOUT_DASHBOARD_PROJECT_ROOT',
   workspaceDir: 'TALENT_SCOUT_DASHBOARD_WORKSPACE_DIR',
   talentsConfigFile: 'TALENT_SCOUT_DASHBOARD_TALENTS_CONFIG',
+} as const;
+
+const DASHBOARD_CAPABILITY_ENV = {
+  readOnly: 'TALENT_SCOUT_DASHBOARD_READ_ONLY',
 } as const;
 
 const dashboardConfigInput = rawDashboardConfig as DashboardConfigInput;
@@ -123,4 +133,22 @@ export async function loadDashboardTalentConfig(forceReload = false): Promise<Ta
 
 export function resetDashboardTalentConfigCache(): void {
   cachedTalentConfig = null;
+}
+
+export function loadDashboardCapabilities(): DashboardCapabilities {
+  const readOnly = process.env[DASHBOARD_CAPABILITY_ENV.readOnly] === '1';
+
+  return {
+    readOnly,
+    canMutate: !readOnly,
+    showOpenClawFeatures: !readOnly,
+  };
+}
+
+export function assertDashboardWritable(): void {
+  if (loadDashboardCapabilities().readOnly) {
+    throw new Error(
+      'Dashboard is running in read-only mode from a workspace archive. Local edits are disabled.'
+    );
+  }
 }
