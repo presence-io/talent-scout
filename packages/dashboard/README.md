@@ -39,6 +39,20 @@ Dashboard 现在统一通过配置文件管理运行路径，不再依赖 `TALEN
 pnpm --filter @talent-scout/dashboard run dev
 ```
 
+如果你是直接运行已发布包，也可以启动 package 内置的 standalone 服务：
+
+```bash
+npx @talent-scout/dashboard --host 0.0.0.0 --port 4321 --project-root . --workspace-dir workspace-data
+```
+
+CLI 使用 `yargs` 解析参数，支持这些运行时选项：
+
+- `--host`: 监听地址，默认 `localhost`
+- `--port`: 监听端口，默认 `4321`
+- `--project-root`: 项目根目录；相对路径基于当前命令执行目录
+- `--workspace-dir`: 工作区目录；相对路径基于项目根目录
+- `--talents-config`: `talents.yaml` 路径；相对路径基于项目根目录
+
 如果你要预览构建产物：
 
 ```bash

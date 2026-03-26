@@ -28,6 +28,12 @@ const DEFAULT_CONFIG: Required<Omit<DashboardConfigInput, 'projectRoot'>> & {
   talentsConfigFile: 'talents.yaml',
 };
 
+const DASHBOARD_CONFIG_ENV = {
+  projectRoot: 'TALENT_SCOUT_DASHBOARD_PROJECT_ROOT',
+  workspaceDir: 'TALENT_SCOUT_DASHBOARD_WORKSPACE_DIR',
+  talentsConfigFile: 'TALENT_SCOUT_DASHBOARD_TALENTS_CONFIG',
+} as const;
+
 const dashboardConfigInput = rawDashboardConfig as DashboardConfigInput;
 let cachedTalentConfig: TalentConfig | null = null;
 
@@ -59,18 +65,41 @@ function resolveFromRoot(projectRoot: string, target: string): string {
   return isAbsolute(target) ? resolve(target) : resolve(projectRoot, target);
 }
 
+function readEnvOverride(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+function getDashboardConfigInput(): DashboardConfigInput {
+  return {
+    projectRoot:
+      readEnvOverride(DASHBOARD_CONFIG_ENV.projectRoot) ??
+      dashboardConfigInput.projectRoot ??
+      DEFAULT_CONFIG.projectRoot,
+    workspaceDir:
+      readEnvOverride(DASHBOARD_CONFIG_ENV.workspaceDir) ??
+      dashboardConfigInput.workspaceDir ??
+      DEFAULT_CONFIG.workspaceDir,
+    talentsConfigFile:
+      readEnvOverride(DASHBOARD_CONFIG_ENV.talentsConfigFile) ??
+      dashboardConfigInput.talentsConfigFile ??
+      DEFAULT_CONFIG.talentsConfigFile,
+  };
+}
+
 export function loadDashboardConfig(base?: string): DashboardConfig {
   const start = resolveBase(base);
-  const projectRoot = dashboardConfigInput.projectRoot
-    ? resolveFromRoot(start, dashboardConfigInput.projectRoot)
+  const runtimeConfigInput = getDashboardConfigInput();
+  const projectRoot = runtimeConfigInput.projectRoot
+    ? resolveFromRoot(start, runtimeConfigInput.projectRoot)
     : findProjectRoot(start);
   const workspaceDir = resolveFromRoot(
     projectRoot,
-    dashboardConfigInput.workspaceDir ?? DEFAULT_CONFIG.workspaceDir
+    runtimeConfigInput.workspaceDir ?? DEFAULT_CONFIG.workspaceDir
   );
   const talentsConfigPath = resolveFromRoot(
     projectRoot,
-    dashboardConfigInput.talentsConfigFile ?? DEFAULT_CONFIG.talentsConfigFile
+    runtimeConfigInput.talentsConfigFile ?? DEFAULT_CONFIG.talentsConfigFile
   );
 
   return {

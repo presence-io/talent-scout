@@ -26,6 +26,15 @@ export default tseslint.config(
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
+    files: ['packages/dashboard/bin/**/*.mjs'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+      },
+    },
+    extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
     ignores: [
       '**/.astro/**',
       '**/dist/**',

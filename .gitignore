@@ -1,4 +1,4 @@
-.# .gitignore for talent-scout
+# .gitignore for talent-scout
 
 # 环境与密钥（不要将凭证提交）
 .env
@@ -42,6 +42,7 @@ cache/
 *.sqlite3
 *.db
 *.bak
+.playwright-mcp/
 
 # Astro
 .astro/

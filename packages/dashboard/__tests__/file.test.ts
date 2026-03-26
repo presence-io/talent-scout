@@ -19,6 +19,9 @@ beforeEach(async () => {
 });
 afterEach(() => {
   rmSync(testDir, { recursive: true, force: true });
+  delete process.env.TALENT_SCOUT_DASHBOARD_PROJECT_ROOT;
+  delete process.env.TALENT_SCOUT_DASHBOARD_WORKSPACE_DIR;
+  delete process.env.TALENT_SCOUT_DASHBOARD_TALENTS_CONFIG;
 });
 
 describe('readJsonFile', () => {
@@ -73,6 +76,28 @@ describe('dashboard config', () => {
     expect(config.workspaceDir).toBe(join(testDir, 'workspace-data'));
     expect(config.outputDir).toBe(join(testDir, 'workspace-data', 'output', 'evaluated', 'latest'));
     expect(config.userDataDir).toBe(join(testDir, 'workspace-data', 'user-data'));
+  });
+
+  it('prefers environment overrides for runtime paths', async () => {
+    const customWorkspaceDir = 'alternate-workspace';
+    const customTalentsConfig = join('config', 'talents.custom.yaml');
+
+    await writeJsonAtomic(join(testDir, 'talents.yaml'), { ok: true });
+    await writeJsonAtomic(join(testDir, customTalentsConfig), { ok: true });
+
+    process.env.TALENT_SCOUT_DASHBOARD_PROJECT_ROOT = testDir;
+    process.env.TALENT_SCOUT_DASHBOARD_WORKSPACE_DIR = customWorkspaceDir;
+    process.env.TALENT_SCOUT_DASHBOARD_TALENTS_CONFIG = customTalentsConfig;
+
+    const config = loadDashboardConfig(join(testDir, 'packages', 'dashboard'));
+
+    expect(config.projectRoot).toBe(testDir);
+    expect(config.workspaceDir).toBe(join(testDir, customWorkspaceDir));
+    expect(config.outputDir).toBe(
+      join(testDir, customWorkspaceDir, 'output', 'evaluated', 'latest')
+    );
+    expect(config.userDataDir).toBe(join(testDir, customWorkspaceDir, 'user-data'));
+    expect(config.talentsConfigPath).toBe(join(testDir, customTalentsConfig));
   });
 });
 
