@@ -12,8 +12,8 @@
     "format": "prettier --write 'packages/**/*.{ts,tsx,json,md}'",
     "typecheck": "tsc --build",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test:coverage",
-    "pipeline": "pnpm --filter @talent-scout/data-collector run collect && pnpm --filter @talent-scout/data-processor run process && pnpm --filter @talent-scout/ai-evaluator run evaluate",
-    "cron:sync": "pnpm --filter @talent-scout/shared run cron:sync",
+    "pipeline": "pnpm --filter @talent-scout/skills run skill pipeline",
+    "cron:sync": "pnpm --filter @talent-scout/skills run skill cron sync",
     "preinstall": "node scripts/check-deps.cjs"
   },
   "devDependencies": {

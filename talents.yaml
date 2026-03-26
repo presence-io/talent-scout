@@ -148,17 +148,17 @@ openclaw:
   cron:
     - name: talent-collect
       schedule: "0 1 * * *"
-      command: "cd {{project_dir}} && pnpm --filter @talent-scout/data-collector run collect"
+      command: "cd {{project_dir}} && pnpm --filter @talent-scout/skills run skill collect"
       description: "Daily data collection"
     - name: talent-process
       schedule: "0 3 * * *"
-      command: "cd {{project_dir}} && pnpm --filter @talent-scout/data-processor run process"
+      command: "cd {{project_dir}} && pnpm --filter @talent-scout/skills run skill process"
       description: "Daily data processing"
     - name: talent-evaluate
       schedule: "0 5 * * 1"
-      command: "cd {{project_dir}} && pnpm --filter @talent-scout/ai-evaluator run evaluate"
+      command: "cd {{project_dir}} && pnpm --filter @talent-scout/skills run skill evaluate"
       description: "Weekly AI evaluation"
-    - name: talent-seeds
-      schedule: "0 0 1 * *"
-      command: "cd {{project_dir}} && pnpm --filter @talent-scout/data-collector run collect --source rankings"
-      description: "Monthly ranking seed update"
+    - name: talent-pipeline
+      schedule: "0 1 * * 0"
+      command: "cd {{project_dir}} && pnpm --filter @talent-scout/skills run skill pipeline"
+      description: "Weekly full pipeline"
