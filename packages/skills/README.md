@@ -128,6 +128,27 @@ pnpm --filter @talent-scout/skills run bundle:clawhub
 clawhub publish packages/skills/dist/clawhub/chinese-talent-scout
 ```
 
+发布时的注意事项：
+
+- **目录名与 `SKILL.md` 名称必须一致**：ClawHub 要求发布目录名与 `SKILL.md` frontmatter 中的 `name` 字段一致。仓库的 `bundle:clawhub` 脚本会把 `SKILL.md` 中的 `name` 重写为 `chinese-talent-scout`（见 `packages/skills/SKILL.md`），请在 publish 前确认这一点。
+- **如果需要自定义 slug**：你可以在 `clawhub publish` 时使用 `--slug <slug>` 来指定 ClawHub 上的标识（slug），但发布目录名与 `SKILL.md` 的 `name` 字段仍需保持一致。
+- **CI 中的凭据**：在 CI 环境中请把 ClawHub 的访问 token 放入仓库 secrets（例如 `CLAWHUB_TOKEN`），并在发布前用该 token 登录 `clawhub`。示例步骤（GitHub Actions / 任意 shell）：
+
+```bash
+# 安装并登录（CI 中请从 secrets 读取 token）
+pnpm add -g clawhub
+clawhub login --token "$CLAWHUB_TOKEN"
+
+# 构建 bundle 并发布
+pnpm --filter @talent-scout/skills run bundle:clawhub
+clawhub publish "$PWD/packages/skills/dist/clawhub/chinese-talent-scout"
+```
+
+- **构建失败排查**：若 `bundle:clawhub` 报错（例如 esbuild 无法解析 Playwright/Chromium-bidi 的内部路径），请先在本地运行 `pnpm --filter @talent-scout/skills run bundle:clawhub` 并根据报错调整打包 `external` 列表或安装相应依赖。仓库已对部分 Playwright 路径做了 `external` 处理以避免常见的打包失败。
+- **验证发布内容**：发布前可以手动检查 `packages/skills/dist/clawhub/<skill-name>` 下是否包含 `SKILL.md`、`scripts/talent-scout.mjs` 和 `references/` 等文件。
+
+如果你使用 `clawhub sync`，请显式限制同步范围，避免把工作区里无关的 skill 一并发布.
+
 这个 bundle 会：
 
 - 复制符合规范的 `SKILL.md`

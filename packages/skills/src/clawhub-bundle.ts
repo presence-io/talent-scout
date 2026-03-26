@@ -89,6 +89,7 @@ export async function buildClawHubBundle(
       js: '#!/usr/bin/env node',
     },
     legalComments: 'eof',
+    external: ['chromium-bidi', 'chromium-bidi/*', 'playwright-core', 'playwright-core/*'],
   });
 
   await writeFile(
