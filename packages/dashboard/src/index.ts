@@ -25,5 +25,6 @@ export {
   computeTierDistribution,
   computeCityDistribution,
   computeConfidenceBuckets,
+  computeHistoryTrends,
 } from './lib/stats.js';
-export type { DistributionEntry } from './lib/stats.js';
+export type { DistributionEntry, TrendPoint, HistoryTrends } from './lib/stats.js';
