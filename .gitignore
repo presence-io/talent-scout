@@ -59,6 +59,10 @@ dist/
 # Project-specific generated results
 output/
 
+# Runtime data
+workspace-data/
+user-data/
+
 # API 缓存
 cache/
 
