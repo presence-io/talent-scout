@@ -21,6 +21,12 @@ describe('loadShortlist', () => {
     expect(result).toEqual(data);
     expect(mockReadFile).toHaveBeenCalledWith('/output/evaluated/latest/shortlist.json', 'utf-8');
   });
+
+  it('returns empty array when file is missing', async () => {
+    mockReadFile.mockRejectedValue(new Error('ENOENT'));
+    const result = await loadShortlist('/missing');
+    expect(result).toEqual([]);
+  });
 });
 
 describe('loadEvaluation', () => {
@@ -35,6 +41,12 @@ describe('loadEvaluation', () => {
     const result = await loadEvaluation('/output/evaluated/latest');
     expect(result).toEqual(data);
     expect(mockReadFile).toHaveBeenCalledWith('/output/evaluated/latest/evaluation.json', 'utf-8');
+  });
+
+  it('returns empty record when file is missing', async () => {
+    mockReadFile.mockRejectedValue(new Error('ENOENT'));
+    const result = await loadEvaluation('/missing');
+    expect(result).toEqual({});
   });
 });
 

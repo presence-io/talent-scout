@@ -1,7 +1,7 @@
 import * as shared from '@talent-scout/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { cronStatus } from '../src/cron.js';
+import { cronStatus, cronSync } from '../src/cron.js';
 
 vi.mock('@talent-scout/shared', async () => {
   const actual =
@@ -129,6 +129,23 @@ describe('cronStatus', () => {
     await cronStatus();
     const output = consoleSpy.mock.calls.map((c) => c[0]).join('\n');
     expect(output).toContain('No cron jobs configured');
+    consoleSpy.mockRestore();
+  });
+});
+
+describe('cronSync', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('calls syncCronJobs and logs progress', async () => {
+    vi.mocked(shared.syncCronJobs).mockResolvedValue();
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await cronSync();
+    expect(shared.syncCronJobs).toHaveBeenCalledOnce();
+    const output = consoleSpy.mock.calls.map((c) => c[0]).join('\n');
+    expect(output).toContain('Syncing cron jobs');
+    expect(output).toContain('synced');
     consoleSpy.mockRestore();
   });
 });
