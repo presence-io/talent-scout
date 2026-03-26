@@ -7,7 +7,13 @@ import { runPipeline } from './pipeline.js';
 export { candidateToTalentEntry, produceShortlist } from './shortlist.js';
 export { inferIdentityBatch } from './identity-ai.js';
 export { deepEvaluateBatch } from './deep-eval.js';
-export { computeRunStats, formatStatsEntry, appendSkillsPending } from './skills.js';
+export {
+  computeRunStats,
+  formatStatsEntry,
+  appendSkillsPending,
+  loadStatsHistory,
+  writeStatsJson,
+} from './skills.js';
 export type { RunStats } from './skills.js';
 export { runPipeline } from './pipeline.js';
 export type { PipelineOptions } from './pipeline.js';

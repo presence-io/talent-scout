@@ -1,3 +1,4 @@
+import type { RunStats } from '@talent-scout/ai-evaluator';
 import type { TalentEntry } from '@talent-scout/shared';
 import { describe, expect, it } from 'vitest';
 
@@ -5,6 +6,7 @@ import {
   computeActionDistribution,
   computeCityDistribution,
   computeConfidenceBuckets,
+  computeHistoryTrends,
   computeSignalTypeDistribution,
   computeTierDistribution,
 } from '../src/lib/stats.js';
@@ -113,5 +115,61 @@ describe('computeSignalTypeDistribution', () => {
 
   it('returns empty for entries with no signals', () => {
     expect(computeSignalTypeDistribution([entry()], 10)).toHaveLength(0);
+  });
+});
+
+function makeRunStats(overrides: Partial<RunStats> = {}): RunStats {
+  return {
+    total_candidates: 10,
+    identified_chinese: 5,
+    evaluated: 4,
+    reach_out: 2,
+    monitor: 1,
+    skip: 1,
+    avg_skill_score: 6.0,
+    avg_ai_depth_score: 5.0,
+    run_at: '2025-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
+describe('computeHistoryTrends', () => {
+  it('returns points from history', () => {
+    const history = [makeRunStats(), makeRunStats({ run_at: '2025-01-02T00:00:00Z' })];
+    const trends = computeHistoryTrends(history);
+    expect(trends.points).toHaveLength(2);
+    expect(trends.points[0]?.run_at).toBe('2025-01-01T00:00:00Z');
+  });
+
+  it('computes delta between last two runs', () => {
+    const history = [
+      makeRunStats({ total_candidates: 10, reach_out: 2, avg_skill_score: 5.0 }),
+      makeRunStats({ total_candidates: 15, reach_out: 4, avg_skill_score: 6.5 }),
+    ];
+    const trends = computeHistoryTrends(history);
+    expect(trends.delta).not.toBeNull();
+    expect(trends.delta?.total_candidates).toBe(5);
+    expect(trends.delta?.reach_out).toBe(2);
+    expect(trends.delta?.avg_skill_score).toBe(1.5);
+  });
+
+  it('returns null delta for single run', () => {
+    const trends = computeHistoryTrends([makeRunStats()]);
+    expect(trends.points).toHaveLength(1);
+    expect(trends.delta).toBeNull();
+  });
+
+  it('returns empty for no history', () => {
+    const trends = computeHistoryTrends([]);
+    expect(trends.points).toHaveLength(0);
+    expect(trends.delta).toBeNull();
+  });
+
+  it('limits to maxPoints', () => {
+    const history = Array.from({ length: 30 }, (_, i) =>
+      makeRunStats({ run_at: `2025-01-${String(i + 1).padStart(2, '0')}T00:00:00Z` })
+    );
+    const trends = computeHistoryTrends(history, 10);
+    expect(trends.points).toHaveLength(10);
   });
 });

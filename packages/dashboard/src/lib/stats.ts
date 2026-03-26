@@ -1,9 +1,63 @@
+import type { RunStats } from '@talent-scout/ai-evaluator';
 import type { TalentEntry } from '@talent-scout/shared';
 
 export interface DistributionEntry {
   label: string;
   count: number;
   percentage: number;
+}
+
+export interface TrendPoint {
+  run_at: string;
+  total_candidates: number;
+  identified_chinese: number;
+  evaluated: number;
+  reach_out: number;
+  avg_skill_score: number;
+  avg_ai_depth_score: number;
+}
+
+export interface HistoryTrends {
+  points: TrendPoint[];
+  delta: {
+    total_candidates: number;
+    identified_chinese: number;
+    evaluated: number;
+    reach_out: number;
+    avg_skill_score: number;
+    avg_ai_depth_score: number;
+  } | null;
+}
+
+/** Compute trends from historical stats. Returns recent points and delta from last two runs. */
+export function computeHistoryTrends(history: RunStats[], maxPoints = 20): HistoryTrends {
+  const recent = history.slice(-maxPoints);
+  const points: TrendPoint[] = recent.map((s) => ({
+    run_at: s.run_at,
+    total_candidates: s.total_candidates,
+    identified_chinese: s.identified_chinese,
+    evaluated: s.evaluated,
+    reach_out: s.reach_out,
+    avg_skill_score: s.avg_skill_score,
+    avg_ai_depth_score: s.avg_ai_depth_score,
+  }));
+
+  let delta: HistoryTrends['delta'] = null;
+  if (recent.length >= 2) {
+    const prev = recent.at(-2) as RunStats;
+    const curr = recent.at(-1) as RunStats;
+    delta = {
+      total_candidates: curr.total_candidates - prev.total_candidates,
+      identified_chinese: curr.identified_chinese - prev.identified_chinese,
+      evaluated: curr.evaluated - prev.evaluated,
+      reach_out: curr.reach_out - prev.reach_out,
+      avg_skill_score: Math.round((curr.avg_skill_score - prev.avg_skill_score) * 100) / 100,
+      avg_ai_depth_score:
+        Math.round((curr.avg_ai_depth_score - prev.avg_ai_depth_score) * 100) / 100,
+    };
+  }
+
+  return { points, delta };
 }
 
 export function computeActionDistribution(entries: TalentEntry[]): DistributionEntry[] {

@@ -72,6 +72,7 @@ export function formatStatsEntry(stats: RunStats): string {
 }
 
 const SKILLS_PENDING = 'SKILLS-pending.md';
+const STATS_JSON = 'stats.json';
 
 /** Append run stats to the SKILLS-pending.md file in the given directory. */
 export async function appendSkillsPending(dir: string, stats: RunStats): Promise<void> {
@@ -87,4 +88,21 @@ export async function appendSkillsPending(dir: string, stats: RunStats): Promise
 
   const header = existing ? '' : '# SKILLS Pending Updates\n\n';
   await writeFile(pendingPath, `${existing}${header}${entry}`, 'utf-8');
+}
+
+/** Load historical run stats from stats.json. */
+export async function loadStatsHistory(dir: string): Promise<RunStats[]> {
+  try {
+    const raw = await readFile(join(dir, STATS_JSON), 'utf-8');
+    return JSON.parse(raw) as RunStats[];
+  } catch {
+    return [];
+  }
+}
+
+/** Append run stats to stats.json (accumulative array). */
+export async function writeStatsJson(dir: string, stats: RunStats): Promise<void> {
+  const history = await loadStatsHistory(dir);
+  history.push(stats);
+  await writeFile(join(dir, STATS_JSON), JSON.stringify(history, null, 2) + '\n');
 }

@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path';
 import { deepEvaluateBatch } from './deep-eval.js';
 import { inferIdentityBatch } from './identity-ai.js';
 import { produceShortlist } from './shortlist.js';
-import { appendSkillsPending, computeRunStats } from './skills.js';
+import { appendSkillsPending, computeRunStats, writeStatsJson } from './skills.js';
 
 export interface PipelineOptions {
   /** Directory containing merged.json and profiles.json */
@@ -119,9 +119,11 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
   // Step 6: Write output
   await writeOutput(options.outputDir, candidates, shortlist);
 
-  // Step 7: Update SKILLS-pending
+  // Step 7: Update SKILLS-pending + stats.json
   const stats = computeRunStats(candidates);
-  await appendSkillsPending(dirname(options.outputDir), stats);
+  const parentDir = dirname(options.outputDir);
+  await appendSkillsPending(parentDir, stats);
+  await writeStatsJson(parentDir, stats);
 
   // Pipeline complete — remove checkpoint
   await checkpoint.remove();

@@ -5,7 +5,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { appendSkillsPending, computeRunStats, formatStatsEntry } from '../src/skills.js';
+import {
+  appendSkillsPending,
+  computeRunStats,
+  formatStatsEntry,
+  loadStatsHistory,
+  writeStatsJson,
+} from '../src/skills.js';
 
 function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
   return {
@@ -161,5 +167,38 @@ describe('appendSkillsPending', () => {
     // Should contain header only once, and two run entries
     expect(content.match(/# SKILLS Pending Updates/g)).toHaveLength(1);
     expect(content.match(/## Run/g)).toHaveLength(2);
+  });
+});
+
+describe('writeStatsJson / loadStatsHistory', () => {
+  it('should write and load stats history', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'stats-'));
+    const stats = computeRunStats([
+      makeCandidate({ evaluation: makeEval({ recommended_action: 'reach_out' }) }),
+    ]);
+    await writeStatsJson(dir, stats);
+    const history = await loadStatsHistory(dir);
+    expect(history).toHaveLength(1);
+    expect(history[0]?.reach_out).toBe(1);
+  });
+
+  it('should accumulate multiple runs', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'stats-'));
+    const stats1 = computeRunStats([]);
+    const stats2 = computeRunStats([
+      makeCandidate({ evaluation: makeEval({ recommended_action: 'reach_out' }) }),
+    ]);
+    await writeStatsJson(dir, stats1);
+    await writeStatsJson(dir, stats2);
+    const history = await loadStatsHistory(dir);
+    expect(history).toHaveLength(2);
+    expect(history[0]?.total_candidates).toBe(0);
+    expect(history[1]?.total_candidates).toBe(1);
+  });
+
+  it('should return empty array for missing stats.json', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'stats-'));
+    const history = await loadStatsHistory(dir);
+    expect(history).toEqual([]);
   });
 });
