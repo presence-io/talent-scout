@@ -1,7 +1,7 @@
 import * as shared from '@talent-scout/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { cronStatus, cronSync } from '../src/cron.js';
+import { cronDisable, cronEnable, cronRun, cronRuns, cronStatus, cronSync } from '../src/cron.js';
 
 vi.mock('@talent-scout/shared', async () => {
   const actual =
@@ -10,6 +10,10 @@ vi.mock('@talent-scout/shared', async () => {
     ...actual,
     loadConfig: vi.fn(),
     syncCronJobs: vi.fn(),
+    cronRuns: vi.fn(),
+    cronRun: vi.fn(),
+    cronDisable: vi.fn(),
+    cronEnable: vi.fn(),
   };
 });
 
@@ -146,6 +150,66 @@ describe('cronSync', () => {
     const output = consoleSpy.mock.calls.map((c) => c[0]).join('\n');
     expect(output).toContain('Syncing cron jobs');
     expect(output).toContain('synced');
+    consoleSpy.mockRestore();
+  });
+});
+
+describe('cronRuns', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns parsed run history from openclaw', async () => {
+    const mockRuns = [
+      { name: 'talent-collect', status: 'success', started_at: '2024-01-01T00:00:00Z' },
+    ];
+    vi.mocked(shared.cronRuns).mockResolvedValue(mockRuns);
+    const runs = await cronRuns();
+    expect(runs).toEqual(mockRuns);
+    expect(shared.cronRuns).toHaveBeenCalledOnce();
+  });
+});
+
+describe('cronRun', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns details for a specific cron run', async () => {
+    const mockRun = { name: 'talent-collect', status: 'success' };
+    vi.mocked(shared.cronRun).mockResolvedValue(mockRun);
+    const run = await cronRun('talent-collect');
+    expect(run).toEqual(mockRun);
+    expect(shared.cronRun).toHaveBeenCalledWith('talent-collect');
+  });
+});
+
+describe('cronDisable', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('calls shared cronDisable and logs confirmation', async () => {
+    vi.mocked(shared.cronDisable).mockResolvedValue();
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await cronDisable('talent-collect');
+    expect(shared.cronDisable).toHaveBeenCalledWith('talent-collect');
+    expect(consoleSpy.mock.calls.some((c) => String(c[0]).includes('disabled'))).toBe(true);
+    consoleSpy.mockRestore();
+  });
+});
+
+describe('cronEnable', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('calls shared cronEnable and logs confirmation', async () => {
+    vi.mocked(shared.cronEnable).mockResolvedValue();
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await cronEnable('talent-collect');
+    expect(shared.cronEnable).toHaveBeenCalledWith('talent-collect');
+    expect(consoleSpy.mock.calls.some((c) => String(c[0]).includes('enabled'))).toBe(true);
     consoleSpy.mockRestore();
   });
 });

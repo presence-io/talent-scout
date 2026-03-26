@@ -95,3 +95,32 @@ export async function syncCronJobs(): Promise<void> {
     }
   }
 }
+
+export interface CronRunInfo {
+  name: string;
+  status: string;
+  started_at?: string;
+  finished_at?: string;
+}
+
+/** List recent cron run history from OpenClaw. */
+export async function cronRuns(): Promise<CronRunInfo[]> {
+  const { stdout } = await execa('openclaw', ['cron', 'runs', '--json']);
+  return JSON.parse(stdout) as CronRunInfo[];
+}
+
+/** Get details of a specific cron run by name. */
+export async function cronRun(name: string): Promise<CronRunInfo | null> {
+  const { stdout } = await execa('openclaw', ['cron', 'run', '--name', name, '--json']);
+  return JSON.parse(stdout) as CronRunInfo | null;
+}
+
+/** Disable a cron job in OpenClaw. */
+export async function cronDisable(name: string): Promise<void> {
+  await execa('openclaw', ['cron', 'disable', '--name', name]);
+}
+
+/** Enable a cron job in OpenClaw. */
+export async function cronEnable(name: string): Promise<void> {
+  await execa('openclaw', ['cron', 'enable', '--name', name]);
+}

@@ -9,7 +9,8 @@ export async function runPipelineCommand(): Promise<void> {
 }
 
 export { runCollectCommand, runProcessCommand, runEvaluateCommand } from './commands.js';
-export { cronStatus, cronSync } from './cron.js';
+export { cronStatus, cronSync, cronRuns, cronRun, cronDisable, cronEnable } from './cron.js';
+export type { CronRunInfo } from './cron.js';
 export { queryShortlist, queryCandidate, queryStats } from './query.js';
 export { loadPatches, applyPatches } from './patches.js';
 export { renderShortlistText, renderCandidateText, renderStatsText } from './renderers.js';
@@ -28,6 +29,10 @@ Commands:
   query stats          Show run statistics
   cron status          Show cron job configuration
   cron sync            Sync cron jobs to OpenClaw
+  cron runs            List recent cron run history
+  cron run <name>      Show details of a specific cron run
+  cron disable <name>  Disable a cron job
+  cron enable <name>   Enable a cron job
 `.trim();
 
 async function main(): Promise<void> {
@@ -87,7 +92,8 @@ async function main(): Promise<void> {
       break;
     }
     case 'cron': {
-      const { cronStatus, cronSync } = await import('./cron.js');
+      const { cronStatus, cronSync, cronRuns, cronRun, cronDisable, cronEnable } =
+        await import('./cron.js');
       switch (subcommand) {
         case 'status':
           await cronStatus();
@@ -95,6 +101,47 @@ async function main(): Promise<void> {
         case 'sync':
           await cronSync();
           break;
+        case 'runs': {
+          const runs = await cronRuns();
+          console.log(JSON.stringify(runs, null, 2));
+          break;
+        }
+        case 'run': {
+          const name = args[2];
+          if (!name) {
+            console.error('Usage: talent-scout cron run <name>');
+            process.exitCode = 1;
+            return;
+          }
+          const run = await cronRun(name);
+          if (!run) {
+            console.error(`Cron run "${name}" not found.`);
+            process.exitCode = 1;
+            return;
+          }
+          console.log(JSON.stringify(run, null, 2));
+          break;
+        }
+        case 'disable': {
+          const name = args[2];
+          if (!name) {
+            console.error('Usage: talent-scout cron disable <name>');
+            process.exitCode = 1;
+            return;
+          }
+          await cronDisable(name);
+          break;
+        }
+        case 'enable': {
+          const name = args[2];
+          if (!name) {
+            console.error('Usage: talent-scout cron enable <name>');
+            process.exitCode = 1;
+            return;
+          }
+          await cronEnable(name);
+          break;
+        }
         default:
           console.error(`Unknown cron subcommand: ${String(subcommand)}`);
           console.log(USAGE);
