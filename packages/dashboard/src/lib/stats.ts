@@ -77,3 +77,25 @@ export function computeConfidenceBuckets(entries: TalentEntry[]): DistributionEn
     percentage: Math.round((count / total) * 100),
   }));
 }
+
+export function computeSignalTypeDistribution(
+  entries: TalentEntry[],
+  topN: number = 10,
+): DistributionEntry[] {
+  const counts: Record<string, number> = {};
+  for (const e of entries) {
+    for (const st of e.signal_types) {
+      counts[st] = (counts[st] ?? 0) + 1;
+    }
+  }
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (total === 0) return [];
+  return Object.entries(counts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, topN)
+    .map(([label, count]) => ({
+      label,
+      count,
+      percentage: Math.round((count / total) * 100),
+    }));
+}

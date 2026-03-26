@@ -5,6 +5,7 @@ import {
   computeTierDistribution,
   computeCityDistribution,
   computeConfidenceBuckets,
+  computeSignalTypeDistribution,
 } from '../src/lib/stats.js';
 
 function entry(overrides: Partial<TalentEntry> = {}): TalentEntry {
@@ -93,5 +94,23 @@ describe('computeConfidenceBuckets', () => {
 
   it('returns empty for empty input', () => {
     expect(computeConfidenceBuckets([])).toHaveLength(0);
+  });
+});
+
+describe('computeSignalTypeDistribution', () => {
+  it('counts signal types across entries', () => {
+    const entries = [
+      entry({ signal_types: ['code:claude-md', 'commit:claude-coauthor'] }),
+      entry({ signal_types: ['code:claude-md', 'topic:cursor-ai'] }),
+      entry({ signal_types: ['commit:claude-coauthor'] }),
+    ];
+    const dist = computeSignalTypeDistribution(entries, 10);
+    expect(dist.find((d) => d.label === 'code:claude-md')?.count).toBe(2);
+    expect(dist.find((d) => d.label === 'commit:claude-coauthor')?.count).toBe(2);
+    expect(dist.find((d) => d.label === 'topic:cursor-ai')?.count).toBe(1);
+  });
+
+  it('returns empty for entries with no signals', () => {
+    expect(computeSignalTypeDistribution([entry()], 10)).toHaveLength(0);
   });
 });

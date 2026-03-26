@@ -1,24 +1,25 @@
 ---
-import { join } from 'node:path';
 import Base from '../layouts/Base.astro';
-import type { TalentEntry } from '@talent-scout/shared';
-import { readJsonFile, resolveOutputDir } from '../lib/file';
+import { loadShortlist } from '@talent-scout/ai-evaluator';
+import { resolveOutputDir } from '../lib/file';
 import {
   computeActionDistribution,
   computeTierDistribution,
   computeCityDistribution,
   computeConfidenceBuckets,
+  computeSignalTypeDistribution,
 } from '../lib/stats';
 import { formatAction, formatTier } from '../lib/format';
 
 const base = process.cwd();
 const outputDir = resolveOutputDir(base);
-const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.json'), []);
+const entries = await loadShortlist(outputDir).catch(() => []);
 
 const actionDist = computeActionDistribution(entries);
 const tierDist = computeTierDistribution(entries);
 const cityDist = computeCityDistribution(entries);
 const confidenceBuckets = computeConfidenceBuckets(entries);
+const signalDist = computeSignalTypeDistribution(entries);
 ---
 
 <Base title="Statistics">
@@ -87,5 +88,21 @@ const confidenceBuckets = computeConfidenceBuckets(entries);
         ))}
       </div>
     </div>
+
+    <!-- Signal Type Distribution -->
+    {signalDist.length > 0 && (
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h3 class="card-title">Signal Sources</h3>
+          {signalDist.map((d) => (
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-36 text-sm truncate" title={d.label}>{d.label}</span>
+              <progress class="progress progress-warning flex-1" value={d.percentage} max="100"></progress>
+              <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
   </div>
 </Base>

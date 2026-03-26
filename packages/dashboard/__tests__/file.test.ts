@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, mkdir, symlink } from 'node:fs/promises';
 import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -8,6 +8,7 @@ import {
   writeJsonAtomic,
   resolveOutputDir,
   resolveUserDataDir,
+  listRunHistory,
 } from '../src/lib/file.js';
 
 let testDir: string;
@@ -71,5 +72,41 @@ describe('resolveUserDataDir', () => {
     if (orig !== undefined) {
       process.env['TALENT_USER_DATA_DIR'] = orig;
     }
+  });
+});
+
+describe('listRunHistory', () => {
+  it('lists run directories sorted newest first', async () => {
+    const evaluatedDir = join(testDir, 'output', 'evaluated');
+    await mkdir(join(evaluatedDir, '20250101T000000'), { recursive: true });
+    await mkdir(join(evaluatedDir, '20250102T000000'), { recursive: true });
+    await symlink('20250102T000000', join(evaluatedDir, 'latest'));
+
+    const orig = process.env['TALENT_OUTPUT_DIR'];
+    process.env['TALENT_OUTPUT_DIR'] = join(evaluatedDir, 'latest');
+    const history = await listRunHistory(testDir);
+    if (orig === undefined) {
+      delete process.env['TALENT_OUTPUT_DIR'];
+    } else {
+      process.env['TALENT_OUTPUT_DIR'] = orig;
+    }
+
+    expect(history).toHaveLength(2);
+    expect(history[0]?.timestamp).toBe('20250102T000000');
+    expect(history[0]?.isLatest).toBe(true);
+    expect(history[1]?.timestamp).toBe('20250101T000000');
+    expect(history[1]?.isLatest).toBe(false);
+  });
+
+  it('returns empty array when no evaluated directory', async () => {
+    const orig = process.env['TALENT_OUTPUT_DIR'];
+    process.env['TALENT_OUTPUT_DIR'] = join(testDir, 'output', 'evaluated', 'latest');
+    const history = await listRunHistory(testDir);
+    if (orig === undefined) {
+      delete process.env['TALENT_OUTPUT_DIR'];
+    } else {
+      process.env['TALENT_OUTPUT_DIR'] = orig;
+    }
+    expect(history).toEqual([]);
   });
 });

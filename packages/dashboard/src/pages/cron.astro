@@ -1,15 +1,24 @@
 ---
 import Base from '../layouts/Base.astro';
 import { loadConfig } from '@talent-scout/shared';
+import { listRunHistory } from '../lib/file';
+import type { RunHistoryEntry } from '../lib/file';
 
 let cronJobs: { name: string; schedule: string; command: string; description?: string }[] = [];
 let configError: string | null = null;
+let runHistory: RunHistoryEntry[] = [];
 
 try {
   const config = await loadConfig();
   cronJobs = config.openclaw.cron;
 } catch (err) {
   configError = err instanceof Error ? err.message : String(err);
+}
+
+try {
+  runHistory = await listRunHistory(process.cwd());
+} catch {
+  // ignore
 }
 ---
 
@@ -29,7 +38,7 @@ try {
   )}
 
   {cronJobs.length > 0 && (
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto mb-8">
       <table class="table table-zebra">
         <thead>
           <tr>
@@ -46,6 +55,48 @@ try {
               <td><code>{job.schedule}</code></td>
               <td><code>{job.command}</code></td>
               <td>{job.description ?? '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  <h2 class="text-xl font-bold mb-3">Recent Runs</h2>
+
+  <div class="flex items-center gap-4 mb-4">
+    <button class="btn btn-primary btn-sm" disabled title="Trigger via OpenClaw scheduler">
+      Run Now
+    </button>
+    <span class="text-sm text-base-content/60">Actual execution is handled by the OpenClaw scheduler.</span>
+  </div>
+
+  {runHistory.length === 0 && (
+    <div class="alert alert-info">
+      <span>No run history found. Runs will appear in <code>output/evaluated/</code>.</span>
+    </div>
+  )}
+
+  {runHistory.length > 0 && (
+    <div class="overflow-x-auto">
+      <table class="table table-zebra">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {runHistory.map((run) => (
+            <tr>
+              <td><code>{run.timestamp}</code></td>
+              <td>
+                {run.isLatest ? (
+                  <span class="badge badge-success">Latest</span>
+                ) : (
+                  <span class="badge badge-ghost">Completed</span>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
