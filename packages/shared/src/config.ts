@@ -39,6 +39,15 @@ const StargazerRepoSchema = z.object({
   max_pages: z.number().default(10),
 });
 
+const RankingSourceSchema = z.object({
+  name: z.string(),
+  type: z.enum(['github-readme', 'web-scrape']),
+  repo: z.string().optional(),
+  url: z.string().optional(),
+  signal_type: z.enum(['seed:ranking', 'seed:list']),
+  weight: z.number(),
+});
+
 const GraphExpansionSchema = z.object({
   enabled: z.boolean().default(true),
   max_seed_users: z.number().default(200),
@@ -120,6 +129,7 @@ export const TalentConfigSchema = z.object({
   topic_queries: z.array(TopicQuerySchema).default([]),
   chinese_community: z.array(CommunityRepoSchema).default([]),
   stargazer_repos: z.array(StargazerRepoSchema).default([]),
+  ranking_sources: z.array(RankingSourceSchema).default([]),
   graph_expansion: GraphExpansionSchema.default({}),
   api_budget: ApiBudgetSchema.default({}),
   identity: IdentityConfigSchema.default({}),

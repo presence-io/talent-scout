@@ -89,6 +89,24 @@ stargazer_repos:
     weight: 5
     max_pages: 10
 
+# ── Ranking / seed list sources ──
+ranking_sources:
+  - name: chinese-independent-developer
+    type: github-readme
+    repo: 1c7/chinese-independent-developer
+    signal_type: "seed:list"
+    weight: 5
+  - name: china-ranking
+    type: web-scrape
+    url: "https://china-ranking.aolifu.org"
+    signal_type: "seed:ranking"
+    weight: 4
+  - name: githubrank
+    type: web-scrape
+    url: "https://githubrank.com"
+    signal_type: "seed:ranking"
+    weight: 4
+
 # ── Graph expansion settings ──
 graph_expansion:
   enabled: true

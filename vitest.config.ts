@@ -44,6 +44,7 @@ export default defineConfig({
         'packages/ai-evaluator/src/identity-ai.ts',
         'packages/data-collector/src/community.ts',
         'packages/data-collector/src/follower-graph.ts',
+        'packages/data-collector/src/rankings.ts',
         'packages/data-collector/src/stargazers.ts',
         'packages/data-collector/src/github-signals.ts',
         'packages/data-processor/src/validate-identity.ts',

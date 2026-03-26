@@ -13,6 +13,7 @@ import { basename, join, resolve } from 'node:path';
 import { collectCommunitySignals } from './community.js';
 import { collectFollowerGraphSignals } from './follower-graph.js';
 import { collectAllGitHubSignals } from './github-signals.js';
+import { collectRankingSignals } from './rankings.js';
 import { collectStargazerSignals } from './stargazers.js';
 
 export { loadRawSignals } from './query.js';
@@ -83,8 +84,19 @@ export async function runCollect(): Promise<void> {
     () => collectStargazerSignals(config, cache)
   );
 
+  const rankingSignals = await collectOrLoad(
+    join(outputDir, 'rankings.json'),
+    'ranking/seed signals',
+    () => collectRankingSignals(config, cache)
+  );
+
   // Merge all signals
-  const allSignals = mergeSignalMaps(githubSignals, communitySignals, stargazerSignals);
+  const allSignals = mergeSignalMaps(
+    githubSignals,
+    communitySignals,
+    stargazerSignals,
+    rankingSignals
+  );
   console.log(`Total: ${String(allSignals.size)} unique users from initial collection`);
 
   // Follower graph expansion placeholder
