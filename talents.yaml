@@ -151,6 +151,22 @@ cache:
     events: 43200
     rankings: 2592000
 
+# ── AI Provider (openclaw | claude | metabot) ──
+# ai:
+#   provider: claude
+#   claude:
+#     model: claude-opus-4-6
+#     max_tokens: 4096
+#   batch_size: 10
+
+# ── Scheduler (openclaw | metabot | system) ──
+# scheduler:
+#   type: system
+
+# ── Notifier (openclaw | metabot | console) ──
+# notifier:
+#   type: console
+
 # ── OpenClaw integration ──
 openclaw:
   agents:

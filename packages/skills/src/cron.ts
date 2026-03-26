@@ -1,4 +1,4 @@
-import { loadConfig, syncCronJobs } from '@talent-scout/shared';
+import { createScheduler, loadConfig, syncCronJobs } from '@talent-scout/shared';
 import {
   cronDisable as sharedCronDisable,
   cronEnable as sharedCronEnable,
@@ -18,7 +18,8 @@ export async function cronStatus(): Promise<void> {
     return;
   }
 
-  console.log('Configured cron jobs:');
+  const schedulerType = config.scheduler?.type ?? 'openclaw';
+  console.log(`Configured cron jobs (scheduler: ${schedulerType}):`);
   console.log('');
   for (const job of jobs) {
     console.log(`  ${job.name}`);
@@ -31,10 +32,21 @@ export async function cronStatus(): Promise<void> {
   }
 }
 
-/** Sync cron jobs to OpenClaw. */
+/** Sync cron jobs using the configured scheduler backend. */
 export async function cronSync(): Promise<void> {
-  console.log('Syncing cron jobs to OpenClaw...');
-  await syncCronJobs();
+  const config = await loadConfig();
+  const schedulerType = config.scheduler?.type ?? 'openclaw';
+
+  if (schedulerType === 'openclaw') {
+    // Legacy path for backward compatibility
+    console.log('Syncing cron jobs to OpenClaw...');
+    await syncCronJobs();
+  } else {
+    const scheduler = createScheduler(config);
+    console.log(`Syncing cron jobs via ${schedulerType} scheduler...`);
+    await scheduler.sync(config.openclaw.cron);
+  }
+
   console.log('Cron jobs synced.');
 }
 
@@ -48,14 +60,30 @@ export async function cronRun(name: string): ReturnType<typeof sharedCronRun> {
   return sharedCronRun(name);
 }
 
-/** Disable a cron job in OpenClaw. */
+/** Disable a cron job. */
 export async function cronDisable(name: string): Promise<void> {
-  await sharedCronDisable(name);
+  const config = await loadConfig();
+  const schedulerType = config.scheduler?.type ?? 'openclaw';
+
+  if (schedulerType === 'openclaw') {
+    await sharedCronDisable(name);
+  } else {
+    const scheduler = createScheduler(config);
+    await scheduler.disable(name);
+  }
   console.log(`Cron job "${name}" disabled.`);
 }
 
-/** Enable a cron job in OpenClaw. */
+/** Enable a cron job. */
 export async function cronEnable(name: string): Promise<void> {
-  await sharedCronEnable(name);
+  const config = await loadConfig();
+  const schedulerType = config.scheduler?.type ?? 'openclaw';
+
+  if (schedulerType === 'openclaw') {
+    await sharedCronEnable(name);
+  } else {
+    const scheduler = createScheduler(config);
+    await scheduler.enable(name);
+  }
   console.log(`Cron job "${name}" enabled.`);
 }

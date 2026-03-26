@@ -134,6 +134,38 @@ const OpenClawConfigSchema = z.object({
   delivery: OpenClawDeliverySchema.optional(),
 });
 
+// ── AI Provider config ──
+
+const ClaudeConfigSchema = z.object({
+  model: z.string().default('claude-opus-4-6'),
+  max_tokens: z.number().default(4096),
+});
+
+const MetaBotConfigSchema = z.object({
+  bot_name: z.string(),
+  chat_id: z.string(),
+  notify: z.boolean().default(false),
+});
+
+const AIConfigSchema = z.object({
+  provider: z.enum(['openclaw', 'claude', 'metabot']).default('openclaw'),
+  claude: ClaudeConfigSchema.optional(),
+  metabot: MetaBotConfigSchema.optional(),
+  batch_size: z.number().default(10),
+});
+
+// ── Scheduler config ──
+
+const SchedulerConfigSchema = z.object({
+  type: z.enum(['openclaw', 'metabot', 'system']).default('openclaw'),
+});
+
+// ── Notifier config ──
+
+const NotifierConfigSchema = z.object({
+  type: z.enum(['openclaw', 'metabot', 'console']).default('console'),
+});
+
 const CacheTtlSchema = z.object({
   user_profile: z.number().default(604800),
   user_repos: z.number().default(259200),
@@ -159,6 +191,9 @@ export const TalentConfigSchema = z.object({
   evaluation: EvaluationConfigSchema.default({}),
   target_profile: TargetProfileSchema.default({}),
   openclaw: OpenClawConfigSchema.default({}),
+  ai: AIConfigSchema.optional(),
+  scheduler: SchedulerConfigSchema.optional(),
+  notifier: NotifierConfigSchema.optional(),
   cache: CacheConfigSchema.default({}),
 });
 
