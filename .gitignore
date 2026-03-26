@@ -6,37 +6,12 @@
 .env.local
 .envrc
 
-# Python: byte-compiled / cache
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environments
-.venv/
-venv/
-env/
-venv.bak/
-
 # Packaging / build
 build/
 dist/
-*.egg-info/
-.eggs/
-pip-wheel-metadata/
 
 # Test / coverage / type check caches
-.pytest_cache/
-.tox/
-.nox/
-.coverage
-.coverage.*
-coverage.xml
-htmlcov/
-.mypy_cache/
-.pytype/
-
-# Jupyter
-.ipynb_checkpoints/
+coverage/
 
 # Logs
 logs/
@@ -56,18 +31,12 @@ Thumbs.db
 node_modules/
 dist/
 
-# Project-specific generated results
-output/
-
 # Runtime data
 workspace-data/
 user-data/
 
 # API 缓存
 cache/
-
-# v1 Python 代码备份
-legacy/
 
 # Misc
 *.sqlite3

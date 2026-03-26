@@ -112,7 +112,7 @@ GitHub Actions 的目标流程如下：
 3. 运行 `pnpm -r build`。
 4. 运行 `pnpm check`。
 5. 发布全部 `@talent-scout/*` npm 包。
-6. 校验并发布 `packages/skills/`。
+6. 校验 `packages/skills/`。
 
 skill bundle 发布至少需要补充以下校验：
 
@@ -120,6 +120,10 @@ skill bundle 发布至少需要补充以下校验：
 - `SKILL.md` frontmatter 合法性校验
 - 脚本可执行性检查
 - workspace patch 向后兼容性测试
+
+### 5.1 发布 ClawHub skill 的额外要求
+
+由于 Clawhub 需要登录状态才能发布，所以发布 Clawhub skills 的脚本需要在本地执行，而不能完全依赖 CI 自动化。
 
 发布命令可采用：
 
