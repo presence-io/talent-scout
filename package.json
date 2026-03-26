@@ -2,6 +2,7 @@
   "name": "talent-scout",
   "private": true,
   "license": "MIT",
+  "homepage": "https://github.com/presence-io/talent-scout",
   "type": "module",
   "scripts": {
     "test": "vitest run",

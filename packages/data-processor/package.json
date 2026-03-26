@@ -1,6 +1,7 @@
 {
   "name": "@talent-scout/data-processor",
   "version": "0.1.0",
+  "homepage": "https://github.com/presence-io/talent-scout",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",

@@ -1,6 +1,6 @@
 # @talent-scout/skills
 
-[![GitHub Actions](https://github.com/huandu/talent-scout/actions/workflows/publish.yml/badge.svg)](https://github.com/huandu/talent-scout/actions/workflows/publish.yml)
+[![GitHub Actions](https://github.com/presence-io/talent-scout/actions/workflows/publish.yml/badge.svg)](https://github.com/presence-io/talent-scout/actions/workflows/publish.yml)
 [![npm: @talent-scout/skills](https://img.shields.io/npm/v/%40talent-scout%2Fskills?logo=npm)](https://www.npmjs.com/package/@talent-scout/skills)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f.svg)](../../LICENSE)
