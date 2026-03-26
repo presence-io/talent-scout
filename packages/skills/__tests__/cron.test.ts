@@ -75,7 +75,7 @@ describe('cronStatus', () => {
         },
       },
     };
-    vi.mocked(shared.loadConfig).mockResolvedValue(mockConfig);
+    vi.mocked(shared.loadConfig).mockResolvedValue(shared.TalentConfigSchema.parse(mockConfig));
 
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await cronStatus();
@@ -127,7 +127,7 @@ describe('cronStatus', () => {
         },
       },
     };
-    vi.mocked(shared.loadConfig).mockResolvedValue(mockConfig);
+    vi.mocked(shared.loadConfig).mockResolvedValue(shared.TalentConfigSchema.parse(mockConfig));
 
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await cronStatus();
