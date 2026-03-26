@@ -1,0 +1,40 @@
+{
+  "name": "@talent-scout/skills",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "SKILL.md",
+    "references",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "skill": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@talent-scout/shared": "workspace:*",
+    "@talent-scout/data-collector": "workspace:*",
+    "@talent-scout/data-processor": "workspace:*",
+    "@talent-scout/ai-evaluator": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.19.3"
+  }
+}

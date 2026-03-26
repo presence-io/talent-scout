@@ -3,7 +3,7 @@ name: Publish to npm
 on:
   push:
     tags:
-      - "v*"
+      - "v[0-9]+.[0-9]+.[0-9]+*"
 
 permissions:
   contents: read
@@ -44,5 +44,15 @@ jobs:
           pnpm --filter @talent-scout/data-collector publish --access public --no-git-checks
           pnpm --filter @talent-scout/data-processor publish --access public --no-git-checks
           pnpm --filter @talent-scout/ai-evaluator publish --access public --no-git-checks
+          pnpm --filter @talent-scout/skills publish --access public --no-git-checks
+          pnpm --filter @talent-scout/dashboard publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Validate skill bundle
+        run: |
+          if command -v skills-ref &>/dev/null; then
+            skills-ref validate ./packages/skills
+          else
+            echo "skills-ref not found, skipping skill validation"
+          fi
