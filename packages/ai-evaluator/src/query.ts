@@ -1,7 +1,6 @@
+import type { Candidate, TalentEntry } from '@talent-scout/shared';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-
-import type { Candidate, TalentEntry } from '@talent-scout/shared';
 
 import type { RunStats } from './skills.js';
 import { computeRunStats } from './skills.js';

@@ -1,8 +1,7 @@
+import type { RunStats } from '@talent-scout/ai-evaluator';
+import type { Candidate, TalentEntry } from '@talent-scout/shared';
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-
-import type { Candidate, TalentEntry } from '@talent-scout/shared';
-import type { RunStats } from '@talent-scout/ai-evaluator';
 
 /** Resolve the latest evaluated output directory. */
 function resolveOutputDir(): string {

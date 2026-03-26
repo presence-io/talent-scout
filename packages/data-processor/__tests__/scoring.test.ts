@@ -1,16 +1,16 @@
-import { describe, it, expect } from 'vitest';
-
 import type { Candidate, GitHubProfile, RepoSummary } from '@talent-scout/shared';
 import { TalentConfigSchema } from '@talent-scout/shared';
+import { describe, expect, it } from 'vitest';
+
 import {
-  extractSkillFeatures,
-  computeSkillScore,
   computeAIDepthScore,
-  computeReachabilityScore,
-  computeFitScore,
   computeFinalScore,
+  computeFitScore,
+  computeReachabilityScore,
+  computeSkillScore,
   determineAction,
   evaluateCandidate,
+  extractSkillFeatures,
 } from '../src/scoring.js';
 
 function makeRepo(overrides: Partial<RepoSummary> = {}): RepoSummary {
@@ -51,7 +51,7 @@ function makeProfile(overrides: Partial<GitHubProfile> = {}): GitHubProfile {
 
 function makeCandidate(
   profileOverrides?: Partial<GitHubProfile>,
-  candidateOverrides?: Partial<Candidate>,
+  candidateOverrides?: Partial<Candidate>
 ): Candidate {
   return {
     username: 'testuser',
@@ -280,7 +280,7 @@ describe('computeFinalScore', () => {
     const score = computeFinalScore(
       { skill: 8, ai_depth: 7, reachability: 6, fit: 5 },
       defaultConfig,
-      50,
+      50
     );
     // 8*0.35 + 7*0.3 + 6*0.15 + 5*0.2 = 2.8 + 2.1 + 0.9 + 1.0 = 6.8
     expect(score).toBeCloseTo(6.8, 1);
@@ -290,12 +290,12 @@ describe('computeFinalScore', () => {
     const active = computeFinalScore(
       { skill: 8, ai_depth: 7, reachability: 6, fit: 5 },
       defaultConfig,
-      50,
+      50
     );
     const inactive = computeFinalScore(
       { skill: 8, ai_depth: 7, reachability: 6, fit: 5 },
       defaultConfig,
-      5,
+      5
     );
     expect(inactive).toBeLessThan(active);
   });
@@ -304,7 +304,7 @@ describe('computeFinalScore', () => {
     const score = computeFinalScore(
       { skill: 1, ai_depth: 1, reachability: 1, fit: 1 },
       defaultConfig,
-      0,
+      0
     );
     expect(score).toBeGreaterThanOrEqual(0);
   });
@@ -354,7 +354,7 @@ describe('evaluateCandidate', () => {
       },
       {
         signals: [{ type: 'code:claude-md', detail: 'test', weight: 2, source: 'test' }],
-      },
+      }
     );
 
     const result = evaluateCandidate(candidate, defaultConfig);

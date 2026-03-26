@@ -1,10 +1,10 @@
 ---
 import { join } from 'node:path';
-import Base from '../../layouts/Base.astro';
+import Base from '@/layouts/Base.astro';
 import type { TalentEntry, Candidate, IgnoreList } from '@talent-scout/shared';
-import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '../../lib/file';
-import type { AnnotationMap } from '../../lib/merge';
-import { formatScore, formatAction, formatTier, actionBadgeClass } from '../../lib/format';
+import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '@/lib/file';
+import type { AnnotationMap } from '@/lib/merge';
+import { formatScore, formatAction, formatTier, actionBadgeClass } from '@/lib/format';
 
 const { username } = Astro.params;
 if (!username) return Astro.redirect('/');
@@ -19,7 +19,7 @@ if (!entry) return Astro.redirect('/');
 
 const candidateData = await readJsonFile<Record<string, Candidate> | Candidate[]>(
   join(outputDir, 'evaluation.json'),
-  {},
+  {}
 );
 const candidateArray = Array.isArray(candidateData) ? candidateData : Object.values(candidateData);
 const candidate = candidateArray.find((c) => c.username === username) ?? null;
@@ -39,7 +39,7 @@ const signals = candidate?.signals ?? [];
     <a href="/" class="btn btn-ghost btn-sm">&larr; Back to list</a>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
     <!-- Left column: profile info -->
     <div class="card bg-base-100 shadow">
       <div class="card-body">
@@ -94,7 +94,7 @@ const signals = candidate?.signals ?? [];
         {ignored && <div class="badge badge-error mt-2">Ignored</div>}
         {
           annotation && (
-            <div class="mt-2 p-2 bg-base-200 rounded">
+            <div class="bg-base-200 mt-2 rounded p-2">
               <p class="text-sm font-semibold">Annotation: {annotation.status}</p>
               {annotation.note && <p class="text-sm">{annotation.note}</p>}
             </div>
@@ -149,7 +149,7 @@ const signals = candidate?.signals ?? [];
           </p>
           {
             identity && identity.signals.length > 0 && (
-              <ul class="list-disc list-inside text-sm">
+              <ul class="list-inside list-disc text-sm">
                 {identity.signals.map((s) => (
                   <li>
                     T{s.tier}: {s.evidence} ({(s.confidence * 100).toFixed(0)}%)
@@ -173,11 +173,11 @@ const signals = candidate?.signals ?? [];
   <!-- Signals table -->
   {
     signals.length > 0 && (
-      <div class="card bg-base-100 shadow mt-4">
+      <div class="card bg-base-100 mt-4 shadow">
         <div class="card-body">
           <h3 class="card-title text-lg">Signals ({signals.length})</h3>
           <div class="overflow-x-auto">
-            <table class="table table-zebra table-sm">
+            <table class="table-zebra table-sm table">
               <thead>
                 <tr>
                   <th>Type</th>
@@ -206,10 +206,10 @@ const signals = candidate?.signals ?? [];
   }
 
   <!-- Annotation & Ignore controls -->
-  <div class="card bg-base-100 shadow mt-4">
+  <div class="card bg-base-100 mt-4 shadow">
     <div class="card-body">
       <h3 class="card-title text-lg">Actions</h3>
-      <div class="flex flex-wrap gap-2 items-end">
+      <div class="flex flex-wrap items-end gap-2">
         <div class="flex gap-2">
           <button
             class="btn btn-sm btn-success annotation-btn"
@@ -227,7 +227,7 @@ const signals = candidate?.signals ?? [];
             data-username={username}>Reject</button
           >
         </div>
-        <div class="form-control flex-1 min-w-48">
+        <div class="form-control min-w-48 flex-1">
           <input
             type="text"
             id="annotation-note"

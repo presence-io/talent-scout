@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, readdir, unlink, stat } from 'node:fs/promises';
+import { mkdir, readFile, readdir, stat, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import type { CacheEntry } from './types.js';

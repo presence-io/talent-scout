@@ -1,5 +1,5 @@
-import type { Candidate, TalentEntry } from '@talent-scout/shared';
 import type { RunStats } from '@talent-scout/ai-evaluator';
+import type { Candidate, TalentEntry } from '@talent-scout/shared';
 
 /** Render shortlist as plain text suitable for IM/TUI. */
 export function renderShortlistText(entries: TalentEntry[]): string {
@@ -13,7 +13,7 @@ export function renderShortlistText(entries: TalentEntry[]): string {
     lines.push(
       `  ${e.username.padEnd(24)} ${e.final_score.toFixed(1).padStart(5)}  ` +
         `skill=${e.skill_score.toFixed(1)} ai=${e.ai_depth_score.toFixed(1)} ` +
-        `[${action}] ${city}`,
+        `[${action}] ${city}`
     );
   }
 
@@ -49,10 +49,10 @@ export function renderCandidateText(candidate: Candidate): string {
   if (ev) {
     lines.push('');
     lines.push(
-      `Skill: ${ev.skill_score.toFixed(1)}  AI Depth: ${ev.ai_depth_score.toFixed(1)} (${ev.ai_depth_tier})`,
+      `Skill: ${ev.skill_score.toFixed(1)}  AI Depth: ${ev.ai_depth_score.toFixed(1)} (${ev.ai_depth_tier})`
     );
     lines.push(
-      `Reachability: ${ev.reachability_score.toFixed(1)}  Fit: ${ev.fit_score.toFixed(1)}`,
+      `Reachability: ${ev.reachability_score.toFixed(1)}  Fit: ${ev.fit_score.toFixed(1)}`
     );
     lines.push(`Final Score: ${ev.final_score.toFixed(1)}  Action: ${ev.recommended_action}`);
     if (ev.summary) lines.push(`Summary: ${ev.summary}`);

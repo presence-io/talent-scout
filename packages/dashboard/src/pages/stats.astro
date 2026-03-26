@@ -1,15 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
 import { loadShortlist } from '@talent-scout/ai-evaluator';
-import { resolveOutputDir } from '../lib/file';
+import { resolveOutputDir } from '@/lib/file';
 import {
   computeActionDistribution,
   computeTierDistribution,
   computeCityDistribution,
   computeConfidenceBuckets,
   computeSignalTypeDistribution,
-} from '../lib/stats';
-import { formatAction, formatTier } from '../lib/format';
+} from '@/lib/stats';
+import { formatAction, formatTier } from '@/lib/format';
 
 const base = process.cwd();
 const outputDir = resolveOutputDir(base);
@@ -23,27 +23,31 @@ const signalDist = computeSignalTypeDistribution(entries);
 ---
 
 <Base title="Statistics">
-  <h1 class="text-2xl font-bold mb-4">Statistics</h1>
+  <h1 class="mb-4 text-2xl font-bold">Statistics</h1>
 
-  <div class="stats shadow mb-6 w-full">
+  <div class="stats mb-6 w-full shadow">
     <div class="stat">
       <div class="stat-title">Total Candidates</div>
       <div class="stat-value">{entries.length}</div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
     <!-- Action Distribution -->
     <div class="card bg-base-100 shadow">
       <div class="card-body">
         <h3 class="card-title">Recommended Actions</h3>
-        {actionDist.map((d) => (
-          <div class="flex items-center gap-2 mb-1">
-            <span class="w-24 text-sm">{formatAction(d.label)}</span>
-            <progress class="progress progress-primary flex-1" value={d.percentage} max="100"></progress>
-            <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
-          </div>
-        ))}
+        {
+          actionDist.map((d) => (
+            <div class="mb-1 flex items-center gap-2">
+              <span class="w-24 text-sm">{formatAction(d.label)}</span>
+              <progress class="progress progress-primary flex-1" value={d.percentage} max="100" />
+              <span class="w-16 text-right text-sm">
+                {d.count} ({d.percentage}%)
+              </span>
+            </div>
+          ))
+        }
       </div>
     </div>
 
@@ -51,13 +55,17 @@ const signalDist = computeSignalTypeDistribution(entries);
     <div class="card bg-base-100 shadow">
       <div class="card-body">
         <h3 class="card-title">AI Depth Tiers</h3>
-        {tierDist.map((d) => (
-          <div class="flex items-center gap-2 mb-1">
-            <span class="w-24 text-sm">{formatTier(d.label)}</span>
-            <progress class="progress progress-secondary flex-1" value={d.percentage} max="100"></progress>
-            <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
-          </div>
-        ))}
+        {
+          tierDist.map((d) => (
+            <div class="mb-1 flex items-center gap-2">
+              <span class="w-24 text-sm">{formatTier(d.label)}</span>
+              <progress class="progress progress-secondary flex-1" value={d.percentage} max="100" />
+              <span class="w-16 text-right text-sm">
+                {d.count} ({d.percentage}%)
+              </span>
+            </div>
+          ))
+        }
       </div>
     </div>
 
@@ -65,13 +73,19 @@ const signalDist = computeSignalTypeDistribution(entries);
     <div class="card bg-base-100 shadow">
       <div class="card-body">
         <h3 class="card-title">Top Cities</h3>
-        {cityDist.map((d) => (
-          <div class="flex items-center gap-2 mb-1">
-            <span class="w-24 text-sm truncate" title={d.label}>{d.label}</span>
-            <progress class="progress progress-accent flex-1" value={d.percentage} max="100"></progress>
-            <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
-          </div>
-        ))}
+        {
+          cityDist.map((d) => (
+            <div class="mb-1 flex items-center gap-2">
+              <span class="w-24 truncate text-sm" title={d.label}>
+                {d.label}
+              </span>
+              <progress class="progress progress-accent flex-1" value={d.percentage} max="100" />
+              <span class="w-16 text-right text-sm">
+                {d.count} ({d.percentage}%)
+              </span>
+            </div>
+          ))
+        }
       </div>
     </div>
 
@@ -79,30 +93,40 @@ const signalDist = computeSignalTypeDistribution(entries);
     <div class="card bg-base-100 shadow">
       <div class="card-body">
         <h3 class="card-title">China Confidence</h3>
-        {confidenceBuckets.map((d) => (
-          <div class="flex items-center gap-2 mb-1">
-            <span class="w-24 text-sm">{d.label}</span>
-            <progress class="progress progress-info flex-1" value={d.percentage} max="100"></progress>
-            <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
-          </div>
-        ))}
+        {
+          confidenceBuckets.map((d) => (
+            <div class="mb-1 flex items-center gap-2">
+              <span class="w-24 text-sm">{d.label}</span>
+              <progress class="progress progress-info flex-1" value={d.percentage} max="100" />
+              <span class="w-16 text-right text-sm">
+                {d.count} ({d.percentage}%)
+              </span>
+            </div>
+          ))
+        }
       </div>
     </div>
 
     <!-- Signal Type Distribution -->
-    {signalDist.length > 0 && (
-      <div class="card bg-base-100 shadow">
-        <div class="card-body">
-          <h3 class="card-title">Signal Sources</h3>
-          {signalDist.map((d) => (
-            <div class="flex items-center gap-2 mb-1">
-              <span class="w-36 text-sm truncate" title={d.label}>{d.label}</span>
-              <progress class="progress progress-warning flex-1" value={d.percentage} max="100"></progress>
-              <span class="text-sm w-16 text-right">{d.count} ({d.percentage}%)</span>
-            </div>
-          ))}
+    {
+      signalDist.length > 0 && (
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <h3 class="card-title">Signal Sources</h3>
+            {signalDist.map((d) => (
+              <div class="mb-1 flex items-center gap-2">
+                <span class="w-36 truncate text-sm" title={d.label}>
+                  {d.label}
+                </span>
+                <progress class="progress progress-warning flex-1" value={d.percentage} max="100" />
+                <span class="w-16 text-right text-sm">
+                  {d.count} ({d.percentage}%)
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    )}
+      )
+    }
   </div>
 </Base>

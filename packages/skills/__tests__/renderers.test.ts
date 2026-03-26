@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-
-import { renderShortlistText, renderCandidateText, renderStatsText } from '../src/renderers.js';
-import type { Candidate, TalentEntry } from '@talent-scout/shared';
 import type { RunStats } from '@talent-scout/ai-evaluator';
+import type { Candidate, TalentEntry } from '@talent-scout/shared';
+import { describe, expect, it } from 'vitest';
+
+import { renderCandidateText, renderShortlistText, renderStatsText } from '../src/renderers.js';
 
 describe('renderShortlistText', () => {
   it('returns empty message for no entries', () => {
@@ -45,7 +45,14 @@ describe('renderCandidateText', () => {
   it('renders candidate with profile and evaluation', () => {
     const candidate: Candidate = {
       username: 'devuser',
-      signals: [{ type: 'code:claude-md', detail: 'Found CLAUDE.md', weight: 2, source: 'github' }],
+      signals: [
+        {
+          type: 'code:claude-md',
+          detail: 'Found CLAUDE.md',
+          weight: 2,
+          source: 'github',
+        },
+      ],
       signal_score: 2,
       is_ai_coding_enthusiast: true,
       profile: {
@@ -68,7 +75,14 @@ describe('renderCandidateText', () => {
       identity: {
         china_confidence: 0.95,
         city: 'Beijing',
-        signals: [{ tier: 1, type: 'location:explicit', confidence: 0.92, evidence: 'Beijing' }],
+        signals: [
+          {
+            tier: 1,
+            type: 'location:explicit',
+            confidence: 0.92,
+            evidence: 'Beijing',
+          },
+        ],
         ai_assisted: false,
         inferred_at: '2025-01-01T00:00:00Z',
       },

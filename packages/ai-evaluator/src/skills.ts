@@ -1,7 +1,6 @@
+import type { Candidate } from '@talent-scout/shared';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-
-import type { Candidate } from '@talent-scout/shared';
 
 export interface RunStats {
   total_candidates: number;

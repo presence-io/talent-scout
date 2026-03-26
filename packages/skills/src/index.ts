@@ -1,4 +1,4 @@
-import { runCollectCommand, runProcessCommand, runEvaluateCommand } from './commands.js';
+import { runCollectCommand, runEvaluateCommand, runProcessCommand } from './commands.js';
 
 export async function runPipelineCommand(): Promise<void> {
   console.log('Running full pipeline: collect → process → evaluate');

@@ -1,8 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import { loadConfig } from '@talent-scout/shared';
-import { listRunHistory } from '../lib/file';
-import type { RunHistoryEntry } from '../lib/file';
+import { listRunHistory } from '@/lib/file';
+import type { RunHistoryEntry } from '@/lib/file';
 
 let cronJobs: { name: string; schedule: string; command: string; description?: string }[] = [];
 let configError: string | null = null;
@@ -23,84 +23,106 @@ try {
 ---
 
 <Base title="Cron Jobs">
-  <h1 class="text-2xl font-bold mb-4">Cron Jobs</h1>
+  <h1 class="mb-4 text-2xl font-bold">Cron Jobs</h1>
 
-  {configError && (
-    <div class="alert alert-warning mb-4">
-      <span>Could not load config: {configError}</span>
-    </div>
-  )}
+  {
+    configError && (
+      <div class="alert alert-warning mb-4">
+        <span>Could not load config: {configError}</span>
+      </div>
+    )
+  }
 
-  {cronJobs.length === 0 && !configError && (
-    <div class="alert alert-info mb-4">
-      <span>No cron jobs configured. Add entries to <code>openclaw.cron</code> in talents.yaml.</span>
-    </div>
-  )}
+  {
+    cronJobs.length === 0 && !configError && (
+      <div class="alert alert-info mb-4">
+        <span>
+          No cron jobs configured. Add entries to <code>openclaw.cron</code> in talents.yaml.
+        </span>
+      </div>
+    )
+  }
 
-  {cronJobs.length > 0 && (
-    <div class="overflow-x-auto mb-8">
-      <table class="table table-zebra">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Schedule</th>
-            <th>Command</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cronJobs.map((job) => (
+  {
+    cronJobs.length > 0 && (
+      <div class="mb-8 overflow-x-auto">
+        <table class="table-zebra table">
+          <thead>
             <tr>
-              <td class="font-semibold">{job.name}</td>
-              <td><code>{job.schedule}</code></td>
-              <td><code>{job.command}</code></td>
-              <td>{job.description ?? '—'}</td>
+              <th>Name</th>
+              <th>Schedule</th>
+              <th>Command</th>
+              <th>Description</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
+          </thead>
+          <tbody>
+            {cronJobs.map((job) => (
+              <tr>
+                <td class="font-semibold">{job.name}</td>
+                <td>
+                  <code>{job.schedule}</code>
+                </td>
+                <td>
+                  <code>{job.command}</code>
+                </td>
+                <td>{job.description ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
 
-  <h2 class="text-xl font-bold mb-3">Recent Runs</h2>
+  <h2 class="mb-3 text-xl font-bold">Recent Runs</h2>
 
-  <div class="flex items-center gap-4 mb-4">
+  <div class="mb-4 flex items-center gap-4">
     <button class="btn btn-primary btn-sm" disabled title="Trigger via OpenClaw scheduler">
       Run Now
     </button>
-    <span class="text-sm text-base-content/60">Actual execution is handled by the OpenClaw scheduler.</span>
+    <span class="text-base-content/60 text-sm"
+      >Actual execution is handled by the OpenClaw scheduler.</span
+    >
   </div>
 
-  {runHistory.length === 0 && (
-    <div class="alert alert-info">
-      <span>No run history found. Runs will appear in <code>output/evaluated/</code>.</span>
-    </div>
-  )}
+  {
+    runHistory.length === 0 && (
+      <div class="alert alert-info">
+        <span>
+          No run history found. Runs will appear in <code>output/evaluated/</code>.
+        </span>
+      </div>
+    )
+  }
 
-  {runHistory.length > 0 && (
-    <div class="overflow-x-auto">
-      <table class="table table-zebra">
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {runHistory.map((run) => (
+  {
+    runHistory.length > 0 && (
+      <div class="overflow-x-auto">
+        <table class="table-zebra table">
+          <thead>
             <tr>
-              <td><code>{run.timestamp}</code></td>
-              <td>
-                {run.isLatest ? (
-                  <span class="badge badge-success">Latest</span>
-                ) : (
-                  <span class="badge badge-ghost">Completed</span>
-                )}
-              </td>
+              <th>Timestamp</th>
+              <th>Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
+          </thead>
+          <tbody>
+            {runHistory.map((run) => (
+              <tr>
+                <td>
+                  <code>{run.timestamp}</code>
+                </td>
+                <td>
+                  {run.isLatest ? (
+                    <span class="badge badge-success">Latest</span>
+                  ) : (
+                    <span class="badge badge-ghost">Completed</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
 </Base>

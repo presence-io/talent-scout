@@ -1,4 +1,4 @@
-import type { TalentEntry, RecommendedAction } from '@talent-scout/shared';
+import type { RecommendedAction, TalentEntry } from '@talent-scout/shared';
 
 export type SortField = keyof Pick<
   TalentEntry,
@@ -14,11 +14,11 @@ export type SortField = keyof Pick<
 
 export type SortOrder = 'asc' | 'desc';
 
-export function sortCandidates(
-  list: TalentEntry[],
+export function sortCandidates<T extends TalentEntry>(
+  list: T[],
   by: SortField = 'final_score',
-  order: SortOrder = 'desc',
-): TalentEntry[] {
+  order: SortOrder = 'desc'
+): T[] {
   const sorted = [...list].sort((a, b) => {
     const aVal = a[by];
     const bVal = b[by];
@@ -30,16 +30,16 @@ export function sortCandidates(
   return order === 'desc' ? sorted.reverse() : sorted;
 }
 
-export function filterByAction(list: TalentEntry[], action: RecommendedAction): TalentEntry[] {
+export function filterByAction<T extends TalentEntry>(list: T[], action: RecommendedAction): T[] {
   return list.filter((c) => c.recommended_action === action);
 }
 
-export function filterByCity(list: TalentEntry[], city: string): TalentEntry[] {
+export function filterByCity<T extends TalentEntry>(list: T[], city: string): T[] {
   const lower = city.toLowerCase();
   return list.filter((c) => c.city?.toLowerCase().includes(lower));
 }
 
-export function filterByAIDepthTier(list: TalentEntry[], tier: string): TalentEntry[] {
+export function filterByAIDepthTier<T extends TalentEntry>(list: T[], tier: string): T[] {
   return list.filter((c) => c.ai_depth_tier === tier);
 }
 
@@ -50,11 +50,11 @@ export interface PaginationResult<T> {
   totalItems: number;
 }
 
-export function paginateCandidates(
-  list: TalentEntry[],
+export function paginateCandidates<T extends TalentEntry>(
+  list: T[],
   page: number = 1,
-  limit: number = 50,
-): PaginationResult<TalentEntry> {
+  limit: number = 50
+): PaginationResult<T> {
   const safePage = Math.max(1, page);
   const safeLimit = Math.max(1, limit);
   const totalItems = list.length;

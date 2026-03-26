@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import type { TalentEntry } from '@talent-scout/shared';
+import { describe, expect, it } from 'vitest';
+
 import { mergeWithAnnotations, mergeWithIgnoreList } from '../src/lib/merge.js';
 import type { AnnotationMap } from '../src/lib/merge.js';
 
@@ -32,7 +33,11 @@ describe('mergeWithAnnotations', () => {
   it('attaches annotation to matching entry', () => {
     const entries = [entry({ username: 'alice' }), entry({ username: 'bob' })];
     const annotations: AnnotationMap = {
-      alice: { status: 'approved', note: 'Good', annotated_at: '2025-01-01T00:00:00Z' },
+      alice: {
+        status: 'approved',
+        note: 'Good',
+        annotated_at: '2025-01-01T00:00:00Z',
+      },
     };
     const result = mergeWithAnnotations(entries, annotations);
     expect(result[0]?.annotation?.status).toBe('approved');
@@ -49,7 +54,9 @@ describe('mergeWithAnnotations', () => {
 describe('mergeWithIgnoreList', () => {
   it('marks ignored entries', () => {
     const entries = [entry({ username: 'alice' }), entry({ username: 'bob' })];
-    const ignoreList = { alice: { reason: 'spam', ignored_at: '2025-01-01T00:00:00Z' } };
+    const ignoreList = {
+      alice: { reason: 'spam', ignored_at: '2025-01-01T00:00:00Z' },
+    };
     const result = mergeWithIgnoreList(entries, ignoreList);
     expect(result[0]?.ignored).toBe(true);
     expect(result[1]?.ignored).toBeUndefined();

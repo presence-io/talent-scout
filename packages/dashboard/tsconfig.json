@@ -1,10 +1,13 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "baseUrl": "."
   },
-  "include": ["src/lib/**/*.ts", "src/index.ts", "src/pages/**/*.ts"],
+  "include": ["src", ".astro/types.d.ts"],
   "references": [
     {
       "path": "../shared"

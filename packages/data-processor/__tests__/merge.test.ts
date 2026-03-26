@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-
 import type { Signal } from '@talent-scout/shared';
-import { mergeSignalMaps, deduplicateSignals, mergeCandidateRecords } from '../src/merge.js';
+import { describe, expect, it } from 'vitest';
+
+import { deduplicateSignals, mergeCandidateRecords, mergeSignalMaps } from '../src/merge.js';
 
 function signal(overrides: Partial<Signal> = {}): Signal {
   return {
@@ -25,9 +25,24 @@ describe('deduplicateSignals', () => {
 
   it('should dedup identical (type, repo, object_id) keeping highest weight', () => {
     const signals = [
-      signal({ type: 'code:claude-md', repo: 'a/b', object_id: '1', weight: 1 }),
-      signal({ type: 'code:claude-md', repo: 'a/b', object_id: '1', weight: 3 }),
-      signal({ type: 'code:claude-md', repo: 'a/b', object_id: '1', weight: 2 }),
+      signal({
+        type: 'code:claude-md',
+        repo: 'a/b',
+        object_id: '1',
+        weight: 1,
+      }),
+      signal({
+        type: 'code:claude-md',
+        repo: 'a/b',
+        object_id: '1',
+        weight: 3,
+      }),
+      signal({
+        type: 'code:claude-md',
+        repo: 'a/b',
+        object_id: '1',
+        weight: 2,
+      }),
     ];
     const result = deduplicateSignals(signals);
     expect(result).toHaveLength(1);
@@ -44,10 +59,28 @@ describe('deduplicateSignals', () => {
 describe('mergeSignalMaps', () => {
   it('should merge multiple maps into candidates', () => {
     const map1 = new Map<string, Signal[]>([
-      ['alice', [signal({ detail: 'from map1', type: 'code:claude-md', object_id: '1' })]],
+      [
+        'alice',
+        [
+          signal({
+            detail: 'from map1',
+            type: 'code:claude-md',
+            object_id: '1',
+          }),
+        ],
+      ],
     ]);
     const map2 = new Map<string, Signal[]>([
-      ['alice', [signal({ detail: 'from map2', type: 'code:cursor-rules', object_id: '2' })]],
+      [
+        'alice',
+        [
+          signal({
+            detail: 'from map2',
+            type: 'code:cursor-rules',
+            object_id: '2',
+          }),
+        ],
+      ],
       ['bob', [signal({ detail: 'bob signal' })]],
     ]);
 

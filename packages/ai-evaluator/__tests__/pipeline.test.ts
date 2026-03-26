@@ -1,11 +1,11 @@
-import { writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
-import { mkdtemp } from 'node:fs/promises';
-
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
 import type { Candidate } from '@talent-scout/shared';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { runPipeline } from '../src/pipeline.js';
 
 vi.mock('@talent-scout/shared', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@talent-scout/shared')>();
@@ -48,8 +48,6 @@ vi.mock('@talent-scout/data-processor', async (importOriginal) => {
     }),
   };
 });
-
-import { runPipeline } from '../src/pipeline.js';
 
 describe('runPipeline', () => {
   let inputDir: string;

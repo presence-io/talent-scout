@@ -85,7 +85,7 @@ export function computeSkillScore(f: SkillFeatures): number {
 
 export function extractAIDepthFeatures(
   candidate: Candidate,
-  profile: GitHubProfile,
+  profile: GitHubProfile
 ): AIDepthFeatures {
   const signals = candidate.signals;
 
@@ -94,7 +94,7 @@ export function extractAIDepthFeatures(
 
   const aiTopics = ['mcp-server', 'mcp', 'ai-agent', 'llm', 'langchain'];
   const hasBuilderProject = profile.recent_repos.some(
-    (r) => !r.is_fork && r.stars >= 10 && r.topics.some((t) => aiTopics.includes(t)),
+    (r) => !r.is_fork && r.stars >= 10 && r.topics.some((t) => aiTopics.includes(t))
   );
 
   const aiProjectStars = profile.recent_repos
@@ -136,7 +136,7 @@ export function computeAIDepthScore(f: AIDepthFeatures): {
 export function extractReachabilityFeatures(profile: GitHubProfile): ReachabilityFeatures {
   const text = [profile.blog ?? '', profile.bio ?? ''].join(' ').toLowerCase();
   const hasChinese = /zhihu\.com|juejin\.cn|csdn\.net|cnblogs\.com|bilibili\.com|v2ex\.com/.test(
-    text,
+    text
   );
 
   return {
@@ -165,19 +165,19 @@ export function computeReachabilityScore(f: ReachabilityFeatures): number {
 export function extractFitFeatures(
   profile: GitHubProfile,
   city: string | null,
-  config: TalentConfig,
+  config: TalentConfig
 ): FitFeatures {
   const cityBonus = city
     ? (config.target_profile.preferred_cities.find(
-        (c) => c.name.toLowerCase() === city.toLowerCase(),
+        (c) => c.name.toLowerCase() === city.toLowerCase()
       )?.bonus ?? 0)
     : 0;
 
   const primaryLanguages = new Set(
-    profile.recent_repos.filter((r) => !r.is_fork && r.language).map((r) => r.language),
+    profile.recent_repos.filter((r) => !r.is_fork && r.language).map((r) => r.language)
   );
   const languageMatch = config.target_profile.preferred_languages.some((l) =>
-    primaryLanguages.has(l),
+    primaryLanguages.has(l)
   );
 
   const isTooSenior = profile.followers > 10_000 || extractTotalStars(profile) > 50_000;
@@ -204,9 +204,14 @@ export function computeFitScore(f: FitFeatures): number {
 // ── Final Score ──
 
 export function computeFinalScore(
-  scores: { skill: number; ai_depth: number; reachability: number; fit: number },
+  scores: {
+    skill: number;
+    ai_depth: number;
+    reachability: number;
+    fit: number;
+  },
   config: TalentConfig,
-  recentContributions: number,
+  recentContributions: number
 ): number {
   const w = config.evaluation.weights;
   const weighted =
@@ -227,7 +232,7 @@ export function determineAction(
   finalScore: number,
   reachability: number,
   skill: number,
-  aiDepth: number,
+  aiDepth: number
 ): RecommendedAction {
   if (skill <= 3 && aiDepth <= 3) return 'skip';
   if (finalScore >= 7.0 && reachability >= 5) return 'reach_out';
@@ -258,9 +263,14 @@ export function evaluateCandidate(candidate: Candidate, config: TalentConfig): E
   const fitScore = computeFitScore(fitF);
 
   const finalScore = computeFinalScore(
-    { skill: skillScore, ai_depth: aiDepthScore, reachability: reachScore, fit: fitScore },
+    {
+      skill: skillScore,
+      ai_depth: aiDepthScore,
+      reachability: reachScore,
+      fit: fitScore,
+    },
     config,
-    skillF.recent_contributions,
+    skillF.recent_contributions
   );
 
   const action = determineAction(finalScore, reachScore, skillScore, aiDepthScore);

@@ -1,9 +1,9 @@
-import { writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { readIgnoreList, isIgnored } from '../src/ignore-list.js';
+import { isIgnored, readIgnoreList } from '../src/ignore-list.js';
 
 function makeTmpDir() {
   return join(tmpdir(), `talent-scout-ignore-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -28,7 +28,7 @@ describe('readIgnoreList', () => {
       filePath,
       JSON.stringify({
         baduser: { reason: 'spam', ignored_at: '2026-01-01T00:00:00Z' },
-      }),
+      })
     );
 
     const result = await readIgnoreList(filePath);
@@ -40,7 +40,10 @@ describe('readIgnoreList', () => {
 describe('isIgnored', () => {
   const ignoreList = {
     spammer: { reason: 'spam account', ignored_at: '2026-01-01T00:00:00Z' },
-    inactive: { reason: 'no longer active', ignored_at: '2026-02-01T00:00:00Z' },
+    inactive: {
+      reason: 'no longer active',
+      ignored_at: '2026-02-01T00:00:00Z',
+    },
   };
 
   it('should return true for ignored usernames', () => {

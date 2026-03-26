@@ -1,19 +1,17 @@
+import { loadEvaluation, loadShortlist } from '@talent-scout/ai-evaluator';
+import type { Candidate, IgnoreList, TalentEntry } from '@talent-scout/shared';
 import type { APIRoute } from 'astro';
 import { join } from 'node:path';
-import type { TalentEntry, Candidate, IgnoreList } from '@talent-scout/shared';
-import { loadShortlist, loadEvaluation } from '@talent-scout/ai-evaluator';
-import {
-  readJsonFile,
-  writeJsonAtomic,
-  resolveOutputDir,
-  resolveUserDataDir,
-} from '../../../lib/file.js';
-import type { Annotation, AnnotationMap } from '../../../lib/merge.js';
+
+import { readJsonFile, resolveOutputDir, resolveUserDataDir, writeJsonAtomic } from '@/lib/file';
+import type { Annotation, AnnotationMap } from '@/lib/merge';
 
 export const GET: APIRoute = async ({ params }) => {
   const { username } = params;
   if (!username) {
-    return new Response(JSON.stringify({ error: 'Missing username' }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'Missing username' }), {
+      status: 400,
+    });
   }
 
   const base = process.cwd();
@@ -23,7 +21,9 @@ export const GET: APIRoute = async ({ params }) => {
   const entries = await loadShortlist(outputDir).catch(() => [] as TalentEntry[]);
   const entry = entries.find((e: TalentEntry) => e.username === username);
   if (!entry) {
-    return new Response(JSON.stringify({ error: 'Not found' }), { status: 404 });
+    return new Response(JSON.stringify({ error: 'Not found' }), {
+      status: 404,
+    });
   }
 
   const evaluation = await loadEvaluation(outputDir).catch(() => ({}) as Record<string, Candidate>);
@@ -35,18 +35,20 @@ export const GET: APIRoute = async ({ params }) => {
   return new Response(
     JSON.stringify({
       entry,
-      candidate: candidate ?? null,
+      candidate,
       annotation: annotations[username] ?? null,
       ignored: username in ignoreList,
     }),
-    { headers: { 'Content-Type': 'application/json' } },
+    { headers: { 'Content-Type': 'application/json' } }
   );
 };
 
 export const PATCH: APIRoute = async ({ params, request }) => {
   const { username } = params;
   if (!username) {
-    return new Response(JSON.stringify({ error: 'Missing username' }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'Missing username' }), {
+      status: 400,
+    });
   }
 
   const body = (await request.json()) as {
@@ -57,8 +59,10 @@ export const PATCH: APIRoute = async ({ params, request }) => {
   const validActions = ['approved', 'rejected', 'noted'];
   if (!body.action || !validActions.includes(body.action)) {
     return new Response(
-      JSON.stringify({ error: 'Invalid action. Must be approved, rejected, or noted.' }),
-      { status: 400 },
+      JSON.stringify({
+        error: 'Invalid action. Must be approved, rejected, or noted.',
+      }),
+      { status: 400 }
     );
   }
 

@@ -1,8 +1,8 @@
 import {
+  FileCache,
   type Signal,
   type SignalType,
   type TalentConfig,
-  FileCache,
   ghApi,
   loadConfig,
 } from '@talent-scout/shared';
@@ -26,7 +26,7 @@ interface RepoSearchItem {
 /** Collect code file signals (CLAUDE.md, .cursorrules, etc.) */
 export async function collectCodeSignals(
   config: TalentConfig,
-  cache: FileCache,
+  cache: FileCache
 ): Promise<Map<string, Signal[]>> {
   const candidates = new Map<string, Signal[]>();
 
@@ -39,7 +39,7 @@ export async function collectCodeSignals(
         sleepMs: config.api_budget.search_sleep_ms,
         cache,
         cacheTtl: config.cache.ttl.search_results,
-      },
+      }
     );
 
     for (const item of items) {
@@ -65,7 +65,7 @@ export async function collectCodeSignals(
 /** Collect commit co-author signals */
 export async function collectCommitSignals(
   config: TalentConfig,
-  cache: FileCache,
+  cache: FileCache
 ): Promise<Map<string, Signal[]>> {
   const candidates = new Map<string, Signal[]>();
 
@@ -79,7 +79,7 @@ export async function collectCommitSignals(
         accept: 'application/vnd.github.cloak-preview+json',
         cache,
         cacheTtl: config.cache.ttl.search_results,
-      },
+      }
     );
 
     for (const item of items) {
@@ -105,7 +105,7 @@ export async function collectCommitSignals(
 /** Collect topic signals (claude-code, mcp-server, etc.) */
 export async function collectTopicSignals(
   config: TalentConfig,
-  cache: FileCache,
+  cache: FileCache
 ): Promise<Map<string, Signal[]>> {
   const candidates = new Map<string, Signal[]>();
 
@@ -117,7 +117,7 @@ export async function collectTopicSignals(
         sleepMs: config.api_budget.search_sleep_ms,
         cache,
         cacheTtl: config.cache.ttl.search_results,
-      },
+      }
     );
 
     for (const item of items) {

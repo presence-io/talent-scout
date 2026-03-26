@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
-  formatScore,
-  formatDate,
-  formatAction,
-  formatTier,
   actionBadgeClass,
+  formatAction,
+  formatDate,
+  formatScore,
+  formatTier,
 } from '../src/lib/format.js';
 
 describe('formatScore', () => {

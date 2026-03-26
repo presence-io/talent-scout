@@ -1,14 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, mkdir, symlink } from 'node:fs/promises';
 import { readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdir, mkdtemp, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import {
+  listRunHistory,
   readJsonFile,
-  writeJsonAtomic,
   resolveOutputDir,
   resolveUserDataDir,
-  listRunHistory,
+  writeJsonAtomic,
 } from '../src/lib/file.js';
 
 let testDir: string;

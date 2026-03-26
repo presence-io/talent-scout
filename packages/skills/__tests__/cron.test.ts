@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as shared from '@talent-scout/shared';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cronStatus } from '../src/cron.js';
-import * as shared from '@talent-scout/shared';
 
 vi.mock('@talent-scout/shared', async () => {
   const actual =
@@ -50,7 +50,10 @@ describe('cronStatus', () => {
         profile_batch_size: 500,
         search_sleep_ms: 2500,
       },
-      identity: { min_confidence: 0.5, ai_assist_range: [0.3, 0.7] as [number, number] },
+      identity: {
+        min_confidence: 0.5,
+        ai_assist_range: [0.3, 0.7] as [number, number],
+      },
       evaluation: {
         weights: { skill: 0.35, ai_depth: 0.3, reachability: 0.15, fit: 0.2 },
         activity_penalty: -3,
@@ -99,7 +102,10 @@ describe('cronStatus', () => {
         profile_batch_size: 500,
         search_sleep_ms: 2500,
       },
-      identity: { min_confidence: 0.5, ai_assist_range: [0.3, 0.7] as [number, number] },
+      identity: {
+        min_confidence: 0.5,
+        ai_assist_range: [0.3, 0.7] as [number, number],
+      },
       evaluation: {
         weights: { skill: 0.35, ai_depth: 0.3, reachability: 0.15, fit: 0.2 },
         activity_penalty: -3,

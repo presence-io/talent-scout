@@ -1,5 +1,5 @@
-import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   tseslint.configs.strictTypeChecked,
@@ -25,5 +25,14 @@ export default tseslint.config(
     },
     extends: [tseslint.configs.disableTypeChecked],
   },
-  { ignores: ['**/dist/**', 'output/**', 'cache/**', 'legacy/**', '**/astro.config.*'] },
+  {
+    ignores: [
+      '**/.astro/**',
+      '**/dist/**',
+      'output/**',
+      'cache/**',
+      'legacy/**',
+      '**/astro.config.*',
+    ],
+  }
 );

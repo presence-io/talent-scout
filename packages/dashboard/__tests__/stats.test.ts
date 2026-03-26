@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
 import type { TalentEntry } from '@talent-scout/shared';
+import { describe, expect, it } from 'vitest';
+
 import {
   computeActionDistribution,
-  computeTierDistribution,
   computeCityDistribution,
   computeConfidenceBuckets,
   computeSignalTypeDistribution,
+  computeTierDistribution,
 } from '../src/lib/stats.js';
 
 function entry(overrides: Partial<TalentEntry> = {}): TalentEntry {

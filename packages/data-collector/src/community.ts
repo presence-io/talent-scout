@@ -1,4 +1,4 @@
-import { type Signal, type TalentConfig, FileCache, ghApi } from '@talent-scout/shared';
+import { FileCache, type Signal, type TalentConfig, ghApi } from '@talent-scout/shared';
 
 interface UserItem {
   login: string;
@@ -11,7 +11,7 @@ interface ForkItem {
 /** Collect stargazers/forks of community repos defined in config */
 export async function collectCommunitySignals(
   config: TalentConfig,
-  cache: FileCache,
+  cache: FileCache
 ): Promise<Map<string, Signal[]>> {
   const candidates = new Map<string, Signal[]>();
 

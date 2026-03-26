@@ -6,7 +6,7 @@ export interface Annotation {
   annotated_at: string;
 }
 
-export type AnnotationMap = Record<string, Annotation>;
+export type AnnotationMap = Partial<Record<string, Annotation>>;
 
 export interface MergedTalentEntry extends TalentEntry {
   annotation?: Annotation;
@@ -15,7 +15,7 @@ export interface MergedTalentEntry extends TalentEntry {
 
 export function mergeWithAnnotations(
   entries: TalentEntry[],
-  annotations: AnnotationMap,
+  annotations: AnnotationMap
 ): MergedTalentEntry[] {
   return entries.map((e) => {
     const annotation = annotations[e.username];
@@ -25,7 +25,7 @@ export function mergeWithAnnotations(
 
 export function mergeWithIgnoreList(
   entries: MergedTalentEntry[],
-  ignoreList: Record<string, unknown>,
+  ignoreList: Record<string, unknown>
 ): MergedTalentEntry[] {
   return entries.map((e) => {
     if (e.username in ignoreList) {

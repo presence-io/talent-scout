@@ -1,7 +1,6 @@
+import type { Candidate } from '@talent-scout/shared';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-
-import type { Candidate } from '@talent-scout/shared';
 
 import { identifyCandidate } from './identity.js';
 
@@ -97,7 +96,7 @@ async function main(): Promise<void> {
   const targets = { precision: 0.95, recall: 0.8 };
   if (result.precision < targets.precision) {
     console.log(
-      `\nWARN: Precision ${String(result.precision)} < target ${String(targets.precision)}`,
+      `\nWARN: Precision ${String(result.precision)} < target ${String(targets.precision)}`
     );
   }
   if (result.recall < targets.recall) {

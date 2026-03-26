@@ -1,11 +1,10 @@
-import { readFile, writeFile, mkdir, symlink, rm, readdir, rename } from 'node:fs/promises';
+import { isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
+import type { Candidate, Signal } from '@talent-scout/shared';
+import { mkdir, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
-import { loadConfig, readIgnoreList, isIgnored } from '@talent-scout/shared';
-import type { Candidate, Signal } from '@talent-scout/shared';
-
-import { mergeCandidateRecords } from './merge.js';
 import { identifyCandidate } from './identity.js';
+import { mergeCandidateRecords } from './merge.js';
 import { evaluateCandidate } from './scoring.js';
 
 interface RawCollectionFile {

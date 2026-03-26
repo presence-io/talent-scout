@@ -18,7 +18,7 @@ interface AIIdentityInference {
  */
 export async function inferIdentityBatch(
   candidates: Candidate[],
-  config: TalentConfig,
+  config: TalentConfig
 ): Promise<number> {
   const grayArea = candidates.filter((c) => {
     const conf = c.identity?.china_confidence ?? 0;

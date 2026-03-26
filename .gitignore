@@ -74,6 +74,9 @@ legacy/
 *.db
 *.bak
 
+# Astro
+.astro/
+
 # Agent temp files
 .agent/
 

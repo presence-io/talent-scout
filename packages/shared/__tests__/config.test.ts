@@ -1,9 +1,9 @@
-import { writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { loadConfig, resetConfigCache, TalentConfigSchema } from '../src/config.js';
+import { TalentConfigSchema, loadConfig, resetConfigCache } from '../src/config.js';
 
 function makeTmpDir() {
   return join(tmpdir(), `talent-scout-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -23,7 +23,14 @@ describe('TalentConfigSchema', () => {
 
   it('should parse code_signals', () => {
     const result = TalentConfigSchema.parse({
-      code_signals: [{ filename: 'CLAUDE.md', path: '/', weight: 2.0, label: 'ai-config:claude' }],
+      code_signals: [
+        {
+          filename: 'CLAUDE.md',
+          path: '/',
+          weight: 2.0,
+          label: 'ai-config:claude',
+        },
+      ],
     });
     expect(result.code_signals).toHaveLength(1);
     expect(result.code_signals[0]).toMatchObject({ filename: 'CLAUDE.md' });
@@ -33,7 +40,7 @@ describe('TalentConfigSchema', () => {
     expect(() =>
       TalentConfigSchema.parse({
         code_signals: [{ filename: 'CLAUDE.md', path: '/' }],
-      }),
+      })
     ).toThrow();
   });
 
@@ -49,11 +56,17 @@ describe('TalentConfigSchema', () => {
     const result = TalentConfigSchema.parse({
       openclaw: {
         agents: {
-          identity: { name: 'talent-identity', workspace: './pkg', timeout: 60 },
+          identity: {
+            name: 'talent-identity',
+            workspace: './pkg',
+            timeout: 60,
+          },
         },
       },
     });
-    expect(result.openclaw.agents['identity']).toMatchObject({ name: 'talent-identity' });
+    expect(result.openclaw.agents['identity']).toMatchObject({
+      name: 'talent-identity',
+    });
   });
 
   it('should parse cron config', () => {
@@ -114,7 +127,7 @@ api_budget:
 evaluation:
   weights:
     skill: 0.4
-`,
+`
     );
     process.env['TALENT_CONFIG'] = configPath;
 

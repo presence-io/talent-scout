@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
 import { FileCache, type TalentConfig, TalentConfigSchema } from '@talent-scout/shared';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock execa to avoid real API calls
 vi.mock('execa', () => ({
@@ -54,7 +53,14 @@ describe('collectCodeSignals', () => {
     } as never);
 
     const config = makeConfig({
-      code_signals: [{ filename: 'CLAUDE.md', path: '/', weight: 2.0, label: 'code:claude-md' }],
+      code_signals: [
+        {
+          filename: 'CLAUDE.md',
+          path: '/',
+          weight: 2.0,
+          label: 'code:claude-md',
+        },
+      ],
     });
     const cache = makeMockCache();
     const result = await collectCodeSignals(config, cache);
@@ -69,7 +75,7 @@ describe('collectCodeSignals', () => {
           type: 'code:claude-md',
           weight: 2.0,
         }),
-      ]),
+      ])
     );
   });
 });

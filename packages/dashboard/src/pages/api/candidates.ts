@@ -1,19 +1,20 @@
-import type { APIRoute } from 'astro';
-import type { RecommendedAction } from '@talent-scout/shared';
 import { loadShortlist } from '@talent-scout/ai-evaluator';
-import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '../../lib/file.js';
+import type { RecommendedAction } from '@talent-scout/shared';
+import type { IgnoreList } from '@talent-scout/shared';
+import type { APIRoute } from 'astro';
+import { join } from 'node:path';
+
 import {
-  sortCandidates,
+  filterByAIDepthTier,
   filterByAction,
   filterByCity,
-  filterByAIDepthTier,
   paginateCandidates,
-} from '../../lib/candidates.js';
-import type { SortField, SortOrder } from '../../lib/candidates.js';
-import { mergeWithAnnotations, mergeWithIgnoreList } from '../../lib/merge.js';
-import type { AnnotationMap } from '../../lib/merge.js';
-import type { IgnoreList } from '@talent-scout/shared';
-import { join } from 'node:path';
+  sortCandidates,
+} from '@/lib/candidates.js';
+import type { SortField, SortOrder } from '@/lib/candidates.js';
+import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '@/lib/file.js';
+import { mergeWithAnnotations, mergeWithIgnoreList } from '@/lib/merge.js';
+import type { AnnotationMap } from '@/lib/merge.js';
 
 export const GET: APIRoute = async ({ url }) => {
   const base = process.cwd();

@@ -1,7 +1,6 @@
+import type { Signal } from '@talent-scout/shared';
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-
-import type { Signal } from '@talent-scout/shared';
 
 interface RawCollectionFile {
   candidates: Record<string, Signal[]>;

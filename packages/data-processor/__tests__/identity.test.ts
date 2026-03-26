@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
-
 import type { Candidate, GitHubProfile } from '@talent-scout/shared';
+import { describe, expect, it } from 'vitest';
+
 import {
-  identifyCandidate,
   computeChinaConfidence,
   containsSimplifiedChinese,
+  identifyCandidate,
 } from '../src/identity.js';
 
 function makeProfile(overrides: Partial<GitHubProfile> = {}): GitHubProfile {
@@ -63,14 +63,24 @@ describe('computeChinaConfidence', () => {
 
   it('should return 0.95 for Tier 1 signal', () => {
     const result = computeChinaConfidence([
-      { tier: 1, type: 'location:explicit', confidence: 0.92, evidence: 'test' },
+      {
+        tier: 1,
+        type: 'location:explicit',
+        confidence: 0.92,
+        evidence: 'test',
+      },
     ]);
     expect(result).toBe(0.95);
   });
 
   it('should use noisy-or for Tier 2+ signals', () => {
     const result = computeChinaConfidence([
-      { tier: 2, type: 'bio:simplified-chinese', confidence: 0.75, evidence: 'test' },
+      {
+        tier: 2,
+        type: 'bio:simplified-chinese',
+        confidence: 0.75,
+        evidence: 'test',
+      },
       { tier: 2, type: 'company:china', confidence: 0.8, evidence: 'test' },
     ]);
     // noisy-or: 1 - (1-0.75)*(1-0.8) = 1 - 0.25*0.2 = 0.95
@@ -139,7 +149,7 @@ describe('identifyCandidate', () => {
         location: 'San Francisco, CA',
         email: 'user@gmail.com',
         bio: 'Software engineer',
-      }),
+      })
     );
     expect(result.china_confidence).toBe(0);
     expect(result.signals).toHaveLength(0);
@@ -150,7 +160,7 @@ describe('identifyCandidate', () => {
       makeCandidate({
         company: '@Tencent',
         blog: 'https://mysite.cn',
-      }),
+      })
     );
     // Two Tier 2 signals should combine
     expect(result.signals.length).toBeGreaterThanOrEqual(2);
@@ -173,7 +183,7 @@ describe('identifyCandidate', () => {
             updated_at: '2024-01-01T00:00:00Z',
           },
         ],
-      }),
+      })
     );
     expect(result.signals.some((s) => s.type === 'readme:profile-chinese')).toBe(true);
   });

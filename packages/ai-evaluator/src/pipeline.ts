@@ -1,14 +1,13 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { evaluateCandidate, identifyCandidate } from '@talent-scout/data-processor';
+import { isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
+import type { Candidate } from '@talent-scout/shared';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
-import { loadConfig, readIgnoreList, isIgnored } from '@talent-scout/shared';
-import type { Candidate } from '@talent-scout/shared';
-import { identifyCandidate, evaluateCandidate } from '@talent-scout/data-processor';
-
-import { inferIdentityBatch } from './identity-ai.js';
 import { deepEvaluateBatch } from './deep-eval.js';
+import { inferIdentityBatch } from './identity-ai.js';
 import { produceShortlist } from './shortlist.js';
-import { computeRunStats, appendSkillsPending } from './skills.js';
+import { appendSkillsPending, computeRunStats } from './skills.js';
 
 export interface PipelineOptions {
   /** Directory containing merged.json and profiles.json */
@@ -123,7 +122,7 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
 async function writeOutput(
   outputDir: string,
   candidates: Candidate[],
-  shortlist: ReturnType<typeof produceShortlist>,
+  shortlist: ReturnType<typeof produceShortlist>
 ): Promise<void> {
   const evaluated: Record<string, Candidate> = {};
   for (const c of candidates) {
@@ -140,7 +139,7 @@ function logSummary(stats: RunStats, shortlistCount: number): void {
   console.log(`Identified Chinese: ${String(stats.identified_chinese)}`);
   console.log(`Evaluated: ${String(stats.evaluated)}`);
   console.log(
-    `Actions: reach_out=${String(stats.reach_out)} monitor=${String(stats.monitor)} skip=${String(stats.skip)}`,
+    `Actions: reach_out=${String(stats.reach_out)} monitor=${String(stats.monitor)} skip=${String(stats.skip)}`
   );
   console.log(`Shortlist entries: ${String(shortlistCount)}`);
 }

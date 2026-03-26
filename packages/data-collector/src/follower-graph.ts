@@ -1,4 +1,4 @@
-import { type Signal, type TalentConfig, FileCache, ghApi } from '@talent-scout/shared';
+import { FileCache, type Signal, type TalentConfig, ghApi } from '@talent-scout/shared';
 
 interface UserItem {
   login: string;
@@ -8,7 +8,7 @@ interface UserItem {
 export async function collectFollowerGraphSignals(
   config: TalentConfig,
   cache: FileCache,
-  seedUsers: string[],
+  seedUsers: string[]
 ): Promise<Map<string, Signal[]>> {
   const candidates = new Map<string, Signal[]>();
   const graphConfig = config.graph_expansion;

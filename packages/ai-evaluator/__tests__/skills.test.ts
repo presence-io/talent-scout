@@ -1,13 +1,11 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
-import { mkdtemp } from 'node:fs/promises';
-
-import { describe, it, expect } from 'vitest';
-
 import type { Candidate, Evaluation } from '@talent-scout/shared';
+import { readFile } from 'node:fs/promises';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
 
-import { computeRunStats, formatStatsEntry, appendSkillsPending } from '../src/skills.js';
+import { appendSkillsPending, computeRunStats, formatStatsEntry } from '../src/skills.js';
 
 function makeCandidate(overrides: Partial<Candidate> = {}): Candidate {
   return {
@@ -65,7 +63,11 @@ describe('computeRunStats', () => {
           ai_assisted: false,
           inferred_at: '',
         },
-        evaluation: makeEval({ skill_score: 5, ai_depth_score: 4, recommended_action: 'monitor' }),
+        evaluation: makeEval({
+          skill_score: 5,
+          ai_depth_score: 4,
+          recommended_action: 'monitor',
+        }),
       }),
       makeCandidate({
         username: 'c',
@@ -100,7 +102,11 @@ describe('computeRunStats', () => {
   it('should count skip actions', () => {
     const candidates = [
       makeCandidate({
-        evaluation: makeEval({ recommended_action: 'skip', skill_score: 2, ai_depth_score: 1 }),
+        evaluation: makeEval({
+          recommended_action: 'skip',
+          skill_score: 2,
+          ai_depth_score: 1,
+        }),
       }),
     ];
     const stats = computeRunStats(candidates);

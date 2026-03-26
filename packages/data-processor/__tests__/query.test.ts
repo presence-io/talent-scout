@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { loadProcessedCandidates, loadIdentityResults } from '../src/query.js';
+import { loadIdentityResults, loadProcessedCandidates } from '../src/query.js';
 
 vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(),
@@ -29,7 +29,9 @@ describe('loadIdentityResults', () => {
   });
 
   it('loads and parses identity.json', async () => {
-    const data = { alice: { china_confidence: 0.9, city: 'Beijing', signals: [] } };
+    const data = {
+      alice: { china_confidence: 0.9, city: 'Beijing', signals: [] },
+    };
     mockReadFile.mockResolvedValue(JSON.stringify(data));
 
     const result = await loadIdentityResults('/output/processed/latest');

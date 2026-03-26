@@ -1,10 +1,8 @@
-import { readFile, mkdir, writeFile, rm } from 'node:fs/promises';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
-
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-
 import type { Candidate, TalentEntry } from '@talent-scout/shared';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Mock loadConfig so it doesn't require a real talents.yaml
 vi.mock('@talent-scout/shared', async (importOriginal) => {

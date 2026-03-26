@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { loadPatches, applyPatches } from '../src/patches.js';
+import { applyPatches, loadPatches } from '../src/patches.js';
 
 describe('loadPatches', () => {
   it('returns empty array for nonexistent directory', async () => {

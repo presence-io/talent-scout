@@ -1,12 +1,13 @@
-import type { APIRoute } from 'astro';
 import { loadShortlist } from '@talent-scout/ai-evaluator';
-import { resolveOutputDir } from '../../lib/file.js';
+import type { APIRoute } from 'astro';
+
+import { resolveOutputDir } from '@/lib/file.js';
 import {
   computeActionDistribution,
-  computeTierDistribution,
   computeCityDistribution,
   computeConfidenceBuckets,
-} from '../../lib/stats.js';
+  computeTierDistribution,
+} from '@/lib/stats.js';
 
 export const GET: APIRoute = async () => {
   const base = process.cwd();

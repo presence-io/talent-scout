@@ -36,7 +36,7 @@ export function computeTierDistribution(entries: TalentEntry[]): DistributionEnt
 
 export function computeCityDistribution(
   entries: TalentEntry[],
-  topN: number = 10,
+  topN: number = 10
 ): DistributionEntry[] {
   const total = entries.length;
   if (total === 0) return [];
@@ -80,7 +80,7 @@ export function computeConfidenceBuckets(entries: TalentEntry[]): DistributionEn
 
 export function computeSignalTypeDistribution(
   entries: TalentEntry[],
-  topN: number = 10,
+  topN: number = 10
 ): DistributionEntry[] {
   const counts: Record<string, number> = {};
   for (const e of entries) {

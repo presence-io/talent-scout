@@ -1,6 +1,5 @@
-import { describe, it, expect } from 'vitest';
-
 import type { Candidate, Evaluation } from '@talent-scout/shared';
+import { describe, expect, it } from 'vitest';
 
 import { candidateToTalentEntry, produceShortlist } from '../src/shortlist.js';
 
@@ -60,7 +59,10 @@ describe('candidateToTalentEntry', () => {
         ai_assisted: false,
         inferred_at: '2025-01-01T00:00:00Z',
       },
-      evaluation: makeEvaluation({ recommended_action: 'reach_out', final_score: 8 }),
+      evaluation: makeEvaluation({
+        recommended_action: 'reach_out',
+        final_score: 8,
+      }),
     });
 
     const entry = candidateToTalentEntry(candidate);
@@ -112,7 +114,10 @@ describe('produceShortlist', () => {
   it('should exclude candidates with skip action', () => {
     const candidates = [
       makeCandidate({
-        evaluation: makeEvaluation({ recommended_action: 'skip', final_score: 3 }),
+        evaluation: makeEvaluation({
+          recommended_action: 'skip',
+          final_score: 3,
+        }),
       }),
     ];
     expect(produceShortlist(candidates)).toHaveLength(0);
@@ -122,15 +127,24 @@ describe('produceShortlist', () => {
     const candidates = [
       makeCandidate({
         username: 'a',
-        evaluation: makeEvaluation({ recommended_action: 'reach_out', final_score: 9 }),
+        evaluation: makeEvaluation({
+          recommended_action: 'reach_out',
+          final_score: 9,
+        }),
       }),
       makeCandidate({
         username: 'b',
-        evaluation: makeEvaluation({ recommended_action: 'monitor', final_score: 6 }),
+        evaluation: makeEvaluation({
+          recommended_action: 'monitor',
+          final_score: 6,
+        }),
       }),
       makeCandidate({
         username: 'c',
-        evaluation: makeEvaluation({ recommended_action: 'skip', final_score: 2 }),
+        evaluation: makeEvaluation({
+          recommended_action: 'skip',
+          final_score: 2,
+        }),
       }),
     ];
     const shortlist = produceShortlist(candidates);
@@ -143,15 +157,24 @@ describe('produceShortlist', () => {
     const candidates = [
       makeCandidate({
         username: 'low',
-        evaluation: makeEvaluation({ recommended_action: 'monitor', final_score: 5 }),
+        evaluation: makeEvaluation({
+          recommended_action: 'monitor',
+          final_score: 5,
+        }),
       }),
       makeCandidate({
         username: 'high',
-        evaluation: makeEvaluation({ recommended_action: 'reach_out', final_score: 9 }),
+        evaluation: makeEvaluation({
+          recommended_action: 'reach_out',
+          final_score: 9,
+        }),
       }),
       makeCandidate({
         username: 'mid',
-        evaluation: makeEvaluation({ recommended_action: 'monitor', final_score: 7 }),
+        evaluation: makeEvaluation({
+          recommended_action: 'monitor',
+          final_score: 7,
+        }),
       }),
     ];
     const shortlist = produceShortlist(candidates);

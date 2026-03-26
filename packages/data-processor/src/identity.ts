@@ -436,7 +436,7 @@ function matchProfileReadme(candidate: Candidate): IdentitySignal | null {
   const profile = candidate.profile;
   if (!profile) return null;
   const profileRepo = profile.recent_repos.find(
-    (r) => r.full_name.toLowerCase() === `${profile.login}/${profile.login}`.toLowerCase(),
+    (r) => r.full_name.toLowerCase() === `${profile.login}/${profile.login}`.toLowerCase()
   );
   if (!profileRepo) return null;
   if (profileRepo.description && containsSimplifiedChinese(profileRepo.description)) {

@@ -1,5 +1,5 @@
-import { readFile, writeFile, rename, mkdir, readdir, lstat } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+import { lstat, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 
 export async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {
   try {

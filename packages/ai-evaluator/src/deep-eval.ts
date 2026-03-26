@@ -16,7 +16,7 @@ interface AIEvalResult {
  */
 export async function deepEvaluateBatch(
   candidates: Candidate[],
-  config: TalentConfig,
+  config: TalentConfig
 ): Promise<number> {
   const eligible = candidates
     .filter((c) => c.evaluation)

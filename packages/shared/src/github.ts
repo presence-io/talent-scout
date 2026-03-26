@@ -28,7 +28,7 @@ export async function ghApi<T>(
     cache?: FileCache;
     cacheTtl?: number;
     method?: string;
-  } = {},
+  } = {}
 ): Promise<T[]> {
   const {
     perPage = DEFAULT_PER_PAGE,
@@ -120,7 +120,7 @@ export async function ghApi<T>(
  */
 export async function ghApiSingle<T>(
   endpoint: string,
-  options: { cache?: FileCache; cacheTtl?: number } = {},
+  options: { cache?: FileCache; cacheTtl?: number } = {}
 ): Promise<T | null> {
   const { cache, cacheTtl = 86400 } = options;
 
@@ -133,7 +133,7 @@ export async function ghApiSingle<T>(
     const { stdout } = await execa(
       'gh',
       ['api', endpoint, '--header', 'X-GitHub-Api-Version:2022-11-28'],
-      { timeout: 120_000 },
+      { timeout: 120_000 }
     );
     const data = JSON.parse(stdout) as T;
     if (cache) {

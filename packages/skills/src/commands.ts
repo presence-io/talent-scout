@@ -1,15 +1,14 @@
-import { resolve, join } from 'node:path';
-import { readFile, readdir, mkdir, writeFile, symlink, rm, rename } from 'node:fs/promises';
-
-import { loadConfig, readIgnoreList, isIgnored } from '@talent-scout/shared';
-import type { Candidate, Signal } from '@talent-scout/shared';
+import { runPipeline } from '@talent-scout/ai-evaluator';
 import { runCollect } from '@talent-scout/data-collector';
 import {
-  mergeCandidateRecords,
-  identifyCandidate,
   evaluateCandidate,
+  identifyCandidate,
+  mergeCandidateRecords,
 } from '@talent-scout/data-processor';
-import { runPipeline } from '@talent-scout/ai-evaluator';
+import { isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
+import type { Candidate, Signal } from '@talent-scout/shared';
+import { mkdir, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 
 /** Run data collection via data-collector. */
 export async function runCollectCommand(): Promise<void> {

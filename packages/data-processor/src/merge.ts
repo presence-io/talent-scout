@@ -27,7 +27,7 @@ export function mergeSignalMaps(...maps: Map<string, Signal[]>[]): Map<string, C
     candidate.signal_score = candidate.signals.reduce((sum, s) => sum + s.weight, 0);
     candidate.is_ai_coding_enthusiast = candidate.signals.some(
       (s) =>
-        s.type.startsWith('code:') || s.type.startsWith('commit:') || s.type.startsWith('topic:'),
+        s.type.startsWith('code:') || s.type.startsWith('commit:') || s.type.startsWith('topic:')
     );
   }
 

@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
 import type { TalentEntry } from '@talent-scout/shared';
+import { describe, expect, it } from 'vitest';
+
 import {
-  sortCandidates,
+  filterByAIDepthTier,
   filterByAction,
   filterByCity,
-  filterByAIDepthTier,
   paginateCandidates,
+  sortCandidates,
 } from '../src/lib/candidates.js';
 
 function entry(overrides: Partial<TalentEntry> = {}): TalentEntry {

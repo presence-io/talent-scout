@@ -1,5 +1,5 @@
-import { resolve, join } from 'node:path';
-import { mkdir, symlink, rm } from 'node:fs/promises';
+import { mkdir, rm, symlink } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 
 import { runPipeline } from './pipeline.js';
 

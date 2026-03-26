@@ -1,19 +1,19 @@
 ---
 import { join } from 'node:path';
-import Base from '../layouts/Base.astro';
-import type { TalentEntry, IgnoreList } from '@talent-scout/shared';
-import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '../lib/file';
+import Base from '@/layouts/Base.astro';
+import type { TalentEntry, IgnoreList, RecommendedAction } from '@talent-scout/shared';
+import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '@/lib/file';
 import {
   sortCandidates,
   filterByAction,
   filterByCity,
   filterByAIDepthTier,
   paginateCandidates,
-} from '../lib/candidates';
-import type { SortField, SortOrder } from '../lib/candidates';
-import { mergeWithAnnotations, mergeWithIgnoreList } from '../lib/merge';
-import type { AnnotationMap } from '../lib/merge';
-import { formatScore, formatAction, formatTier, actionBadgeClass } from '../lib/format';
+} from '@/lib/candidates';
+import type { SortField, SortOrder } from '@/lib/candidates';
+import { mergeWithAnnotations, mergeWithIgnoreList } from '@/lib/merge';
+import type { AnnotationMap } from '@/lib/merge';
+import { formatScore, formatAction, formatTier, actionBadgeClass } from '@/lib/format';
 
 const base = process.cwd();
 const outputDir = resolveOutputDir(base);
@@ -30,7 +30,7 @@ let list = merged.filter((e) => !e.ignored);
 
 const url = Astro.url;
 const action = url.searchParams.get('action');
-if (action) list = filterByAction(list, action as TalentEntry['recommended_action']);
+if (action) list = filterByAction(list, action as RecommendedAction);
 
 const city = url.searchParams.get('city');
 if (city) list = filterByCity(list, city);
@@ -48,7 +48,7 @@ const paginated = paginateCandidates(list, page, limit);
 ---
 
 <Base title="Candidates">
-  <div class="flex flex-wrap items-center gap-2 mb-4">
+  <div class="mb-4 flex flex-wrap items-center gap-2">
     <select class="select select-bordered select-sm" id="action-filter">
       <option value="">All Actions</option>
       <option value="reach_out" selected={action === 'reach_out'}>Reach Out</option>
@@ -73,7 +73,7 @@ const paginated = paginateCandidates(list, page, limit);
   </div>
 
   <div class="overflow-x-auto">
-    <table class="table table-zebra table-sm">
+    <table class="table-zebra table-sm table">
       <thead>
         <tr>
           <th>Username</th>

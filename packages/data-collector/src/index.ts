@@ -1,7 +1,6 @@
+import { FileCache, type Signal, loadConfig } from '@talent-scout/shared';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-
-import { type Signal, FileCache, loadConfig } from '@talent-scout/shared';
 
 import { collectCommunitySignals } from './community.js';
 import { collectFollowerGraphSignals } from './follower-graph.js';
@@ -74,7 +73,7 @@ export async function runGraphExpansion(seedUsers: string[]): Promise<Map<string
 async function saveSignalMap(
   filePath: string,
   signals: Map<string, Signal[]>,
-  step: string,
+  step: string
 ): Promise<void> {
   const candidates: Record<string, Signal[]> = {};
   for (const [username, sigs] of signals) {
