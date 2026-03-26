@@ -1,6 +1,6 @@
-# DESIGN-v2-09: 测试与持续迭代
+# 09: 测试与持续迭代
 
-> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md) · [10-distribution](10-distribution.md)
+> 系列文档索引：[01-overview](01-overview.md) · [02-architecture](02-architecture.md) · [03-data-sources](03-data-sources.md) · [04-identity](04-identity.md) · [05-evaluation](05-evaluation.md) · [06-openclaw](06-openclaw.md) · [07-data-model](07-data-model.md) · [08-dashboard](08-dashboard.md) · [09-testing](09-testing.md) · [10-distribution](10-distribution.md)
 
 ## 1. 测试策略总览
 
@@ -27,7 +27,7 @@
 
 ## 2. 单元测试 (Vitest)
 
-**要求：所有 public 类和方法的测试覆盖率 ≥ 90%**（statements / branches / functions / lines）。这是在 `vitest.config.ts` 中通过 `coverage.thresholds` 强制执行的（见 [02-architecture §2.1](DESIGN-v2-02-architecture.md)）。
+**要求：所有 public 类和方法的测试覆盖率 ≥ 90%**（statements / branches / functions / lines）。这是在 `vitest.config.ts` 中通过 `coverage.thresholds` 强制执行的（见 [02-architecture §2.1](02-architecture.md)）。
 
 每个模块的纯计算逻辑都应有单元测试，**不依赖外部 API 和文件系统**。
 
@@ -58,7 +58,7 @@
 | `patches.ts` | patch 加载、优先级排序、semver 兼容性判定、冲突跳过 |
 | `renderers.ts` | 面向 IM / TUI 的文本渲染 |
 
-> **Dashboard UI（Astro 页面、`<script>` 标签）不做单元测试**。但 `lib/` 中的所有纯函数必须测试。逻辑不应存在于 `<script>` 标签中（见 [08-dashboard](DESIGN-v2-08-dashboard.md)）。
+> **Dashboard UI（Astro 页面、`<script>` 标签）不做单元测试**。但 `lib/` 中的所有纯函数必须测试。逻辑不应存在于 `<script>` 标签中（见 [08-dashboard](08-dashboard.md)）。
 
 #### data-processor 模块
 

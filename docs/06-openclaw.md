@@ -1,6 +1,6 @@
-# DESIGN-v2-06: OpenClaw 集成
+# 06: OpenClaw 集成
 
-> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md) · [10-distribution](10-distribution.md)
+> 系列文档索引：[01-overview](01-overview.md) · [02-architecture](02-architecture.md) · [03-data-sources](03-data-sources.md) · [04-identity](04-identity.md) · [05-evaluation](05-evaluation.md) · [06-openclaw](06-openclaw.md) · [07-data-model](07-data-model.md) · [08-dashboard](08-dashboard.md) · [09-testing](09-testing.md) · [10-distribution](10-distribution.md)
 
 ## 1. 集成原则
 
@@ -30,7 +30,7 @@
 
 ### 2.1 基本调用模式
 
-所有子项目通过 `@talent-scout/shared` 的 `openclaw.ts` 封装调用（见 [02-architecture §3](DESIGN-v2-02-architecture.md)），不直接调用 CLI。
+所有子项目通过 `@talent-scout/shared` 的 `openclaw.ts` 封装调用（见 [02-architecture §3](02-architecture.md)），不直接调用 CLI。
 
 ```typescript
 import { callAgent } from '@talent-scout/shared';

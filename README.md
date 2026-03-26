@@ -169,12 +169,12 @@ pnpm pipeline
 
 ## 去哪里看细节
 
-- [packages/shared/README.md](./packages/shared/README.md): 共享类型、配置加载、GitHub/OpenClaw 封装
-- [packages/data-collector/README.md](./packages/data-collector/README.md): 多源线索采集
-- [packages/data-processor/README.md](./packages/data-processor/README.md): 去重、身份识别、规则评分
-- [packages/ai-evaluator/README.md](./packages/ai-evaluator/README.md): OpenClaw AI 评估与 shortlist 生成
-- [packages/dashboard/README.md](./packages/dashboard/README.md): 本地 Web 界面和 `workspace-data` 使用方式
-- [packages/skills/README.md](./packages/skills/README.md): ClawHub/OpenClaw skill 的发布、测试与命令面
+- [@talent-scout/shared](./packages/shared/README.md): 共享类型、配置加载、GitHub/OpenClaw 封装
+- [@talent-scout/data-collector](./packages/data-collector/README.md): 多源线索采集
+- [@talent-scout/data-processor](./packages/data-processor/README.md): 去重、身份识别、规则评分
+- [@talent-scout/ai-evaluator](./packages/ai-evaluator/README.md): OpenClaw AI 评估与 shortlist 生成
+- [@talent-scout/dashboard](./packages/dashboard/README.md): 本地 Web 界面和 `workspace-data` 使用方式
+- [@talent-scout/skills](./packages/skills/README.md): ClawHub/OpenClaw skill 的发布、测试与命令面
 
 ## 许可证
 

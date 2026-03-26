@@ -1,6 +1,6 @@
-# DESIGN-v2-02: 技术架构
+# 02: 技术架构
 
-> 系列文档索引：[01-overview](DESIGN-v2-01-overview.md) · [02-architecture](DESIGN-v2-02-architecture.md) · [03-data-sources](DESIGN-v2-03-data-sources.md) · [04-identity](DESIGN-v2-04-identity.md) · [05-evaluation](DESIGN-v2-05-evaluation.md) · [06-openclaw](DESIGN-v2-06-openclaw.md) · [07-data-model](DESIGN-v2-07-data-model.md) · [08-dashboard](DESIGN-v2-08-dashboard.md) · [09-testing](DESIGN-v2-09-testing.md) · [10-distribution](10-distribution.md)
+> 系列文档索引：[01-overview](01-overview.md) · [02-architecture](02-architecture.md) · [03-data-sources](03-data-sources.md) · [04-identity](04-identity.md) · [05-evaluation](05-evaluation.md) · [06-openclaw](06-openclaw.md) · [07-data-model](07-data-model.md) · [08-dashboard](08-dashboard.md) · [09-testing](09-testing.md) · [10-distribution](10-distribution.md)
 
 ## 1. 技术栈决策
 
@@ -192,12 +192,12 @@ AGENTS.md 应遵循**渐进披露原则**，尽量简短，将细节引用到对
 
 ## 项目结构
 
-- 参见 DESIGN-v2-02-architecture.md §3
+- 参见 02-architecture.md §3
 
 ## 配置
 
 - 统一配置文件：`$PWD/talents.yaml`
-- 参见 DESIGN-v2-07-data-model.md §5
+- 参见 07-data-model.md §5
 
 ## 子项目快速参考
 
@@ -351,7 +351,7 @@ talent-scout/
 
 所有子项目的运行参数都从项目根目录的 `talents.yaml` 读取。`@talent-scout/shared` 的 `config.ts` 负责加载这个文件，默认路径为 `$PWD/talents.yaml`，可通过环境变量 `TALENT_CONFIG` 覆盖。
 
-`talents.yaml` 包含所有子项目所需的配置（信号权重、API 预算、OpenClaw agent 配置、cron 参数等），详见 [07-data-model §5](DESIGN-v2-07-data-model.md)。
+`talents.yaml` 包含所有子项目所需的配置（信号权重、API 预算、OpenClaw agent 配置、cron 参数等），详见 [07-data-model §5](07-data-model.md)。
 
 ### 关于 OpenClaw CLI 封装 (`shared/openclaw.ts`)
 
@@ -359,7 +359,7 @@ talent-scout/
 
 1. 从 `talents.yaml` 读取 agent 名称、workspace 路径、timeout 等配置
 2. 统一 JSON 输入/输出的序列化和错误处理
-3. 统一 cron 任务的注册与去重逻辑（见 [06-openclaw §4](DESIGN-v2-06-openclaw.md)）
+3. 统一 cron 任务的注册与去重逻辑（见 [06-openclaw §4](06-openclaw.md)）
 
 ```typescript
 // packages/shared/src/openclaw.ts
