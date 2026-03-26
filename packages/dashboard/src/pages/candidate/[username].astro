@@ -17,8 +17,9 @@ const entries = await readJsonFile<TalentEntry[]>(join(outputDir, 'shortlist.jso
 const entry = entries.find((e) => e.username === username);
 if (!entry) return Astro.redirect('/');
 
-const candidates = await readJsonFile<Candidate[]>(join(outputDir, 'step4_evaluated.json'), []);
-const candidate = candidates.find((c) => c.username === username) ?? null;
+const candidateData = await readJsonFile<Record<string, Candidate> | Candidate[]>(join(outputDir, 'evaluation.json'), {});
+const candidateArray = Array.isArray(candidateData) ? candidateData : Object.values(candidateData);
+const candidate = candidateArray.find((c) => c.username === username) ?? null;
 
 const annotations = await readJsonFile<AnnotationMap>(join(userDataDir, 'annotations.json'), {});
 const ignoreList = await readJsonFile<IgnoreList>(join(userDataDir, 'ignore-list.json'), {});
@@ -148,23 +149,52 @@ const signals = candidate?.signals ?? [];
     </div>
   )}
 
-  <!-- Ignore/Unignore button -->
-  <div class="mt-4 flex gap-2">
-    <button
-      id="ignore-btn"
-      class={"btn btn-sm " + (ignored ? "btn-success" : "btn-error")}
-      data-username={username}
-      data-ignored={ignored.toString()}
-    >
-      {ignored ? 'Unignore' : 'Ignore'}
-    </button>
+  <!-- Annotation & Ignore controls -->
+  <div class="card bg-base-100 shadow mt-4">
+    <div class="card-body">
+      <h3 class="card-title text-lg">Actions</h3>
+      <div class="flex flex-wrap gap-2 items-end">
+        <div class="flex gap-2">
+          <button class="btn btn-sm btn-success annotation-btn" data-action="approved" data-username={username}>Approve</button>
+          <button class="btn btn-sm btn-warning annotation-btn" data-action="noted" data-username={username}>Note</button>
+          <button class="btn btn-sm btn-error annotation-btn" data-action="rejected" data-username={username}>Reject</button>
+        </div>
+        <div class="form-control flex-1 min-w-48">
+          <input type="text" id="annotation-note" placeholder="Optional note..." class="input input-bordered input-sm w-full" />
+        </div>
+        <button
+          id="ignore-btn"
+          class={"btn btn-sm btn-outline " + (ignored ? "btn-success" : "btn-error")}
+          data-username={username}
+          data-ignored={ignored.toString()}
+        >
+          {ignored ? 'Unignore' : 'Ignore'}
+        </button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const btn = document.getElementById('ignore-btn') as HTMLButtonElement;
-    btn?.addEventListener('click', async () => {
-      const username = btn.dataset.username;
-      const isIgnored = btn.dataset.ignored === 'true';
+    document.querySelectorAll('.annotation-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const el = btn as HTMLButtonElement;
+        const username = el.dataset.username;
+        const action = el.dataset.action;
+        const noteInput = document.getElementById('annotation-note') as HTMLInputElement;
+        const note = noteInput?.value ?? '';
+        await fetch(`/api/candidate/${username}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, note }),
+        });
+        window.location.reload();
+      });
+    });
+
+    const ignoreBtn = document.getElementById('ignore-btn') as HTMLButtonElement;
+    ignoreBtn?.addEventListener('click', async () => {
+      const username = ignoreBtn.dataset.username;
+      const isIgnored = ignoreBtn.dataset.ignored === 'true';
       const method = isIgnored ? 'DELETE' : 'POST';
       await fetch('/api/ignore', {
         method,

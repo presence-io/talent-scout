@@ -1,8 +1,13 @@
 import type { APIRoute } from 'astro';
 import { join } from 'node:path';
 import type { TalentEntry, Candidate, IgnoreList } from '@talent-scout/shared';
-import { readJsonFile, resolveOutputDir, resolveUserDataDir } from '../../../lib/file.js';
-import type { AnnotationMap } from '../../../lib/merge.js';
+import {
+  readJsonFile,
+  writeJsonAtomic,
+  resolveOutputDir,
+  resolveUserDataDir,
+} from '../../../lib/file.js';
+import type { Annotation, AnnotationMap } from '../../../lib/merge.js';
 
 export const GET: APIRoute = async ({ params }) => {
   const { username } = params;
@@ -41,4 +46,40 @@ export const GET: APIRoute = async ({ params }) => {
     }),
     { headers: { 'Content-Type': 'application/json' } },
   );
+};
+
+export const PATCH: APIRoute = async ({ params, request }) => {
+  const { username } = params;
+  if (!username) {
+    return new Response(JSON.stringify({ error: 'Missing username' }), { status: 400 });
+  }
+
+  const body = (await request.json()) as {
+    action?: string;
+    note?: string;
+  };
+
+  const validActions = ['approved', 'rejected', 'noted'];
+  if (!body.action || !validActions.includes(body.action)) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid action. Must be approved, rejected, or noted.' }),
+      { status: 400 },
+    );
+  }
+
+  const userDataDir = resolveUserDataDir(process.cwd());
+  const filePath = join(userDataDir, 'annotations.json');
+  const annotations = await readJsonFile<AnnotationMap>(filePath, {});
+
+  const annotation: Annotation = {
+    status: body.action as Annotation['status'],
+    note: body.note ?? '',
+    annotated_at: new Date().toISOString(),
+  };
+  annotations[username] = annotation;
+  await writeJsonAtomic(filePath, annotations);
+
+  return new Response(JSON.stringify({ ok: true, annotation }), {
+    headers: { 'Content-Type': 'application/json' },
+  });
 };

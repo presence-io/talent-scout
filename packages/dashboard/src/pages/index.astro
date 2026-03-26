@@ -86,6 +86,7 @@ const paginated = paginateCandidates(list, page, limit);
           <th>City</th>
           <th>Action</th>
           <th>Signals</th>
+          <th>Quick Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -103,6 +104,13 @@ const paginated = paginateCandidates(list, page, limit);
             <td>{c.city ?? '—'}</td>
             <td><span class={"badge " + actionBadgeClass(c.recommended_action)}>{formatAction(c.recommended_action)}</span></td>
             <td>{c.signal_count}</td>
+            <td>
+              <div class="flex gap-1">
+                <button class="btn btn-xs btn-success quick-annotate" data-username={c.username} data-action="approved" title="Approve">✓</button>
+                <button class="btn btn-xs btn-error quick-annotate" data-username={c.username} data-action="rejected" title="Reject">✗</button>
+              </div>
+              {c.annotation && <span class="badge badge-xs badge-outline ml-1">{c.annotation.status}</span>}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -139,6 +147,20 @@ const paginated = paginateCandidates(list, page, limit);
     document.getElementById('city-filter')?.addEventListener('input', () => {
       clearTimeout(debounce);
       debounce = setTimeout(applyFilters, 400);
+    });
+
+    document.querySelectorAll('.quick-annotate').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const el = btn as HTMLButtonElement;
+        const username = el.dataset.username;
+        const action = el.dataset.action;
+        await fetch(`/api/candidate/${username}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        });
+        window.location.reload();
+      });
     });
   </script>
 </Base>
