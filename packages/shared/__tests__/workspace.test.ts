@@ -12,6 +12,7 @@ import {
 describe('workspace path resolution', () => {
   afterEach(() => {
     delete process.env['TALENT_WORKSPACE'];
+    delete process.env['INIT_CWD'];
   });
 
   describe('resolveWorkspaceDir', () => {
@@ -24,7 +25,15 @@ describe('workspace path resolution', () => {
       expect(resolveWorkspaceDir('/my/project')).toBe(resolve('/my/project', 'workspace-data'));
     });
 
-    it('falls back to cwd when no base and no env var', () => {
+    it('uses INIT_CWD when no base and no TALENT_WORKSPACE', () => {
+      delete process.env['TALENT_WORKSPACE'];
+      process.env['INIT_CWD'] = '/monorepo/root';
+      expect(resolveWorkspaceDir()).toBe(resolve('/monorepo/root', 'workspace-data'));
+    });
+
+    it('falls back to cwd when no base, no INIT_CWD, no TALENT_WORKSPACE', () => {
+      delete process.env['TALENT_WORKSPACE'];
+      delete process.env['INIT_CWD'];
       expect(resolveWorkspaceDir()).toBe(resolve(process.cwd(), 'workspace-data'));
     });
   });

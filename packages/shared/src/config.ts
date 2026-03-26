@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 
@@ -143,7 +143,8 @@ let cachedConfig: TalentConfig | null = null;
 export async function loadConfig(forceReload = false): Promise<TalentConfig> {
   if (cachedConfig && !forceReload) return cachedConfig;
 
-  const configPath = resolve(process.env['TALENT_CONFIG'] ?? 'talents.yaml');
+  const root = process.env['INIT_CWD'] ?? process.cwd();
+  const configPath = resolve(process.env['TALENT_CONFIG'] ?? join(root, 'talents.yaml'));
   const raw = await readFile(configPath, 'utf-8');
   const parsed: unknown = parseYaml(raw);
   cachedConfig = TalentConfigSchema.parse(parsed);

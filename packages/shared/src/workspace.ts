@@ -1,12 +1,21 @@
 import { resolve } from 'node:path';
 
 /**
+ * Determine the effective project root.
+ * When invoked via `pnpm --filter`, INIT_CWD is the original working directory
+ * (typically the monorepo root). Falls back to process.cwd().
+ */
+function effectiveRoot(base?: string): string {
+  return base ?? process.env['INIT_CWD'] ?? process.cwd();
+}
+
+/**
  * Resolve the workspace-data root directory.
- * Uses TALENT_WORKSPACE env var if set, otherwise defaults to `$PWD/workspace-data`.
+ * Uses TALENT_WORKSPACE env var if set, otherwise defaults to `<root>/workspace-data`.
  */
 export function resolveWorkspaceDir(base?: string): string {
   if (process.env['TALENT_WORKSPACE']) return resolve(process.env['TALENT_WORKSPACE']);
-  return resolve(base ?? process.cwd(), 'workspace-data');
+  return resolve(effectiveRoot(base), 'workspace-data');
 }
 
 /** Resolve the output directory root: `workspace-data/output`. */

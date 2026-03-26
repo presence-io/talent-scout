@@ -109,20 +109,21 @@ async function writeJsonAtomic(filePath: string, data: unknown): Promise<void> {
 /** Run AI evaluation via ai-evaluator. */
 export async function runEvaluateCommand(): Promise<void> {
   console.log('[skills] Running AI evaluation...');
-  const baseDir = process.cwd();
-  const inputDir = resolve(baseDir, 'output', 'processed', 'latest');
+  const outputBase = resolveOutputDir();
+  const userDataDir = resolveUserDataDir();
+  const inputDir = resolve(outputBase, 'processed', 'latest');
   const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const outputDir = resolve(baseDir, 'output', 'evaluated', timestamp);
+  const outputDir = resolve(outputBase, 'evaluated', timestamp);
   await mkdir(outputDir, { recursive: true });
 
   await runPipeline({
     inputDir,
     outputDir,
-    ignoreListPath: join(baseDir, 'user-data', 'ignore-list.json'),
+    ignoreListPath: join(userDataDir, 'ignore-list.json'),
     skipAI: process.argv.includes('--skip-ai'),
   });
 
-  const latestLink = join(baseDir, 'output', 'evaluated', 'latest');
+  const latestLink = join(outputBase, 'evaluated', 'latest');
   try {
     await rm(latestLink);
   } catch {
