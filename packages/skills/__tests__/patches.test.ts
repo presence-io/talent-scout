@@ -1,9 +1,14 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { applyPatches, loadPatches } from '../src/patches.js';
+import {
+  applyPatches,
+  loadPatches,
+  satisfiesVersion,
+  writeAppliedManifest,
+} from '../src/patches.js';
 
 describe('loadPatches', () => {
   let dir: string;
@@ -71,7 +76,7 @@ Missing required fields`
 });
 
 describe('applyPatches', () => {
-  it('returns formatted overlay entries', () => {
+  it('returns formatted overlay entries for compatible patches', () => {
     const patches = [
       {
         id: 'p1',
@@ -82,9 +87,98 @@ describe('applyPatches', () => {
         content: 'Increase min confidence to 0.6',
       },
     ];
-    const result = applyPatches([], patches);
-    expect(result).toHaveLength(1);
-    expect(result[0]).toContain('[threshold:identity]');
-    expect(result[0]).toContain('Increase min confidence');
+    const { applied, skipped } = applyPatches([], patches, '1.0.0');
+    expect(applied).toHaveLength(1);
+    expect(applied[0]).toContain('[threshold:identity]');
+    expect(applied[0]).toContain('Increase min confidence');
+    expect(skipped).toHaveLength(0);
+  });
+
+  it('skips incompatible patches and warns', () => {
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const patches = [
+      {
+        id: 'p1',
+        target: 'scoring',
+        applies_to: '>=2.0.0',
+        kind: 'override',
+        priority: 10,
+        content: 'New scoring logic',
+      },
+    ];
+    const { applied, skipped } = applyPatches([], patches, '1.0.0');
+    expect(applied).toHaveLength(0);
+    expect(skipped).toHaveLength(1);
+    expect(skipped[0]?.id).toBe('p1');
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  it('applies wildcard patches to any version', () => {
+    const patches = [
+      {
+        id: 'p1',
+        target: 'eval',
+        applies_to: '*',
+        kind: 'threshold',
+        priority: 5,
+        content: 'Always applies',
+      },
+    ];
+    const { applied } = applyPatches([], patches, '0.0.1');
+    expect(applied).toHaveLength(1);
+  });
+});
+
+describe('satisfiesVersion', () => {
+  it('wildcard matches everything', () => {
+    expect(satisfiesVersion('1.0.0', '*')).toBe(true);
+    expect(satisfiesVersion('0.0.1', '*')).toBe(true);
+  });
+
+  it('exact match', () => {
+    expect(satisfiesVersion('1.0.0', '1.0.0')).toBe(true);
+    expect(satisfiesVersion('1.0.1', '1.0.0')).toBe(false);
+  });
+
+  it('>= constraint', () => {
+    expect(satisfiesVersion('2.0.0', '>=1.0.0')).toBe(true);
+    expect(satisfiesVersion('1.0.0', '>=1.0.0')).toBe(true);
+    expect(satisfiesVersion('0.9.0', '>=1.0.0')).toBe(false);
+    expect(satisfiesVersion('1.1.0', '>=1.0.0')).toBe(true);
+  });
+});
+
+describe('writeAppliedManifest', () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'manifest-'));
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true });
+  });
+
+  it('writes applied.json with correct structure', async () => {
+    await writeAppliedManifest(
+      dir,
+      ['[threshold:identity] content'],
+      [
+        {
+          id: 'p2',
+          target: 'scoring',
+          applies_to: '>=2.0.0',
+          kind: 'override',
+          priority: 5,
+          content: 'skipped',
+        },
+      ]
+    );
+    const raw = await readFile(join(dir, 'applied.json'), 'utf-8');
+    const record = JSON.parse(raw);
+    expect(record.patches).toEqual(['[threshold:identity] content']);
+    expect(record.skipped).toEqual(['p2']);
+    expect(record.applied_at).toBeDefined();
   });
 });

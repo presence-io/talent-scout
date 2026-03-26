@@ -12,7 +12,7 @@ export { runCollectCommand, runProcessCommand, runEvaluateCommand } from './comm
 export { cronStatus, cronSync, cronRuns, cronRun, cronDisable, cronEnable } from './cron.js';
 export type { CronRunInfo } from './cron.js';
 export { queryShortlist, queryCandidate, queryStats } from './query.js';
-export { loadPatches, applyPatches } from './patches.js';
+export { loadPatches, applyPatches, satisfiesVersion, writeAppliedManifest } from './patches.js';
 export { renderShortlistText, renderCandidateText, renderStatsText } from './renderers.js';
 export type { SkillPatch } from './patches.js';
 
