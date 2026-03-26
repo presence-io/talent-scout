@@ -1,6 +1,6 @@
 # @talent-scout/ai-evaluator
 
-[![GitHub Actions](https://github.com/presence-io/talent-scout/actions/workflows/publish.yml/badge.svg)](https://github.com/presence-io/talent-scout/actions/workflows/publish.yml)
+[![GitHub Actions](https://github.com/huandu/talent-scout/actions/workflows/publish.yml/badge.svg)](https://github.com/huandu/talent-scout/actions/workflows/publish.yml)
 [![npm: @talent-scout/ai-evaluator](https://img.shields.io/npm/v/%40talent-scout%2Fai-evaluator?logo=npm)](https://www.npmjs.com/package/@talent-scout/ai-evaluator)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f.svg)](../../LICENSE)

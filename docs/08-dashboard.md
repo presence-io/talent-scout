@@ -117,7 +117,7 @@ pages/
 
 ### 4.1 GET /api/candidates
 
-从共享查询层读取候选人列表；共享查询层再从 `workspace-data/output/latest/shortlist.json` 等文件中读取底层数据。
+从共享查询层读取候选人列表；共享查询层再从 `workspace-data/output/evaluated/latest/shortlist.json` 等文件中读取底层数据。
 
 Query params：
 
@@ -150,7 +150,7 @@ Query params：
 
 ### 4.4 GET /api/stats
 
-汇总统计数据，通过共享查询层从 `workspace-data/output/latest/` 各文件中计算。
+汇总统计数据，通过共享查询层从 `workspace-data/output/evaluated/latest/` 各文件中计算。
 
 ## 5. 用户数据隔离
 
@@ -217,14 +217,19 @@ pnpm --filter dashboard install
 pnpm --filter dashboard run dev
 # → http://localhost:4321
 
-# Dashboard 读取的数据路径
-# workspace-data/output/latest/ (只读)
-# workspace-data/user-data/ (读写)
-# 可通过环境变量覆盖:
-#   TALENT_WORKSPACE_DIR=/path/to/workspace-data
-#   TALENT_OUTPUT_DIR=/path/to/workspace-data/output
-#   TALENT_USER_DATA_DIR=/path/to/workspace-data/user-data
+# Dashboard 的运行配置集中在 packages/dashboard/dashboard.config.mjs
+# 默认会自动向上查找项目根目录，并使用：
+#   workspace-data/output/evaluated/latest/ (只读)
+#   workspace-data/user-data/ (读写)
 ```
+
+推荐做法是通过 `dashboard.config.mjs` 管理路径，而不是在代码中散落 `process.env` 判断。配置项至少包括：
+
+- `projectRoot`: 可选。为空时自动向上查找包含 `talents.yaml` 或 `pnpm-workspace.yaml` 的根目录。
+- `workspaceDir`: 工作区数据目录，默认是 `workspace-data`。
+- `talentsConfigFile`: Dashboard 读取 cron 配置时使用的 `talents.yaml` 路径。
+
+因此，Dashboard 不再需要单独的 `TALENT_OUTPUT_DIR` 或 `TALENT_USER_DATA_DIR`。`output` 与 `user-data` 都应从 `workspaceDir` 派生，避免出现 README、代码和设计文档三套路径语义。
 
 ## 7. 辩证备注
 

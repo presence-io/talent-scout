@@ -145,6 +145,12 @@ export type TalentConfig = z.infer<typeof TalentConfigSchema>;
 
 let cachedConfig: TalentConfig | null = null;
 
+export async function loadConfigFromPath(configPath: string): Promise<TalentConfig> {
+  const raw = await readFile(resolve(configPath), 'utf-8');
+  const parsed: unknown = parseYaml(raw);
+  return TalentConfigSchema.parse(parsed);
+}
+
 /**
  * Load and validate talents.yaml from the project root.
  * Uses TALENT_CONFIG env var if set, otherwise defaults to `$PWD/talents.yaml`.
@@ -155,9 +161,7 @@ export async function loadConfig(forceReload = false): Promise<TalentConfig> {
 
   const root = process.env['INIT_CWD'] ?? process.cwd();
   const configPath = resolve(process.env['TALENT_CONFIG'] ?? join(root, 'talents.yaml'));
-  const raw = await readFile(configPath, 'utf-8');
-  const parsed: unknown = parseYaml(raw);
-  cachedConfig = TalentConfigSchema.parse(parsed);
+  cachedConfig = await loadConfigFromPath(configPath);
   return cachedConfig;
 }
 

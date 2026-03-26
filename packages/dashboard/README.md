@@ -1,6 +1,6 @@
 # @talent-scout/dashboard
 
-[![GitHub Actions](https://github.com/presence-io/talent-scout/actions/workflows/publish.yml/badge.svg)](https://github.com/presence-io/talent-scout/actions/workflows/publish.yml)
+[![GitHub Actions](https://github.com/huandu/talent-scout/actions/workflows/publish.yml/badge.svg)](https://github.com/huandu/talent-scout/actions/workflows/publish.yml)
 [![npm: @talent-scout/dashboard](https://img.shields.io/npm/v/%40talent-scout%2Fdashboard?logo=npm)](https://www.npmjs.com/package/@talent-scout/dashboard)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f.svg)](../../LICENSE)
@@ -22,22 +22,31 @@ pnpm install
 
 ## 最重要的运行约定
 
-这个包的 API route 默认以当前进程工作目录为基准解析 `workspace-data/`。因为 `astro dev` 实际运行在 `packages/dashboard` 目录下，所以开发和预览时应显式设置 `TALENT_WORKSPACE`，让它指向仓库根目录下的 `workspace-data`。
+Dashboard 现在统一通过配置文件管理运行路径，不再依赖 `TALENT_WORKSPACE`、`TALENT_OUTPUT_DIR`、`TALENT_USER_DATA_DIR` 这类环境变量。
+
+配置入口是 [dashboard.config.mjs](./dashboard.config.mjs)。默认行为是：
+
+- 自动向上查找包含 `talents.yaml` 或 `pnpm-workspace.yaml` 的项目根目录
+- 从该根目录下读取 `workspace-data/`
+- 使用 `workspace-data/output/evaluated/latest` 作为评估结果目录
+- 使用 `workspace-data/user-data` 作为人工标注目录
+
+默认配置已经适配当前仓库，因此通常不需要额外设置任何参数。
 
 推荐从仓库根目录启动：
 
 ```bash
-TALENT_WORKSPACE="$PWD/workspace-data" pnpm --filter @talent-scout/dashboard run dev
+pnpm --filter @talent-scout/dashboard run dev
 ```
 
 如果你要预览构建产物：
 
 ```bash
-TALENT_WORKSPACE="$PWD/workspace-data" pnpm --filter @talent-scout/dashboard run build
-TALENT_WORKSPACE="$PWD/workspace-data" pnpm --filter @talent-scout/dashboard run preview
+pnpm --filter @talent-scout/dashboard run build
+pnpm --filter @talent-scout/dashboard run preview
 ```
 
-如果你维护多套运行数据，可以把 `TALENT_WORKSPACE` 指到任意其他工作区目录。
+如果你维护多套运行数据，直接修改 [dashboard.config.mjs](./dashboard.config.mjs) 中的 `workspaceDir` 或 `projectRoot` 即可。
 
 ## 在 `workspace-data` 上工作的方式
 
@@ -51,10 +60,20 @@ Dashboard 读写两个目录：
 一个最常见的本地流程：
 
 1. 在仓库根目录跑一次 `pnpm pipeline`
-2. 启动 Dashboard 时设置 `TALENT_WORKSPACE="$PWD/workspace-data"`
+2. 直接启动 Dashboard；默认配置会自动指向仓库根目录下的 `workspace-data`
 3. 打开候选人列表页筛选 `reach_out`
 4. 在详情页补充备注或加入忽略名单
 5. 回到统计页查看这轮运行的分布变化
+
+如果你要切换到别的工作区，例如 `../talent-scout-prod/workspace-data`，可以这样改：
+
+```js
+export default {
+  projectRoot: '../talent-scout-prod',
+  workspaceDir: 'workspace-data',
+  talentsConfigFile: 'talents.yaml',
+};
+```
 
 ## 页面与模块
 
@@ -67,6 +86,7 @@ Dashboard 读写两个目录：
 - `src/lib/format.ts`: 展示格式化
 - `src/lib/merge.ts`: 把评估结果与人工标注、忽略名单合并
 - `src/lib/stats.ts`: 分布和趋势计算
+- `src/lib/dashboard-config.ts`: Dashboard 运行配置与 `talents.yaml` 解析
 - `src/lib/file.ts`: 本地 JSON 读写与工作区路径解析
 
 ## 设计思想
@@ -99,7 +119,7 @@ flowchart TD
 
 - 任何可测试逻辑都优先下沉到 `src/lib/`
 - 如果你要扩展筛选条件，先改 API route 和纯函数，再改页面
-- 如果要切换到其他工作区数据，不要改代码，直接改 `TALENT_WORKSPACE`
+- 如果要切换到其他工作区数据，修改 [dashboard.config.mjs](./dashboard.config.mjs)，不要再新增散落的路径环境变量
 
 ## 相关文档
 

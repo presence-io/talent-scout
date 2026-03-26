@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { loadConfig } from '@talent-scout/shared';
+import { loadDashboardTalentConfig } from '@/lib/dashboard-config';
 import { listRunHistory } from '@/lib/file';
 import type { RunHistoryEntry } from '@/lib/file';
 
@@ -9,7 +9,7 @@ let configError: string | null = null;
 let runHistory: RunHistoryEntry[] = [];
 
 try {
-  const config = await loadConfig();
+  const config = await loadDashboardTalentConfig();
   cronJobs = config.openclaw.cron;
 } catch (err) {
   configError = err instanceof Error ? err.message : String(err);

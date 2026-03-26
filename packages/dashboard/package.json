@@ -15,6 +15,7 @@
     "src/",
     "dist/",
     "astro.config.mjs",
+    "dashboard.config.mjs",
     "tsconfig.json"
   ],
   "publishConfig": {

@@ -1,5 +1,7 @@
 import { lstat, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join } from 'node:path';
+
+import { loadDashboardConfig } from './dashboard-config.js';
 
 export async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {
   try {
@@ -17,20 +19,12 @@ export async function writeJsonAtomic(filePath: string, data: unknown): Promise<
   await rename(tmpPath, filePath);
 }
 
-function resolveWorkspaceDir(base: string): string {
-  if (process.env['TALENT_WORKSPACE']) return resolve(process.env['TALENT_WORKSPACE']);
-  return resolve(base, 'workspace-data');
-}
-
 export function resolveOutputDir(base: string): string {
-  return (
-    process.env['TALENT_OUTPUT_DIR'] ??
-    join(resolveWorkspaceDir(base), 'output', 'evaluated', 'latest')
-  );
+  return loadDashboardConfig(base).outputDir;
 }
 
 export function resolveUserDataDir(base: string): string {
-  return process.env['TALENT_USER_DATA_DIR'] ?? join(resolveWorkspaceDir(base), 'user-data');
+  return loadDashboardConfig(base).userDataDir;
 }
 
 export interface RunHistoryEntry {
@@ -51,7 +45,7 @@ export async function listRunHistory(base: string): Promise<RunHistoryEntry[]> {
       const latestStat = await lstat(join(evaluatedDir, 'latest'));
       if (latestStat.isSymbolicLink()) {
         const { readlink } = await import('node:fs/promises');
-        latestTarget = await readlink(join(evaluatedDir, 'latest'));
+        latestTarget = basename(await readlink(join(evaluatedDir, 'latest')));
       }
     } catch {
       // no latest symlink
