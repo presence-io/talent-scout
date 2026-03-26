@@ -2,15 +2,14 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { IgnoreList } from './types.js';
-
-const DEFAULT_PATH = 'user-data/ignore-list.json';
+import { resolveUserDataDir } from './workspace.js';
 
 /**
- * Read the ignore list from `user-data/ignore-list.json`.
+ * Read the ignore list from `workspace-data/user-data/ignore-list.json`.
  * Returns an empty record if the file does not exist.
  */
 export async function readIgnoreList(basePath?: string): Promise<IgnoreList> {
-  const filePath = resolve(basePath ?? DEFAULT_PATH);
+  const filePath = basePath ? resolve(basePath) : resolve(resolveUserDataDir(), 'ignore-list.json');
   try {
     const raw = await readFile(filePath, 'utf-8');
     return JSON.parse(raw) as IgnoreList;

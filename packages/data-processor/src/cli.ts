@@ -1,4 +1,10 @@
-import { isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
+import {
+  isIgnored,
+  loadConfig,
+  readIgnoreList,
+  resolveOutputDir,
+  resolveUserDataDir,
+} from '@talent-scout/shared';
 import type { Candidate, Signal } from '@talent-scout/shared';
 import { mkdir, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -12,8 +18,8 @@ interface RawCollectionFile {
 }
 
 /** Find the latest raw collection directory */
-async function findLatestRawDir(baseDir: string): Promise<string> {
-  const rawDir = join(baseDir, 'output', 'raw');
+async function findLatestRawDir(): Promise<string> {
+  const rawDir = join(resolveOutputDir(), 'raw');
   const entries = await readdir(rawDir, { withFileTypes: true });
   const dirs = entries
     .filter((e) => e.isDirectory())
@@ -53,12 +59,12 @@ async function loadRawSignals(rawDir: string): Promise<Record<string, Signal[]>>
 
 /** Run the full data processing pipeline */
 async function runProcess(): Promise<void> {
-  const baseDir = process.cwd();
   const config = await loadConfig();
-  const ignoreList = await readIgnoreList(join(baseDir, 'user-data', 'ignore-list.json'));
+  const outputBase = resolveOutputDir();
+  const ignoreList = await readIgnoreList(join(resolveUserDataDir(), 'ignore-list.json'));
 
   // Step 1: Find latest raw data
-  const rawDir = await findLatestRawDir(baseDir);
+  const rawDir = await findLatestRawDir();
   console.log(`Reading raw data from ${rawDir}`);
 
   // Step 2: Load and merge signals
@@ -93,7 +99,7 @@ async function runProcess(): Promise<void> {
 
   // Step 7: Write output
   const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const outputDir = resolve(baseDir, 'output', 'processed', timestamp);
+  const outputDir = resolve(outputBase, 'processed', timestamp);
   await mkdir(outputDir, { recursive: true });
 
   // Write merged candidates
@@ -120,7 +126,7 @@ async function runProcess(): Promise<void> {
   await writeJsonAtomic(join(outputDir, 'scored.json'), scoredOutput);
 
   // Update latest symlink
-  const latestLink = resolve(baseDir, 'output', 'processed', 'latest');
+  const latestLink = resolve(outputBase, 'processed', 'latest');
   try {
     await rm(latestLink, { force: true });
   } catch {

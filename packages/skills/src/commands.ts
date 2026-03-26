@@ -5,7 +5,13 @@ import {
   identifyCandidate,
   mergeCandidateRecords,
 } from '@talent-scout/data-processor';
-import { isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
+import {
+  isIgnored,
+  loadConfig,
+  readIgnoreList,
+  resolveOutputDir,
+  resolveUserDataDir,
+} from '@talent-scout/shared';
 import type { Candidate, Signal } from '@talent-scout/shared';
 import { mkdir, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -23,12 +29,13 @@ interface RawCollectionFile {
 /** Run data processing (merge → identity → scoring). */
 export async function runProcessCommand(): Promise<void> {
   console.log('[skills] Running data processing...');
-  const baseDir = process.cwd();
   const config = await loadConfig();
-  const ignoreList = await readIgnoreList(join(baseDir, 'user-data', 'ignore-list.json'));
+  const outputBase = resolveOutputDir();
+  const userDataDir = resolveUserDataDir();
+  const ignoreList = await readIgnoreList(join(userDataDir, 'ignore-list.json'));
 
   // Find latest raw dir
-  const rawBase = join(baseDir, 'output', 'raw');
+  const rawBase = join(outputBase, 'raw');
   const entries = await readdir(rawBase, { withFileTypes: true });
   const dirs = entries
     .filter((e) => e.isDirectory())
@@ -65,32 +72,32 @@ export async function runProcessCommand(): Promise<void> {
 
   // Write output
   const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const outputDir = resolve(baseDir, 'output', 'processed', timestamp);
-  await mkdir(outputDir, { recursive: true });
+  const processedDir = resolve(outputBase, 'processed', timestamp);
+  await mkdir(processedDir, { recursive: true });
 
   const mergedOutput: Record<string, Candidate> = {};
   for (const c of candidates) mergedOutput[c.username] = c;
-  await writeJsonAtomic(join(outputDir, 'merged.json'), mergedOutput);
+  await writeJsonAtomic(join(processedDir, 'merged.json'), mergedOutput);
 
   const identityOutput: Record<string, Candidate['identity']> = {};
   for (const c of candidates) {
     if (c.identity) identityOutput[c.username] = c.identity;
   }
-  await writeJsonAtomic(join(outputDir, 'identity.json'), identityOutput);
+  await writeJsonAtomic(join(processedDir, 'identity.json'), identityOutput);
 
   const scoredOutput: Record<string, Candidate> = {};
   for (const c of identified) scoredOutput[c.username] = c;
-  await writeJsonAtomic(join(outputDir, 'scored.json'), scoredOutput);
+  await writeJsonAtomic(join(processedDir, 'scored.json'), scoredOutput);
 
-  const latestLink = resolve(baseDir, 'output', 'processed', 'latest');
+  const latestLink = resolve(outputBase, 'processed', 'latest');
   try {
     await rm(latestLink, { force: true });
   } catch {
     /* ignore */
   }
-  await symlink(outputDir, latestLink);
+  await symlink(processedDir, latestLink);
 
-  console.log(`[skills] Processed ${String(candidates.length)} candidates → ${outputDir}`);
+  console.log(`[skills] Processed ${String(candidates.length)} candidates → ${processedDir}`);
 }
 
 async function writeJsonAtomic(filePath: string, data: unknown): Promise<void> {

@@ -1,4 +1,10 @@
-import { FileCache, type Signal, loadConfig } from '@talent-scout/shared';
+import {
+  FileCache,
+  type Signal,
+  loadConfig,
+  resolveCacheDir,
+  resolveOutputDir,
+} from '@talent-scout/shared';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
@@ -25,10 +31,10 @@ function mergeSignalMaps(...maps: Map<string, Signal[]>[]): Map<string, Signal[]
 /** Run the full data collection pipeline */
 export async function runCollect(): Promise<void> {
   const config = await loadConfig();
-  const cache = new FileCache(resolve('cache/github'));
+  const cache = new FileCache(resolve(resolveCacheDir(), 'github'));
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const outputDir = resolve(`output/raw/${timestamp}`);
+  const outputDir = resolve(resolveOutputDir(), 'raw', timestamp);
   await mkdir(outputDir, { recursive: true });
 
   // Collect from all sources

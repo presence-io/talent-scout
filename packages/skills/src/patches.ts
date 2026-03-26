@@ -1,5 +1,6 @@
+import { resolvePatchDir } from '@talent-scout/shared';
 import { readFile, readdir } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 
 export interface SkillPatch {
   id: string;
@@ -48,7 +49,7 @@ function parseFrontmatter(raw: string): { frontmatter: PatchFrontmatter; content
 
 /** Load all skill patches from the workspace data directory. */
 export async function loadPatches(patchDir?: string): Promise<SkillPatch[]> {
-  const dir = patchDir ?? resolve('workspace-data', 'skill-patches');
+  const dir = patchDir ?? resolvePatchDir();
   let files: string[];
   try {
     files = await readdir(dir);

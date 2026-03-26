@@ -1,5 +1,5 @@
 import { lstat, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 export async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {
   try {
@@ -17,12 +17,20 @@ export async function writeJsonAtomic(filePath: string, data: unknown): Promise<
   await rename(tmpPath, filePath);
 }
 
+function resolveWorkspaceDir(base: string): string {
+  if (process.env['TALENT_WORKSPACE']) return resolve(process.env['TALENT_WORKSPACE']);
+  return resolve(base, 'workspace-data');
+}
+
 export function resolveOutputDir(base: string): string {
-  return process.env['TALENT_OUTPUT_DIR'] ?? join(base, 'output', 'evaluated', 'latest');
+  return (
+    process.env['TALENT_OUTPUT_DIR'] ??
+    join(resolveWorkspaceDir(base), 'output', 'evaluated', 'latest')
+  );
 }
 
 export function resolveUserDataDir(base: string): string {
-  return process.env['TALENT_USER_DATA_DIR'] ?? join(base, 'user-data');
+  return process.env['TALENT_USER_DATA_DIR'] ?? join(resolveWorkspaceDir(base), 'user-data');
 }
 
 export interface RunHistoryEntry {

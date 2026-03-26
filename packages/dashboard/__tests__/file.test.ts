@@ -55,23 +55,33 @@ describe('resolveOutputDir', () => {
     }
   });
 
-  it('defaults to base/output', () => {
+  it('defaults to base/workspace-data/output', () => {
     const orig = process.env['TALENT_OUTPUT_DIR'];
+    const origWs = process.env['TALENT_WORKSPACE'];
     delete process.env['TALENT_OUTPUT_DIR'];
-    expect(resolveOutputDir('/base')).toBe('/base/output/evaluated/latest');
+    delete process.env['TALENT_WORKSPACE'];
+    expect(resolveOutputDir('/base')).toBe('/base/workspace-data/output/evaluated/latest');
     if (orig !== undefined) {
       process.env['TALENT_OUTPUT_DIR'] = orig;
+    }
+    if (origWs !== undefined) {
+      process.env['TALENT_WORKSPACE'] = origWs;
     }
   });
 });
 
 describe('resolveUserDataDir', () => {
-  it('defaults to base/user-data', () => {
+  it('defaults to base/workspace-data/user-data', () => {
     const orig = process.env['TALENT_USER_DATA_DIR'];
+    const origWs = process.env['TALENT_WORKSPACE'];
     delete process.env['TALENT_USER_DATA_DIR'];
-    expect(resolveUserDataDir('/base')).toBe('/base/user-data');
+    delete process.env['TALENT_WORKSPACE'];
+    expect(resolveUserDataDir('/base')).toBe('/base/workspace-data/user-data');
     if (orig !== undefined) {
       process.env['TALENT_USER_DATA_DIR'] = orig;
+    }
+    if (origWs !== undefined) {
+      process.env['TALENT_WORKSPACE'] = origWs;
     }
   });
 });
