@@ -1,5 +1,5 @@
 import { evaluateCandidate, identifyCandidate } from '@talent-scout/data-processor';
-import { Checkpoint, isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
+import { Checkpoint, createAIProvider, isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
 import type { Candidate } from '@talent-scout/shared';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -99,8 +99,9 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
   }
 
   // Step 2b: AI identity inference for gray-area candidates
+  const provider = createAIProvider(config);
   if (!options.skipAI) {
-    await inferIdentityBatch(candidates, config, checkpoint);
+    await inferIdentityBatch(candidates, config, provider, checkpoint);
   }
 
   // Step 3: Rule-based evaluation for identified Chinese developers
@@ -113,7 +114,7 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
 
   // Step 4: AI deep evaluation for top candidates
   if (!options.skipAI) {
-    await deepEvaluateBatch(identified, config, checkpoint);
+    await deepEvaluateBatch(identified, config, provider, checkpoint);
   }
 
   // Step 5: Produce shortlist

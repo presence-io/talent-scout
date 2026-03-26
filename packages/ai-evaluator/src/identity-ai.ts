@@ -1,5 +1,5 @@
-import type { Candidate, TalentConfig } from '@talent-scout/shared';
-import { Checkpoint, callAgent } from '@talent-scout/shared';
+import type { AIProvider, Candidate, TalentConfig } from '@talent-scout/shared';
+import { Checkpoint } from '@talent-scout/shared';
 
 interface AIIdentityInference {
   username: string;
@@ -22,6 +22,7 @@ interface AIIdentityInference {
 export async function inferIdentityBatch(
   candidates: Candidate[],
   config: TalentConfig,
+  provider: AIProvider,
   checkpoint?: Checkpoint
 ): Promise<number> {
   const done = new Set((checkpoint?.get('ai_identity_done') as string[] | undefined) ?? []);
@@ -37,13 +38,13 @@ export async function inferIdentityBatch(
     console.log(`  Resuming AI identity: skipping ${String(done.size)} already processed`);
   }
 
-  const batchSize = config.openclaw.batch_size;
+  const batchSize = config.ai?.batch_size ?? config.openclaw.batch_size;
   let processed = 0;
 
   for (let i = 0; i < grayArea.length; i += batchSize) {
     const batch = grayArea.slice(i, i + batchSize);
 
-    const result = await callAgent('identity', {
+    const result = await provider.callAgent('identity', {
       task: 'batch_identity_inference',
       candidates: batch.map((c) => ({
         username: c.username,

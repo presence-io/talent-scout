@@ -143,6 +143,9 @@ describe('cronSync', () => {
   });
 
   it('calls syncCronJobs and logs progress', async () => {
+    vi.mocked(shared.loadConfig).mockResolvedValue(
+      shared.TalentConfigSchema.parse({ openclaw: { cron: [], agents: {}, batch_size: 10 } })
+    );
     vi.mocked(shared.syncCronJobs).mockResolvedValue();
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await cronSync();
@@ -190,6 +193,9 @@ describe('cronDisable', () => {
   });
 
   it('calls shared cronDisable and logs confirmation', async () => {
+    vi.mocked(shared.loadConfig).mockResolvedValue(
+      shared.TalentConfigSchema.parse({ openclaw: { cron: [], agents: {}, batch_size: 10 } })
+    );
     vi.mocked(shared.cronDisable).mockResolvedValue();
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await cronDisable('talent-collect');
@@ -205,6 +211,9 @@ describe('cronEnable', () => {
   });
 
   it('calls shared cronEnable and logs confirmation', async () => {
+    vi.mocked(shared.loadConfig).mockResolvedValue(
+      shared.TalentConfigSchema.parse({ openclaw: { cron: [], agents: {}, batch_size: 10 } })
+    );
     vi.mocked(shared.cronEnable).mockResolvedValue();
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await cronEnable('talent-collect');

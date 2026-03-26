@@ -1,5 +1,5 @@
-import type { Candidate, TalentConfig } from '@talent-scout/shared';
-import { Checkpoint, callAgent } from '@talent-scout/shared';
+import type { AIProvider, Candidate, TalentConfig } from '@talent-scout/shared';
+import { Checkpoint } from '@talent-scout/shared';
 
 interface AIEvalResult {
   username: string;
@@ -20,6 +20,7 @@ interface AIEvalResult {
 export async function deepEvaluateBatch(
   candidates: Candidate[],
   config: TalentConfig,
+  provider: AIProvider,
   checkpoint?: Checkpoint
 ): Promise<number> {
   const done = new Set((checkpoint?.get('deep_eval_done') as string[] | undefined) ?? []);
@@ -34,13 +35,13 @@ export async function deepEvaluateBatch(
     console.log(`  Resuming deep eval: skipping ${String(done.size)} already processed`);
   }
 
-  const batchSize = config.openclaw.batch_size;
+  const batchSize = config.ai?.batch_size ?? config.openclaw.batch_size;
   let processed = 0;
 
   for (let i = 0; i < eligible.length; i += batchSize) {
     const batch = eligible.slice(i, i + batchSize);
 
-    const result = await callAgent('evaluator', {
+    const result = await provider.callAgent('evaluator', {
       task: 'batch_deep_evaluation',
       candidates: batch.map((c) => ({
         username: c.username,
