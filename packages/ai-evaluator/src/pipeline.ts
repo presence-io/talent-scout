@@ -79,6 +79,7 @@ async function attachProfiles(candidates: Candidate[], inputDir: string): Promis
  */
 export async function runPipeline(options: PipelineOptions): Promise<void> {
   const config = await loadConfig();
+  const minConfidence = config.identity.min_confidence;
 
   await mkdir(options.outputDir, { recursive: true });
   const checkpoint = new Checkpoint(join(options.outputDir, '_checkpoint.json'));
@@ -103,7 +104,9 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
   }
 
   // Step 3: Rule-based evaluation for identified Chinese developers
-  const identified = candidates.filter((c) => (c.identity?.china_confidence ?? 0) >= 0.5);
+  const identified = candidates.filter(
+    (candidate) => (candidate.identity?.china_confidence ?? 0) >= minConfidence
+  );
   for (const c of identified) {
     c.evaluation = evaluateCandidate(c, config);
   }
@@ -120,7 +123,7 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
   await writeOutput(options.outputDir, candidates, shortlist);
 
   // Step 7: Update SKILLS-pending + stats.json
-  const stats = computeRunStats(candidates);
+  const stats = computeRunStats(candidates, minConfidence);
   const parentDir = dirname(options.outputDir);
   await appendSkillsPending(parentDir, stats);
   await writeStatsJson(parentDir, stats);

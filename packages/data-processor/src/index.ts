@@ -17,4 +17,5 @@ export {
   computeFinalScore,
   determineAction,
 } from './scoring.js';
+export { runProcessPipeline } from './pipeline.js';
 export { loadProcessedCandidates, loadIdentityResults } from './query.js';

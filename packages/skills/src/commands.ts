@@ -1,20 +1,8 @@
 import { runPipeline } from '@talent-scout/ai-evaluator';
 import { runCollect } from '@talent-scout/data-collector';
-import {
-  evaluateCandidate,
-  identifyCandidate,
-  mergeCandidateRecords,
-} from '@talent-scout/data-processor';
-import {
-  findOrCreateRunDir,
-  isIgnored,
-  loadConfig,
-  readIgnoreList,
-  resolveOutputDir,
-  resolveUserDataDir,
-} from '@talent-scout/shared';
-import type { Candidate, Signal } from '@talent-scout/shared';
-import { mkdir, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import { runProcessPipeline } from '@talent-scout/data-processor';
+import { findOrCreateRunDir, resolveOutputDir, resolveUserDataDir } from '@talent-scout/shared';
+import { rm, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 /** Run data collection via data-collector. */
@@ -23,88 +11,13 @@ export async function runCollectCommand(): Promise<void> {
   await runCollect();
 }
 
-interface RawCollectionFile {
-  candidates: Record<string, Signal[]>;
-}
-
 /** Run data processing (merge → identity → scoring). */
 export async function runProcessCommand(): Promise<void> {
   console.log('[skills] Running data processing...');
-  const config = await loadConfig();
-  const outputBase = resolveOutputDir();
-  const userDataDir = resolveUserDataDir();
-  const ignoreList = await readIgnoreList(join(userDataDir, 'ignore-list.json'));
-
-  // Find latest raw dir
-  const rawBase = join(outputBase, 'raw');
-  const entries = await readdir(rawBase, { withFileTypes: true });
-  const dirs = entries
-    .filter((e) => e.isDirectory())
-    .map((e) => e.name)
-    .sort()
-    .reverse();
-  if (dirs.length === 0) throw new Error(`No raw data directories found in ${rawBase}`);
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const rawDir = join(rawBase, dirs[0]!);
-
-  // Load and merge signals
-  const files = await readdir(rawDir);
-  const jsonFiles = files.filter((f) => f.endsWith('.json'));
-  const rawSignals: Record<string, Signal[]> = {};
-  for (const file of jsonFiles) {
-    const raw = await readFile(join(rawDir, file), 'utf-8');
-    const data = JSON.parse(raw) as RawCollectionFile;
-    for (const [username, signals] of Object.entries(data.candidates)) {
-      const existing = rawSignals[username] ?? [];
-      existing.push(...signals);
-      rawSignals[username] = existing;
-    }
-  }
-
-  // Merge, identify, score
-  const candidateMap = mergeCandidateRecords(rawSignals);
-  const candidates: Candidate[] = [];
-  for (const [username, candidate] of candidateMap) {
-    if (!isIgnored(ignoreList, username)) candidates.push(candidate);
-  }
-  for (const c of candidates) c.identity = identifyCandidate(c);
-  const identified = candidates.filter((c) => (c.identity?.china_confidence ?? 0) >= 0.5);
-  for (const c of identified) c.evaluation = evaluateCandidate(c, config);
-
-  // Write output
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const processedDir = resolve(outputBase, 'processed', timestamp);
-  await mkdir(processedDir, { recursive: true });
-
-  const mergedOutput: Record<string, Candidate> = {};
-  for (const c of candidates) mergedOutput[c.username] = c;
-  await writeJsonAtomic(join(processedDir, 'merged.json'), mergedOutput);
-
-  const identityOutput: Record<string, Candidate['identity']> = {};
-  for (const c of candidates) {
-    if (c.identity) identityOutput[c.username] = c.identity;
-  }
-  await writeJsonAtomic(join(processedDir, 'identity.json'), identityOutput);
-
-  const scoredOutput: Record<string, Candidate> = {};
-  for (const c of identified) scoredOutput[c.username] = c;
-  await writeJsonAtomic(join(processedDir, 'scored.json'), scoredOutput);
-
-  const latestLink = resolve(outputBase, 'processed', 'latest');
-  try {
-    await rm(latestLink, { force: true });
-  } catch {
-    /* ignore */
-  }
-  await symlink(processedDir, latestLink);
-
-  console.log(`[skills] Processed ${String(candidates.length)} candidates → ${processedDir}`);
-}
-
-async function writeJsonAtomic(filePath: string, data: unknown): Promise<void> {
-  const tmpPath = filePath + '.tmp';
-  await writeFile(tmpPath, JSON.stringify(data, null, 2));
-  await rename(tmpPath, filePath);
+  const result = await runProcessPipeline();
+  console.log(
+    `[skills] Processed ${String(result.candidateCount)} candidates, fetched ${String(result.fetchedProfiles)} profiles → ${result.outputDir}`
+  );
 }
 
 /** Run AI evaluation via ai-evaluator. */

@@ -3,5 +3,5 @@ export default {
   // talents.yaml or pnpm-workspace.yaml is found.
   projectRoot: null,
   workspaceDir: 'workspace-data',
-  talentsConfigFile: 'talents.yaml',
+  talentsConfigFile: 'workspace-data/talents.yaml',
 };

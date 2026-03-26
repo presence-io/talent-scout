@@ -15,8 +15,10 @@ export interface RunStats {
 }
 
 /** Compute summary statistics from evaluated candidates. */
-export function computeRunStats(candidates: Candidate[]): RunStats {
-  const identified = candidates.filter((c) => (c.identity?.china_confidence ?? 0) >= 0.5);
+export function computeRunStats(candidates: Candidate[], minConfidence = 0.5): RunStats {
+  const identified = candidates.filter(
+    (candidate) => (candidate.identity?.china_confidence ?? 0) >= minConfidence
+  );
   const evaluated = candidates.filter((c) => c.evaluation);
 
   let skillSum = 0;
