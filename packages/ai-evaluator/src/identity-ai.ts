@@ -32,16 +32,23 @@ export async function inferIdentityBatch(
     return conf > 0.3 && conf < 0.7;
   });
 
-  if (grayArea.length === 0) return 0;
+  if (grayArea.length === 0) {
+    console.log('      No gray-area candidates to process');
+    return 0;
+  }
+  console.log(`      ${String(grayArea.length)} gray-area candidates to infer`);
   if (done.size > 0) {
-    console.log(`  Resuming AI identity: skipping ${String(done.size)} already processed`);
+    console.log(`      Resuming: skipping ${String(done.size)} already processed`);
   }
 
   const batchSize = config.openclaw.batch_size;
   let processed = 0;
+  const totalBatches = Math.ceil(grayArea.length / batchSize);
 
   for (let i = 0; i < grayArea.length; i += batchSize) {
+    const batchNum = Math.floor(i / batchSize) + 1;
     const batch = grayArea.slice(i, i + batchSize);
+    console.log(`      Batch ${String(batchNum)}/${String(totalBatches)}: ${batch.map((c) => c.username).join(', ')}`);
 
     const result = await callAgent('identity', {
       task: 'batch_identity_inference',
@@ -67,10 +74,13 @@ export async function inferIdentityBatch(
       processed++;
     }
 
+    console.log(`      Batch ${String(batchNum)} done: ${String(inferences.length)} inferences returned`);
+
     // Persist progress after each batch
     for (const c of batch) done.add(c.username);
     if (checkpoint) await checkpoint.mark('ai_identity_done', [...done]);
   }
 
+  console.log(`      ✓ AI identity inference complete: ${String(processed)} updated`);
   return processed;
 }

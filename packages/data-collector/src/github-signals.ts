@@ -31,6 +31,7 @@ export async function collectCodeSignals(
   const candidates = new Map<string, Signal[]>();
 
   for (const sig of config.code_signals) {
+    console.log(`      → code search: ${sig.filename} (path:${sig.path})`);
     const q = `filename:${sig.filename}+path:${sig.path}`;
     const items = await ghApi<CodeSearchItem>(
       `/search/code?q=${encodeSearchQuery(q)}&sort=indexed`,
@@ -41,6 +42,7 @@ export async function collectCodeSignals(
         cacheTtl: config.cache.ttl.search_results,
       }
     );
+    console.log(`        found ${String(items.length)} results`);
 
     for (const item of items) {
       const owner = item.repository.owner.login.toLowerCase();
@@ -70,6 +72,7 @@ export async function collectCommitSignals(
   const candidates = new Map<string, Signal[]>();
 
   for (const qcfg of config.commit_queries) {
+    console.log(`      → commit search: "${qcfg.query}"`);
     const q = qcfg.query;
     const items = await ghApi<CommitSearchItem>(
       `/search/commits?q=${encodeSearchQuery(q)}&sort=committer-date`,
@@ -81,6 +84,7 @@ export async function collectCommitSignals(
         cacheTtl: config.cache.ttl.search_results,
       }
     );
+    console.log(`        found ${String(items.length)} commits`);
 
     for (const item of items) {
       const login = item.author?.login.toLowerCase();
@@ -110,6 +114,7 @@ export async function collectTopicSignals(
   const candidates = new Map<string, Signal[]>();
 
   for (const tcfg of config.topic_queries) {
+    console.log(`      → topic search: topic:${tcfg.topic}`);
     const items = await ghApi<RepoSearchItem>(
       `/search/repositories?q=topic:${tcfg.topic}&sort=updated`,
       {
@@ -119,6 +124,7 @@ export async function collectTopicSignals(
         cacheTtl: config.cache.ttl.search_results,
       }
     );
+    console.log(`        found ${String(items.length)} repos`);
 
     for (const item of items) {
       const owner = item.owner.login.toLowerCase();
@@ -145,14 +151,19 @@ export async function collectAllGitHubSignals(cache: FileCache): Promise<Map<str
   const config = await loadConfig();
   const merged = new Map<string, Signal[]>();
 
-  const sources = [
-    collectCodeSignals(config, cache),
-    collectCommitSignals(config, cache),
-    collectTopicSignals(config, cache),
-  ];
+  console.log('      Collecting code file signals...');
+  const codeResult = await collectCodeSignals(config, cache);
+  console.log(`      ✓ Code signals: ${String(codeResult.size)} users`);
 
-  for (const source of sources) {
-    const result = await source;
+  console.log('      Collecting commit co-author signals...');
+  const commitResult = await collectCommitSignals(config, cache);
+  console.log(`      ✓ Commit signals: ${String(commitResult.size)} users`);
+
+  console.log('      Collecting topic signals...');
+  const topicResult = await collectTopicSignals(config, cache);
+  console.log(`      ✓ Topic signals: ${String(topicResult.size)} users`);
+
+  for (const result of [codeResult, commitResult, topicResult]) {
     for (const [username, signals] of result) {
       const existing = merged.get(username) ?? [];
       existing.push(...signals);

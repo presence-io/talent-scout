@@ -234,26 +234,41 @@ async function writeJsonAtomic(filePath: string, data: unknown): Promise<void> {
 export async function runProcessPipeline(
   options: ProcessPipelineOptions = {}
 ): Promise<ProcessPipelineResult> {
+  console.log('    Loading config and ignore list...');
   const config = await loadConfig();
   const outputBase = resolveOutputDir(options.baseDir);
   const ignoreList = await readIgnoreList(
     join(resolveUserDataDir(options.baseDir), 'ignore-list.json')
   );
   const rawDir = options.rawDir ?? (await findLatestRawDir(options.baseDir));
+  console.log(`    ✓ Raw data from: ${rawDir}`);
 
+  console.log('    Loading and merging raw signals...');
   const rawSignals = await loadRawSignals(rawDir);
-  const candidateMap = mergeCandidateRecords(rawSignals);
-  const candidates: Candidate[] = [];
+  console.log(`    ✓ Loaded ${String(Object.keys(rawSignals).length)} users from raw files`);
 
+  const candidateMap = mergeCandidateRecords(rawSignals);
+  console.log(`    ✓ Merged & deduped: ${String(candidateMap.size)} candidates`);
+
+  const candidates: Candidate[] = [];
+  let ignoredCount = 0;
   for (const [username, candidate] of candidateMap) {
     if (isIgnored(ignoreList, username)) {
+      ignoredCount++;
       continue;
     }
     candidates.push(candidate);
   }
+  if (ignoredCount > 0) {
+    console.log(`    ✓ Filtered out ${String(ignoredCount)} ignored users → ${String(candidates.length)} remaining`);
+  }
 
+  console.log(`    Hydrating GitHub profiles (batch_size=${String(config.api_budget.profile_batch_size)})...`);
+  const t1 = Date.now();
   const profiles = await hydrateCandidateProfiles(candidates, config, options.baseDir);
+  console.log(`    ✓ Fetched ${String(Object.keys(profiles).length)} profiles (${((Date.now() - t1) / 1000).toFixed(1)}s)`);
 
+  console.log('    Running identity detection (rule-based)...');
   for (const candidate of candidates) {
     candidate.identity = identifyCandidate(candidate);
   }
@@ -261,20 +276,30 @@ export async function runProcessPipeline(
   const identified = candidates.filter(
     (candidate) => (candidate.identity?.china_confidence ?? 0) >= identityThreshold(config)
   );
+  console.log(`    ✓ Identified ${String(identified.length)}/${String(candidates.length)} candidates (threshold=${String(identityThreshold(config))})`);
+
+  console.log('    Running rule-based scoring for identified candidates...');
   for (const candidate of identified) {
     candidate.evaluation = evaluateCandidate(candidate, config);
   }
+  const reachOut = identified.filter((c) => c.evaluation?.recommended_action === 'reach_out').length;
+  const monitor = identified.filter((c) => c.evaluation?.recommended_action === 'monitor').length;
+  const skip = identified.filter((c) => c.evaluation?.recommended_action === 'skip').length;
+  console.log(`    ✓ Scored: reach_out=${String(reachOut)} monitor=${String(monitor)} skip=${String(skip)}`);
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
   const processedDir = resolve(outputBase, 'processed', timestamp);
   await mkdir(processedDir, { recursive: true });
 
+  console.log('    Writing output files...');
   const mergedOutput: Record<string, Candidate> = {};
   for (const candidate of candidates) {
     mergedOutput[candidate.username] = candidate;
   }
   await writeJsonAtomic(join(processedDir, 'merged.json'), mergedOutput);
+  console.log('      → merged.json');
   await writeJsonAtomic(join(processedDir, 'profiles.json'), profiles);
+  console.log('      → profiles.json');
 
   const identityOutput: Record<string, Candidate['identity']> = {};
   for (const candidate of candidates) {
@@ -283,12 +308,14 @@ export async function runProcessPipeline(
     }
   }
   await writeJsonAtomic(join(processedDir, 'identity.json'), identityOutput);
+  console.log('      → identity.json');
 
   const scoredOutput: Record<string, Candidate> = {};
   for (const candidate of identified) {
     scoredOutput[candidate.username] = candidate;
   }
   await writeJsonAtomic(join(processedDir, 'scored.json'), scoredOutput);
+  console.log('      → scored.json');
 
   const latestLink = resolve(outputBase, 'processed', 'latest');
   try {
@@ -297,6 +324,7 @@ export async function runProcessPipeline(
     // Ignore if latest symlink is absent.
   }
   await symlink(processedDir, latestLink);
+  console.log('    ✓ Updated latest symlink');
 
   return {
     outputDir: processedDir,

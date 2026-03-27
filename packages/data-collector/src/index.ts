@@ -58,46 +58,62 @@ async function collectOrLoad(
 /** Run the full data collection pipeline with resume support. */
 export async function runCollect(): Promise<void> {
   const config = await loadConfig();
+  console.log('    ✓ Config loaded');
   const cache = new FileCache(resolve(resolveCacheDir(), 'github'));
+  console.log('    ✓ Cache initialized');
 
   const rawBase = resolve(resolveOutputDir(), 'raw');
   const outputDir = await findOrCreateRunDir(rawBase);
+  console.log(`    📁 Output directory: ${outputDir}`);
 
   // Each collector saves immediately on completion. On resume, completed
   // collectors are loaded from disk; only the interrupted one re-runs
   // (individual API pages are also cached by ghApi).
+  console.log('\n    [1/4] Collecting GitHub signals (code search, commits, topics)...');
+  const t1 = Date.now();
   const githubSignals = await collectOrLoad(
     join(outputDir, 'github-signals.json'),
     'GitHub signals',
     () => collectAllGitHubSignals(cache)
   );
+  console.log(`    ✓ GitHub signals: ${String(githubSignals.size)} users (${((Date.now() - t1) / 1000).toFixed(1)}s)`);
 
+  console.log('\n    [2/4] Collecting community signals (stargazers, contributors, forks)...');
+  const t2 = Date.now();
   const communitySignals = await collectOrLoad(
     join(outputDir, 'community.json'),
     'community signals',
     () => collectCommunitySignals(config, cache)
   );
+  console.log(`    ✓ Community signals: ${String(communitySignals.size)} users (${((Date.now() - t2) / 1000).toFixed(1)}s)`);
 
+  console.log('\n    [3/4] Collecting stargazer signals...');
+  const t3 = Date.now();
   const stargazerSignals = await collectOrLoad(
     join(outputDir, 'stargazers.json'),
     'stargazer signals',
     () => collectStargazerSignals(config, cache)
   );
+  console.log(`    ✓ Stargazer signals: ${String(stargazerSignals.size)} users (${((Date.now() - t3) / 1000).toFixed(1)}s)`);
 
+  console.log('\n    [4/4] Collecting ranking/seed signals...');
+  const t4 = Date.now();
   const rankingSignals = await collectOrLoad(
     join(outputDir, 'rankings.json'),
     'ranking/seed signals',
     () => collectRankingSignals(config, cache)
   );
+  console.log(`    ✓ Ranking signals: ${String(rankingSignals.size)} users (${((Date.now() - t4) / 1000).toFixed(1)}s)`);
 
   // Merge all signals
+  console.log('\n    Merging all signal sources...');
   const allSignals = mergeSignalMaps(
     githubSignals,
     communitySignals,
     stargazerSignals,
     rankingSignals
   );
-  console.log(`Total: ${String(allSignals.size)} unique users from initial collection`);
+  console.log(`    ✓ Merged: ${String(allSignals.size)} unique users from initial collection`);
 
   // Follower graph expansion placeholder
   if (!existsSync(join(outputDir, 'follower-graph.json'))) {

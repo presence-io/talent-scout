@@ -29,16 +29,23 @@ export async function deepEvaluateBatch(
     .sort((a, b) => (b.evaluation?.final_score ?? 0) - (a.evaluation?.final_score ?? 0))
     .slice(0, config.evaluation.max_ai_evaluations);
 
-  if (eligible.length === 0) return 0;
+  if (eligible.length === 0) {
+    console.log('      No candidates eligible for deep evaluation');
+    return 0;
+  }
+  console.log(`      ${String(eligible.length)} candidates eligible for deep eval`);
   if (done.size > 0) {
-    console.log(`  Resuming deep eval: skipping ${String(done.size)} already processed`);
+    console.log(`      Resuming: skipping ${String(done.size)} already processed`);
   }
 
   const batchSize = config.openclaw.batch_size;
   let processed = 0;
+  const totalBatches = Math.ceil(eligible.length / batchSize);
 
   for (let i = 0; i < eligible.length; i += batchSize) {
+    const batchNum = Math.floor(i / batchSize) + 1;
     const batch = eligible.slice(i, i + batchSize);
+    console.log(`      Batch ${String(batchNum)}/${String(totalBatches)}: ${batch.map((c) => c.username).join(', ')}`);
 
     const result = await callAgent('evaluator', {
       task: 'batch_deep_evaluation',
@@ -60,10 +67,13 @@ export async function deepEvaluateBatch(
       }
     }
 
+    console.log(`      Batch ${String(batchNum)} done: ${String(results.length)} evaluations returned`);
+
     // Persist progress after each batch
     for (const c of batch) done.add(c.username);
     if (checkpoint) await checkpoint.mark('deep_eval_done', [...done]);
   }
 
+  console.log(`      ✓ Deep evaluation complete: ${String(processed)} summaries enriched`);
   return processed;
 }

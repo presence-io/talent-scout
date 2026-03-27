@@ -78,58 +78,95 @@ async function attachProfiles(candidates: Candidate[], inputDir: string): Promis
  * that were already processed.
  */
 export async function runPipeline(options: PipelineOptions): Promise<void> {
+  console.log('    Loading config...');
   const config = await loadConfig();
   const minConfidence = config.identity.min_confidence;
+  console.log(`    ✓ Config loaded (min_confidence=${String(minConfidence)})`);
 
   await mkdir(options.outputDir, { recursive: true });
   const checkpoint = new Checkpoint(join(options.outputDir, '_checkpoint.json'));
   await checkpoint.load();
+  console.log(`    📁 Output: ${options.outputDir}`);
 
   // Step 1: Load data
+  console.log('    [Step 1/7] Loading candidates and profiles...');
   let candidates = await loadCandidates(options.inputDir);
   await attachProfiles(candidates, options.inputDir);
+  const withProfiles = candidates.filter((c) => c.profile).length;
+  console.log(`    ✓ Loaded ${String(candidates.length)} candidates (${String(withProfiles)} with profiles)`);
 
   // Step 1b: Filter out ignored users
   const ignoreList = await readIgnoreList(options.ignoreListPath);
+  const beforeFilter = candidates.length;
   candidates = candidates.filter((c) => !isIgnored(ignoreList, c.username));
+  if (beforeFilter !== candidates.length) {
+    console.log(`    ✓ Filtered: ${String(beforeFilter - candidates.length)} ignored → ${String(candidates.length)} remaining`);
+  }
 
   // Step 2: Identity detection (rule-based)
+  console.log('    [Step 2/7] Running rule-based identity detection...');
   for (const c of candidates) {
     c.identity = identifyCandidate(c);
   }
+  const grayArea = candidates.filter((c) => {
+    const conf = c.identity?.china_confidence ?? 0;
+    return conf > 0.3 && conf < 0.7;
+  }).length;
+  console.log(`    ✓ Identity detection complete (${String(grayArea)} gray-area candidates)`);
 
   // Step 2b: AI identity inference for gray-area candidates
   if (!options.skipAI) {
-    await inferIdentityBatch(candidates, config, checkpoint);
+    console.log('    [Step 2b] Running AI identity inference for gray-area candidates...');
+    const t = Date.now();
+    const aiInferred = await inferIdentityBatch(candidates, config, checkpoint);
+    console.log(`    ✓ AI identity: ${String(aiInferred)} candidates updated (${((Date.now() - t) / 1000).toFixed(1)}s)`);
+  } else {
+    console.log('    [Step 2b] Skipping AI identity inference (--skip-ai)');
   }
 
   // Step 3: Rule-based evaluation for identified Chinese developers
+  console.log('    [Step 3/7] Running rule-based scoring...');
   const identified = candidates.filter(
     (candidate) => (candidate.identity?.china_confidence ?? 0) >= minConfidence
   );
   for (const c of identified) {
     c.evaluation = evaluateCandidate(c, config);
   }
+  console.log(`    ✓ Scored ${String(identified.length)} identified candidates`);
 
   // Step 4: AI deep evaluation for top candidates
   if (!options.skipAI) {
-    await deepEvaluateBatch(identified, config, checkpoint);
+    console.log(`    [Step 4/7] Running AI deep evaluation (max=${String(config.evaluation.max_ai_evaluations)})...`);
+    const t = Date.now();
+    const deepEvaluated = await deepEvaluateBatch(identified, config, checkpoint);
+    console.log(`    ✓ Deep eval: ${String(deepEvaluated)} candidates enriched (${((Date.now() - t) / 1000).toFixed(1)}s)`);
+  } else {
+    console.log('    [Step 4/7] Skipping AI deep evaluation (--skip-ai)');
   }
 
   // Step 5: Produce shortlist
+  console.log('    [Step 5/7] Producing shortlist...');
   const shortlist = produceShortlist(identified);
+  console.log(`    ✓ Shortlist: ${String(shortlist.length)} entries`);
 
   // Step 6: Write output
+  console.log('    [Step 6/7] Writing output files...');
   await writeOutput(options.outputDir, candidates, shortlist);
+  console.log('      → evaluation.json');
+  console.log('      → shortlist.json');
 
   // Step 7: Update SKILLS-pending + stats.json
+  console.log('    [Step 7/7] Updating stats...');
   const stats = computeRunStats(candidates, minConfidence);
   const parentDir = dirname(options.outputDir);
   await appendSkillsPending(parentDir, stats);
   await writeStatsJson(parentDir, stats);
+  console.log('      → SKILLS-pending.md');
+  console.log('      → stats.json');
 
   // Pipeline complete — remove checkpoint
   await checkpoint.remove();
+  console.log('    ✓ Checkpoint cleaned up');
 
   logSummary(stats, shortlist.length);
 }

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/lingzhou/Dev/talent-scout/packages/dashboard && pnpm dev)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm pipeline:*)",
+      "Bash(mkdir -p /Users/lingzhou/.gitmemo/conversations/2026-03 && cat > /Users/lingzhou/.gitmemo/conversations/2026-03/03-27-启动本地开发服务器.md << 'ENDOFFILE'\n---\ntitle: 启动本地开发服务器\ndate: 2026-03-27 00:00:00\nmodel: claude-opus-4-6\nmessages: 1\n---\n\n# 启动本地开发服务器\n\n### User\ngimme commands to start localhost\n\n### Assistant\n```bash\ncd packages/dashboard && pnpm dev\n```\n\nThis starts the Astro dev server for the dashboard. It'll give you a localhost URL \\(usually `http://localhost:4321`\\).\nENDOFFILE)"
+    ]
+  }
+}

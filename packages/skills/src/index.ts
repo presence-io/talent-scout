@@ -3,11 +3,32 @@ import { pathToFileURL } from 'node:url';
 import { runCollectCommand, runEvaluateCommand, runProcessCommand } from './commands.js';
 
 export async function runPipelineCommand(): Promise<void> {
-  console.log('Running full pipeline: collect → process → evaluate');
+  const t0 = Date.now();
+  console.log('\n╔══════════════════════════════════════════════════════════╗');
+  console.log('║        🚀 TALENT SCOUT PIPELINE — STARTING             ║');
+  console.log('╚══════════════════════════════════════════════════════════╝');
+  console.log(`  Started at: ${new Date().toISOString()}`);
+  console.log('  Phases: collect → process → evaluate\n');
+
+  console.log('━━━ PHASE 1/3: DATA COLLECTION ━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  const t1 = Date.now();
   await runCollectCommand();
+  console.log(`  ⏱  Collection finished in ${((Date.now() - t1) / 1000).toFixed(1)}s\n`);
+
+  console.log('━━━ PHASE 2/3: DATA PROCESSING ━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  const t2 = Date.now();
   await runProcessCommand();
+  console.log(`  ⏱  Processing finished in ${((Date.now() - t2) / 1000).toFixed(1)}s\n`);
+
+  console.log('━━━ PHASE 3/3: AI EVALUATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  const t3 = Date.now();
   await runEvaluateCommand();
-  console.log('Pipeline complete.');
+  console.log(`  ⏱  Evaluation finished in ${((Date.now() - t3) / 1000).toFixed(1)}s\n`);
+
+  const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+  console.log('╔══════════════════════════════════════════════════════════╗');
+  console.log(`║        ✅ PIPELINE COMPLETE — ${elapsed}s total              ║`);
+  console.log('╚══════════════════════════════════════════════════════════╝\n');
 }
 
 export { runCollectCommand, runProcessCommand, runEvaluateCommand } from './commands.js';

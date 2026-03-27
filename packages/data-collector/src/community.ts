@@ -14,9 +14,11 @@ export async function collectCommunitySignals(
   cache: FileCache
 ): Promise<Map<string, Signal[]>> {
   const candidates = new Map<string, Signal[]>();
+  console.log(`      Scanning ${String(config.chinese_community.length)} community repos...`);
 
   for (const ccfg of config.chinese_community) {
     const { owner, repo, type, weight, max_pages } = ccfg;
+    console.log(`      → ${owner}/${repo} (${type}, max_pages=${String(max_pages)})`);
 
     if (type === 'stargazers' || type === 'contributors') {
       const endpoint =

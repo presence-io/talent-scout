@@ -10,9 +10,11 @@ export async function collectStargazerSignals(
   cache: FileCache
 ): Promise<Map<string, Signal[]>> {
   const candidates = new Map<string, Signal[]>();
+  console.log(`      Scanning ${String(config.stargazer_repos.length)} stargazer repos...`);
 
   for (const scfg of config.stargazer_repos) {
     const { owner, repo, weight, max_pages } = scfg;
+    console.log(`      → ${owner}/${repo} (max_pages=${String(max_pages)})`);
 
     const items = await ghApi<UserItem>(`/repos/${owner}/${repo}/stargazers`, {
       maxPages: max_pages,
