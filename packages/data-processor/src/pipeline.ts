@@ -1,10 +1,12 @@
 import {
   type Candidate,
+  Checkpoint,
   FileCache,
   type GitHubProfile,
   type RepoSummary,
   type Signal,
   type TalentConfig,
+  findOrCreateRunDir,
   ghApi,
   ghApiSingle,
   isIgnored,
@@ -14,7 +16,8 @@ import {
   resolveOutputDir,
   resolveUserDataDir,
 } from '@talent-scout/shared';
-import { mkdir, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import { identifyCandidate } from './identity.js';
@@ -204,22 +207,60 @@ async function fetchGitHubProfile(
   };
 }
 
+/** Persist interval: save checkpoint every N profiles fetched. */
+const HYDRATION_CHECKPOINT_INTERVAL = 50;
+
 async function hydrateCandidateProfiles(
   candidates: Candidate[],
   config: TalentConfig,
+  checkpoint: Checkpoint,
   baseDir?: string
 ): Promise<Record<string, GitHubProfile>> {
   const cache = new FileCache(resolve(resolveCacheDir(baseDir), 'github'));
   const selected = selectCandidatesForProfileHydration(candidates, config);
   const profiles: Record<string, GitHubProfile> = {};
 
-  for (const candidate of selected) {
+  // Resume: load already-fetched usernames from checkpoint
+  const done = new Set((checkpoint.get('hydration_done') as string[] | undefined) ?? []);
+
+  // Restore profiles for already-done candidates (from cache)
+  if (done.size > 0) {
+    console.log(`      Resuming: skipping ${String(done.size)} already fetched`);
+    for (const candidate of selected) {
+      if (done.has(candidate.username)) {
+        const profile = await fetchGitHubProfile(candidate.username, config, cache);
+        if (profile) {
+          candidate.profile = profile;
+          profiles[candidate.username] = profile;
+        }
+      }
+    }
+  }
+
+  const remaining = selected.filter((c) => !done.has(c.username));
+  let sinceLastCheckpoint = 0;
+
+  for (const candidate of remaining) {
     const profile = await fetchGitHubProfile(candidate.username, config, cache);
     if (!profile) {
+      done.add(candidate.username);
+      sinceLastCheckpoint++;
       continue;
     }
     candidate.profile = profile;
     profiles[candidate.username] = profile;
+    done.add(candidate.username);
+    sinceLastCheckpoint++;
+
+    if (sinceLastCheckpoint >= HYDRATION_CHECKPOINT_INTERVAL) {
+      await checkpoint.mark('hydration_done', [...done]);
+      sinceLastCheckpoint = 0;
+    }
+  }
+
+  // Final checkpoint persist
+  if (sinceLastCheckpoint > 0) {
+    await checkpoint.mark('hydration_done', [...done]);
   }
 
   return profiles;
@@ -243,6 +284,15 @@ export async function runProcessPipeline(
   const rawDir = options.rawDir ?? (await findLatestRawDir(options.baseDir));
   console.log(`    ✓ Raw data from: ${rawDir}`);
 
+  // Use findOrCreateRunDir to resume incomplete runs
+  const processedBase = resolve(outputBase, 'processed');
+  const processedDir = await findOrCreateRunDir(processedBase);
+
+  // Initialize checkpoint
+  const checkpoint = new Checkpoint(join(processedDir, '_checkpoint.json'));
+  await checkpoint.load();
+
+  // ── Step 1: Load & merge raw signals (always re-run, fast) ──
   console.log('    Loading and merging raw signals...');
   const rawSignals = await loadRawSignals(rawDir);
   console.log(`    ✓ Loaded ${String(Object.keys(rawSignals).length)} users from raw files`);
@@ -263,14 +313,52 @@ export async function runProcessPipeline(
     console.log(`    ✓ Filtered out ${String(ignoredCount)} ignored users → ${String(candidates.length)} remaining`);
   }
 
-  console.log(`    Hydrating GitHub profiles (batch_size=${String(config.api_budget.profile_batch_size)})...`);
-  const t1 = Date.now();
-  const profiles = await hydrateCandidateProfiles(candidates, config, options.baseDir);
-  console.log(`    ✓ Fetched ${String(Object.keys(profiles).length)} profiles (${((Date.now() - t1) / 1000).toFixed(1)}s)`);
+  // ── Step 2: Profile hydration (expensive, checkpointed per-user) ──
+  let profiles: Record<string, GitHubProfile>;
+  if (checkpoint.isComplete('hydration_complete')) {
+    console.log('    Hydrating GitHub profiles... (resuming from checkpoint)');
+    const raw = await readFile(join(processedDir, 'profiles.json'), 'utf-8');
+    profiles = JSON.parse(raw) as Record<string, GitHubProfile>;
+    // Re-attach profiles to candidates
+    for (const candidate of candidates) {
+      const p = profiles[candidate.username];
+      if (p) candidate.profile = p;
+    }
+    console.log(`    ✓ Loaded ${String(Object.keys(profiles).length)} profiles from checkpoint`);
+  } else {
+    console.log(`    Hydrating GitHub profiles (batch_size=${String(config.api_budget.profile_batch_size)})...`);
+    const t1 = Date.now();
+    profiles = await hydrateCandidateProfiles(candidates, config, checkpoint, options.baseDir);
+    console.log(`    ✓ Fetched ${String(Object.keys(profiles).length)} profiles (${((Date.now() - t1) / 1000).toFixed(1)}s)`);
+    await writeJsonAtomic(join(processedDir, 'profiles.json'), profiles);
+    console.log('      → profiles.json');
+    await checkpoint.mark('hydration_complete');
+  }
 
-  console.log('    Running identity detection (rule-based)...');
-  for (const candidate of candidates) {
-    candidate.identity = identifyCandidate(candidate);
+  // ── Step 3: Identity detection (fast, checkpointed at step level) ──
+  if (checkpoint.isComplete('identity_complete')) {
+    console.log('    Running identity detection... (resuming from checkpoint)');
+    const raw = await readFile(join(processedDir, 'identity.json'), 'utf-8');
+    const identityData = JSON.parse(raw) as Record<string, Candidate['identity']>;
+    for (const candidate of candidates) {
+      const id = identityData[candidate.username];
+      if (id) candidate.identity = id;
+    }
+    console.log(`    ✓ Loaded identity for ${String(Object.keys(identityData).length)} candidates from checkpoint`);
+  } else {
+    console.log('    Running identity detection (rule-based)...');
+    for (const candidate of candidates) {
+      candidate.identity = identifyCandidate(candidate);
+    }
+    const identityOutput: Record<string, Candidate['identity']> = {};
+    for (const candidate of candidates) {
+      if (candidate.identity) {
+        identityOutput[candidate.username] = candidate.identity;
+      }
+    }
+    await writeJsonAtomic(join(processedDir, 'identity.json'), identityOutput);
+    console.log('      → identity.json');
+    await checkpoint.mark('identity_complete');
   }
 
   const identified = candidates.filter(
@@ -278,19 +366,36 @@ export async function runProcessPipeline(
   );
   console.log(`    ✓ Identified ${String(identified.length)}/${String(candidates.length)} candidates (threshold=${String(identityThreshold(config))})`);
 
-  console.log('    Running rule-based scoring for identified candidates...');
-  for (const candidate of identified) {
-    candidate.evaluation = evaluateCandidate(candidate, config);
+  // ── Step 4: Scoring (fast, checkpointed at step level) ──
+  if (checkpoint.isComplete('scoring_complete')) {
+    console.log('    Running rule-based scoring... (resuming from checkpoint)');
+    const raw = await readFile(join(processedDir, 'scored.json'), 'utf-8');
+    const scoredData = JSON.parse(raw) as Record<string, Candidate>;
+    for (const candidate of identified) {
+      const scored = scoredData[candidate.username];
+      if (scored?.evaluation) candidate.evaluation = scored.evaluation;
+    }
+    console.log('    ✓ Loaded scoring from checkpoint');
+  } else {
+    console.log('    Running rule-based scoring for identified candidates...');
+    for (const candidate of identified) {
+      candidate.evaluation = evaluateCandidate(candidate, config);
+    }
+    const scoredOutput: Record<string, Candidate> = {};
+    for (const candidate of identified) {
+      scoredOutput[candidate.username] = candidate;
+    }
+    await writeJsonAtomic(join(processedDir, 'scored.json'), scoredOutput);
+    console.log('      → scored.json');
+    await checkpoint.mark('scoring_complete');
   }
+
   const reachOut = identified.filter((c) => c.evaluation?.recommended_action === 'reach_out').length;
   const monitor = identified.filter((c) => c.evaluation?.recommended_action === 'monitor').length;
   const skip = identified.filter((c) => c.evaluation?.recommended_action === 'skip').length;
   console.log(`    ✓ Scored: reach_out=${String(reachOut)} monitor=${String(monitor)} skip=${String(skip)}`);
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '').slice(0, 15);
-  const processedDir = resolve(outputBase, 'processed', timestamp);
-  await mkdir(processedDir, { recursive: true });
-
+  // ── Step 5: Write final outputs ──
   console.log('    Writing output files...');
   const mergedOutput: Record<string, Candidate> = {};
   for (const candidate of candidates) {
@@ -298,24 +403,33 @@ export async function runProcessPipeline(
   }
   await writeJsonAtomic(join(processedDir, 'merged.json'), mergedOutput);
   console.log('      → merged.json');
-  await writeJsonAtomic(join(processedDir, 'profiles.json'), profiles);
-  console.log('      → profiles.json');
 
-  const identityOutput: Record<string, Candidate['identity']> = {};
-  for (const candidate of candidates) {
-    if (candidate.identity) {
-      identityOutput[candidate.username] = candidate.identity;
+  // Write profiles/identity/scored if not already written by checkpoint steps
+  if (!existsSync(join(processedDir, 'profiles.json'))) {
+    await writeJsonAtomic(join(processedDir, 'profiles.json'), profiles);
+    console.log('      → profiles.json');
+  }
+  if (!existsSync(join(processedDir, 'identity.json'))) {
+    const identityOutput: Record<string, Candidate['identity']> = {};
+    for (const candidate of candidates) {
+      if (candidate.identity) identityOutput[candidate.username] = candidate.identity;
     }
+    await writeJsonAtomic(join(processedDir, 'identity.json'), identityOutput);
+    console.log('      → identity.json');
   }
-  await writeJsonAtomic(join(processedDir, 'identity.json'), identityOutput);
-  console.log('      → identity.json');
+  if (!existsSync(join(processedDir, 'scored.json'))) {
+    const scoredOutput: Record<string, Candidate> = {};
+    for (const candidate of identified) {
+      scoredOutput[candidate.username] = candidate;
+    }
+    await writeJsonAtomic(join(processedDir, 'scored.json'), scoredOutput);
+    console.log('      → scored.json');
+  }
 
-  const scoredOutput: Record<string, Candidate> = {};
-  for (const candidate of identified) {
-    scoredOutput[candidate.username] = candidate;
-  }
-  await writeJsonAtomic(join(processedDir, 'scored.json'), scoredOutput);
-  console.log('      → scored.json');
+  // Mark complete and clean up checkpoint
+  await writeFile(join(processedDir, '.complete'), new Date().toISOString());
+  await checkpoint.remove();
+  console.log('    ✓ Checkpoint cleaned up');
 
   const latestLink = resolve(outputBase, 'processed', 'latest');
   try {
