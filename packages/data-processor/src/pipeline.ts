@@ -6,6 +6,7 @@ import {
   type RepoSummary,
   type Signal,
   type TalentConfig,
+  collectFollowerGraphSignals,
   findOrCreateRunDir,
   ghApi,
   ghApiSingle,
@@ -238,19 +239,29 @@ async function hydrateCandidateProfiles(
   }
 
   const remaining = selected.filter((c) => !done.has(c.username));
+  const total = done.size + remaining.length;
   let sinceLastCheckpoint = 0;
+  let fetched = done.size;
 
   for (const candidate of remaining) {
     const profile = await fetchGitHubProfile(candidate.username, config, cache);
     if (!profile) {
       done.add(candidate.username);
       sinceLastCheckpoint++;
+      fetched++;
       continue;
     }
     candidate.profile = profile;
     profiles[candidate.username] = profile;
     done.add(candidate.username);
     sinceLastCheckpoint++;
+    fetched++;
+
+    // Progress logging every 25 users
+    if (fetched % 25 === 0) {
+      const pct = ((fetched / total) * 100).toFixed(1);
+      console.log(`      [hydration] ${String(fetched)}/${String(total)} (${pct}%) — ${candidate.username}`);
+    }
 
     if (sinceLastCheckpoint >= HYDRATION_CHECKPOINT_INTERVAL) {
       await checkpoint.mark('hydration_done', [...done]);
@@ -361,10 +372,101 @@ export async function runProcessPipeline(
     await checkpoint.mark('identity_complete');
   }
 
-  const identified = candidates.filter(
+  let identified = candidates.filter(
     (candidate) => (candidate.identity?.china_confidence ?? 0) >= identityThreshold(config)
   );
   console.log(`    ✓ Identified ${String(identified.length)}/${String(candidates.length)} candidates (threshold=${String(identityThreshold(config))})`);
+
+  // ── Step 3b: Graph expansion (discover followers of identified Chinese devs) ──
+  if (!checkpoint.isComplete('graph_expansion_complete')) {
+    const seedConfidence = config.graph_expansion.min_seed_confidence ?? 0.7;
+    const seedUsers = identified
+      .filter((c) => (c.identity?.china_confidence ?? 0) >= seedConfidence)
+      .map((c) => c.username);
+
+    if (config.graph_expansion.enabled && seedUsers.length > 0) {
+      console.log(`    [Step 3b] Graph expansion from ${String(seedUsers.length)} seed users (confidence >= ${String(seedConfidence)})...`);
+      const cache = new FileCache(resolve(resolveCacheDir(options.baseDir), 'github'));
+      const graphSignals = await collectFollowerGraphSignals(config, cache, seedUsers, (idx, user, count) => {
+        if (idx % 10 === 0 || idx === seedUsers.length) {
+          console.log(`      [graph] Seed ${String(idx)}/${String(Math.min(seedUsers.length, config.graph_expansion.max_seed_users))}: ${user} → ${String(count)} followers`);
+        }
+      });
+
+      // Merge graph-discovered candidates
+      const existingUsernames = new Set(candidates.map((c) => c.username));
+      let newCount = 0;
+      for (const [username, signals] of graphSignals) {
+        if (existingUsernames.has(username)) {
+          // Add graph signals to existing candidate
+          const existing = candidates.find((c) => c.username === username);
+          if (existing) existing.signals.push(...signals);
+        } else {
+          // Create new candidate from graph signals
+          const totalWeight = signals.reduce((sum, s) => sum + s.weight, 0);
+          candidates.push({
+            username,
+            signals,
+            signal_score: totalWeight,
+            is_ai_coding_enthusiast: false,
+          });
+          existingUsernames.add(username);
+          newCount++;
+        }
+      }
+      console.log(`    ✓ Graph expansion: ${String(graphSignals.size)} users discovered, ${String(newCount)} new candidates added`);
+
+      // Hydrate profiles for new graph candidates
+      if (newCount > 0) {
+        console.log(`      Hydrating ${String(newCount)} new graph candidates...`);
+        const graphCache = new FileCache(resolve(resolveCacheDir(options.baseDir), 'github'));
+        const newCandidates = candidates.filter((c) => c.signals.some((s) => s.type === 'graph:follower') && !c.profile);
+        let graphFetched = 0;
+        for (const candidate of newCandidates) {
+          const profile = await fetchGitHubProfile(candidate.username, config, graphCache);
+          if (profile) {
+            candidate.profile = profile;
+            profiles[candidate.username] = profile;
+          }
+          graphFetched++;
+          if (graphFetched % 25 === 0) {
+            console.log(`      [graph-hydration] ${String(graphFetched)}/${String(newCandidates.length)} — ${candidate.username}`);
+          }
+        }
+        console.log(`    ✓ Graph hydration: ${String(graphFetched)} profiles fetched`);
+
+        // Run identity on new candidates
+        for (const candidate of newCandidates) {
+          candidate.identity = identifyCandidate(candidate);
+        }
+        const newIdentified = newCandidates.filter(
+          (c) => (c.identity?.china_confidence ?? 0) >= identityThreshold(config)
+        );
+        console.log(`    ✓ Graph identity: ${String(newIdentified.length)} new Chinese devs from graph`);
+
+        // Merge into identified
+        identified = candidates.filter(
+          (candidate) => (candidate.identity?.china_confidence ?? 0) >= identityThreshold(config)
+        );
+        console.log(`    ✓ Total identified after graph: ${String(identified.length)}`);
+      }
+    } else {
+      console.log('    [Step 3b] Graph expansion skipped (disabled or no seeds)');
+    }
+
+    // Update identity.json with graph candidates included
+    const identityOutput: Record<string, Candidate['identity']> = {};
+    for (const candidate of candidates) {
+      if (candidate.identity) {
+        identityOutput[candidate.username] = candidate.identity;
+      }
+    }
+    await writeJsonAtomic(join(processedDir, 'identity.json'), identityOutput);
+    await writeJsonAtomic(join(processedDir, 'profiles.json'), profiles);
+    await checkpoint.mark('graph_expansion_complete');
+  } else {
+    console.log('    [Step 3b] Graph expansion... (resuming from checkpoint)');
+  }
 
   // ── Step 4: Scoring (fast, checkpointed at step level) ──
   if (checkpoint.isComplete('scoring_complete')) {

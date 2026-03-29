@@ -58,18 +58,27 @@ topic_queries:
     max_pages: 10
   - topic: "mcp"
     weight: 1
-    max_pages: 5
+    max_pages: 10
   - topic: "copilot-extension"
     weight: 2
     max_pages: 10
   - topic: "cursor"
     weight: 1.5
-    max_pages: 5
+    max_pages: 10
   - topic: "ai-coding"
     weight: 2
-    max_pages: 5
+    max_pages: 10
+  - topic: "ai-agent"
+    weight: 2
+    max_pages: 10
+  - topic: "llm"
+    weight: 2
+    max_pages: 10
+  - topic: "rag"
+    weight: 2
+    max_pages: 10
 
-# ── Chinese dev community repos ──
+# ── Chinese dev community repos (contributors = builders, not followers) ──
 chinese_community:
   - owner: vuejs
     repo: core
@@ -81,12 +90,70 @@ chinese_community:
     type: stargazers
     weight: 4
     max_pages: 5
+  - owner: langgenius
+    repo: dify
+    type: contributors
+    weight: 5
+    max_pages: 10
+  - owner: element-plus
+    repo: element-plus
+    type: contributors
+    weight: 3
+    max_pages: 5
+  - owner: lobehub
+    repo: lobe-chat
+    type: contributors
+    weight: 4
+    max_pages: 10
+  - owner: antfu
+    repo: ni
+    type: stargazers
+    weight: 3
+    max_pages: 5
+  - owner: vbenjs
+    repo: vue-vben-admin
+    type: contributors
+    weight: 3
+    max_pages: 5
+  - owner: pnpm
+    repo: pnpm
+    type: contributors
+    weight: 3
+    max_pages: 5
 
 # ── Stargazer repos for AI tool indicators ──
 stargazer_repos:
   - owner: anthropics
     repo: claude-code
     weight: 5
+    max_pages: 10
+  - owner: getcursor
+    repo: cursor
+    weight: 5
+    max_pages: 10
+  - owner: continuedev
+    repo: continue
+    weight: 4
+    max_pages: 10
+  - owner: modelcontextprotocol
+    repo: servers
+    weight: 5
+    max_pages: 10
+  - owner: langgenius
+    repo: dify
+    weight: 4
+    max_pages: 10
+  - owner: open-webui
+    repo: open-webui
+    weight: 3
+    max_pages: 10
+  - owner: lobehub
+    repo: lobe-chat
+    weight: 3
+    max_pages: 10
+  - owner: ChatGPTNextWeb
+    repo: ChatGPT-Next-Web
+    weight: 3
     max_pages: 10
 
 # ── Ranking / seed list sources ──
@@ -117,9 +184,9 @@ graph_expansion:
 
 # ── API rate limiting ──
 api_budget:
-  max_total_calls: 2000
+  max_total_calls: 10000
   search_pages_per_query: 10
-  profile_batch_size: 500
+  profile_batch_size: 10000
   search_sleep_ms: 2500
 
 # ── AI provider configuration ──

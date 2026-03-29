@@ -7,3 +7,4 @@ export * from './openclaw.js';
 export * from './ai-provider.js';
 export * from './ignore-list.js';
 export * from './workspace.js';
+export * from './follower-graph.js';
