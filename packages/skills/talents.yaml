@@ -122,6 +122,14 @@ api_budget:
   profile_batch_size: 500
   search_sleep_ms: 2500
 
+# ── AI provider configuration ──
+ai:
+  provider: claude            # claude | openclaw
+  batch_size: 10
+  claude:
+    model: sonnet
+    max_turns: 1
+
 # ── Identity configuration ──
 identity:
   min_confidence: 0.5

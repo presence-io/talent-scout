@@ -1,5 +1,6 @@
+import type { AIProvider } from '@talent-scout/shared';
 import type { Candidate, TalentConfig } from '@talent-scout/shared';
-import { Checkpoint, callAgent } from '@talent-scout/shared';
+import { Checkpoint } from '@talent-scout/shared';
 
 interface AIEvalResult {
   username: string;
@@ -7,8 +8,8 @@ interface AIEvalResult {
 }
 
 /**
- * Run AI-assisted deep evaluation on top candidates via the OpenClaw
- * evaluator agent. Enriches the rule-based evaluation with an AI-generated
+ * Run AI-assisted deep evaluation on top candidates via the configured
+ * AI provider. Enriches the rule-based evaluation with an AI-generated
  * human-readable summary.
  *
  * Candidates must already have rule-based evaluation attached.
@@ -20,6 +21,7 @@ interface AIEvalResult {
 export async function deepEvaluateBatch(
   candidates: Candidate[],
   config: TalentConfig,
+  provider: AIProvider,
   checkpoint?: Checkpoint
 ): Promise<number> {
   const done = new Set((checkpoint?.get('deep_eval_done') as string[] | undefined) ?? []);
@@ -38,7 +40,7 @@ export async function deepEvaluateBatch(
     console.log(`      Resuming: skipping ${String(done.size)} already processed`);
   }
 
-  const batchSize = config.openclaw.batch_size;
+  const batchSize = config.ai.batch_size;
   let processed = 0;
   const totalBatches = Math.ceil(eligible.length / batchSize);
 
@@ -47,7 +49,7 @@ export async function deepEvaluateBatch(
     const batch = eligible.slice(i, i + batchSize);
     console.log(`      Batch ${String(batchNum)}/${String(totalBatches)}: ${batch.map((c) => c.username).join(', ')}`);
 
-    const result = await callAgent('evaluator', {
+    const result = await provider.callAgent('evaluator', {
       task: 'batch_deep_evaluation',
       candidates: batch.map((c) => ({
         username: c.username,

@@ -95,6 +95,17 @@ const TargetProfileSchema = z.object({
   preferred_languages: z.array(z.string()).default([]),
 });
 
+const ClaudeAIConfigSchema = z.object({
+  model: z.string().default('sonnet'),
+  max_turns: z.number().default(1),
+});
+
+const AIConfigSchema = z.object({
+  provider: z.enum(['claude', 'openclaw']).default('openclaw'),
+  batch_size: z.number().default(10),
+  claude: ClaudeAIConfigSchema.default({}),
+});
+
 const OpenClawAgentSchema = z.object({
   name: z.string(),
   workspace: z.string(),
@@ -158,6 +169,7 @@ export const TalentConfigSchema = z.object({
   identity: IdentityConfigSchema.default({}),
   evaluation: EvaluationConfigSchema.default({}),
   target_profile: TargetProfileSchema.default({}),
+  ai: AIConfigSchema.default({}),
   openclaw: OpenClawConfigSchema.default({}),
   cache: CacheConfigSchema.default({}),
 });

@@ -4,5 +4,6 @@ export * from './cache.js';
 export * from './checkpoint.js';
 export * from './github.js';
 export * from './openclaw.js';
+export * from './ai-provider.js';
 export * from './ignore-list.js';
 export * from './workspace.js';
