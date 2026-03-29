@@ -31,8 +31,9 @@ Thumbs.db
 node_modules/
 dist/
 
-# Runtime data
-workspace-data/
+# Runtime data (keep workspace-data/output/ tracked for pipeline results)
+workspace-data/input/
+workspace-data/cache/
 user-data/
 
 # API 缓存
