@@ -1,5 +1,6 @@
+import type { AIProvider } from '@talent-scout/shared';
 import type { Candidate, TalentConfig } from '@talent-scout/shared';
-import { Checkpoint, callAgent } from '@talent-scout/shared';
+import { Checkpoint } from '@talent-scout/shared';
 
 interface AIIdentityInference {
   username: string;
@@ -11,7 +12,7 @@ interface AIIdentityInference {
 
 /**
  * Run AI-assisted identity inference on gray-area candidates
- * (0.3 < china_confidence < 0.7) via the OpenClaw identity agent.
+ * (0.3 < china_confidence < 0.7) via the configured AI provider.
  *
  * Mutates candidates in place — updates identity.china_confidence,
  * identity.city, and identity.ai_assisted when AI provides stronger signals.
@@ -22,6 +23,7 @@ interface AIIdentityInference {
 export async function inferIdentityBatch(
   candidates: Candidate[],
   config: TalentConfig,
+  provider: AIProvider,
   checkpoint?: Checkpoint
 ): Promise<number> {
   const done = new Set((checkpoint?.get('ai_identity_done') as string[] | undefined) ?? []);
@@ -41,7 +43,7 @@ export async function inferIdentityBatch(
     console.log(`      Resuming: skipping ${String(done.size)} already processed`);
   }
 
-  const batchSize = config.openclaw.batch_size;
+  const batchSize = config.ai.batch_size;
   let processed = 0;
   const totalBatches = Math.ceil(grayArea.length / batchSize);
 
@@ -50,7 +52,7 @@ export async function inferIdentityBatch(
     const batch = grayArea.slice(i, i + batchSize);
     console.log(`      Batch ${String(batchNum)}/${String(totalBatches)}: ${batch.map((c) => c.username).join(', ')}`);
 
-    const result = await callAgent('identity', {
+    const result = await provider.callAgent('identity', {
       task: 'batch_identity_inference',
       candidates: batch.map((c) => ({
         username: c.username,

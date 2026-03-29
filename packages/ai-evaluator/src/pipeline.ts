@@ -1,5 +1,5 @@
 import { evaluateCandidate, identifyCandidate } from '@talent-scout/data-processor';
-import { Checkpoint, isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
+import { Checkpoint, createAIProvider, isIgnored, loadConfig, readIgnoreList } from '@talent-scout/shared';
 import type { Candidate } from '@talent-scout/shared';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -16,7 +16,7 @@ export interface PipelineOptions {
   outputDir: string;
   /** Path to ignore-list.json */
   ignoreListPath?: string;
-  /** Skip OpenClaw AI calls (rule-based only) */
+  /** Skip AI calls (rule-based only) */
   skipAI?: boolean;
 }
 
@@ -114,11 +114,17 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
   }).length;
   console.log(`    ✓ Identity detection complete (${String(grayArea)} gray-area candidates)`);
 
+  // Create AI provider (used in steps 2b and 4)
+  const provider = options.skipAI ? null : await createAIProvider(config);
+  if (provider) {
+    console.log(`    ✓ AI provider: ${provider.name}`);
+  }
+
   // Step 2b: AI identity inference for gray-area candidates
-  if (!options.skipAI) {
+  if (provider) {
     console.log('    [Step 2b] Running AI identity inference for gray-area candidates...');
     const t = Date.now();
-    const aiInferred = await inferIdentityBatch(candidates, config, checkpoint);
+    const aiInferred = await inferIdentityBatch(candidates, config, provider, checkpoint);
     console.log(`    ✓ AI identity: ${String(aiInferred)} candidates updated (${((Date.now() - t) / 1000).toFixed(1)}s)`);
   } else {
     console.log('    [Step 2b] Skipping AI identity inference (--skip-ai)');
@@ -135,10 +141,10 @@ export async function runPipeline(options: PipelineOptions): Promise<void> {
   console.log(`    ✓ Scored ${String(identified.length)} identified candidates`);
 
   // Step 4: AI deep evaluation for top candidates
-  if (!options.skipAI) {
+  if (provider) {
     console.log(`    [Step 4/7] Running AI deep evaluation (max=${String(config.evaluation.max_ai_evaluations)})...`);
     const t = Date.now();
-    const deepEvaluated = await deepEvaluateBatch(identified, config, checkpoint);
+    const deepEvaluated = await deepEvaluateBatch(identified, config, provider, checkpoint);
     console.log(`    ✓ Deep eval: ${String(deepEvaluated)} candidates enriched (${((Date.now() - t) / 1000).toFixed(1)}s)`);
   } else {
     console.log('    [Step 4/7] Skipping AI deep evaluation (--skip-ai)');
