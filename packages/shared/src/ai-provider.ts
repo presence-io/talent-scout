@@ -20,6 +20,10 @@ export async function createAIProvider(config: TalentConfig): Promise<AIProvider
   const providerName = config.ai?.provider ?? 'openclaw';
 
   switch (providerName) {
+    case 'metabot': {
+      const { MetaBotProvider } = await import('./providers/metabot-provider.js');
+      return new MetaBotProvider(config);
+    }
     case 'claude': {
       const { ClaudeCliProvider } = await import('./providers/claude-cli-provider.js');
       return new ClaudeCliProvider(config);
@@ -29,6 +33,6 @@ export async function createAIProvider(config: TalentConfig): Promise<AIProvider
       return new OpenClawProvider(config);
     }
     default:
-      throw new Error(`Unknown AI provider: "${providerName}". Use "claude" or "openclaw".`);
+      throw new Error(`Unknown AI provider: "${providerName}". Use "metabot", "claude", or "openclaw".`);
   }
 }

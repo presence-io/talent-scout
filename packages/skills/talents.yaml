@@ -124,8 +124,11 @@ api_budget:
 
 # ── AI provider configuration ──
 ai:
-  provider: claude            # claude | openclaw
+  provider: metabot           # metabot | claude | openclaw
   batch_size: 10
+  metabot:
+    bot_name: "Max's CC"
+    timeout: 180000
   claude:
     model: sonnet
     max_turns: 1
