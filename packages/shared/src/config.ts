@@ -100,10 +100,18 @@ const ClaudeAIConfigSchema = z.object({
   max_turns: z.number().default(1),
 });
 
+const MetaBotAIConfigSchema = z.object({
+  url: z.string().default('http://localhost:9100'),
+  secret: z.string().default(''),
+  bot_name: z.string().default("Max's CC"),
+  timeout: z.number().default(180000),
+});
+
 const AIConfigSchema = z.object({
-  provider: z.enum(['claude', 'openclaw']).default('openclaw'),
+  provider: z.enum(['claude', 'openclaw', 'metabot']).default('openclaw'),
   batch_size: z.number().default(10),
   claude: ClaudeAIConfigSchema.default({}),
+  metabot: MetaBotAIConfigSchema.default({}),
 });
 
 const OpenClawAgentSchema = z.object({
