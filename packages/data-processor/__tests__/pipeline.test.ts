@@ -40,6 +40,9 @@ describe('runProcessPipeline', () => {
         min_confidence: 0.2,
         ai_assist_range: [0.3, 0.7],
       },
+      graph_expansion: {
+        enabled: false,
+      },
     });
 
     mockLoadConfig.mockResolvedValue(config);
